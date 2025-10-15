@@ -1,0 +1,12 @@
+*.zip
+*.pdf
+*.mat
+*.png
+*.jpg
+*.jpeg
+*.gif
+*.bmp
+*.tiff
+*.ico
+*.webp
+.DS_Store
