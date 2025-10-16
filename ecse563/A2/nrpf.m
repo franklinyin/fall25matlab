@@ -1,117 +1,161 @@
-% Q1
 function [V, delta, Psl, Qgv, N, time] = nrpf(Y, is, ipq, ipv, Pg, Qg, Pd, Qd, V0, Sbase, toler, maxiter)
-    tic; % start timing the computation
-    
-    % number of buses
-    n = size(Y, 1);
+%NRPF  Newton–Raphson AC power flow (polar coordinates).
+%   [V, delta, Psl, Qgv, N, time] = nrpf(Y, is, ipq, ipv, Pg, Qg, Pd, Qd, V0, Sbase, toler, maxiter)
+%
+% Inputs:
+%   Y      : (n x n) complex bus-admittance matrix
+%   is     : slack bus index (1-based)
+%   ipq    : vector of PQ bus indices (1-based)
+%   ipv    : vector of PV bus indices (1-based); may include 'is' (removed internally)
+%   Pg,Qg  : (n x 1) specified generation [MW, MVAr]
+%   Pd,Qd  : (n x 1) specified demand    [MW, MVAr]
+%   V0     : specified |V| (p.u.) for generator buses in 'ipv' order
+%   Sbase  : MVA base
+%   toler  : convergence tolerance on mismatch infinity-norm (p.u.)
+%   maxiter: maximum allowed Newton iterations
+%
+% Outputs:
+%   V      : (n x 1) bus voltage magnitudes [p.u.]
+%   delta  : (n x 1) bus voltage angles [rad] (delta(is)=0 reference)
+%   Psl    : slack active generation [MW]
+%   Qgv    : (n x 1) reactive generation at PV buses [MVAr], zeros elsewhere
+%   N      : iterations to convergence
+%   time   : CPU time [s]
+%
+% Notes:
+% - No matrix inversion is used; linear solves use backslash.
+% - Jacobian blocks H,N,M,L follow standard NR polar formulation (course slides).
+%   See ECSE563 Power Flow notes: NR derivation, mismatch definitions, and update rule. 
+%   :contentReference[oaicite:10]{index=10} :contentReference[oaicite:11]{index=11} :contentReference[oaicite:12]{index=12}
+%
+n = size(Y,1);
+G = real(Y); B = imag(Y);
 
+% sets (ensure column vectors, unique, sorted)
+ipq = unique(ipq(:));
+ipv = setdiff(unique(ipv(:)), is);   % remove slack if present
 
-    jp = [2:n]';
-    psize = n - 1;
-    jq = ipq;
-    qsize = size(ipq, 1)
-    jsize = psize + qsize; % the size N of the jacobian matrix
-    
-    % Initialize the complex voltages to the flat voltage profile
-    profile = [zeros(1, psize), ones(1, qsize)]' % [delta | V]
+% per-unit specified injections
+Pinj = (Pg - Pd)/Sbase;   % p.u.
+Qinj = (Qg - Qd)/Sbase;   % p.u.
 
-    delta = abs(profile(1:psize));
-    V = abs(profile(psize+1:end));
+% Initial guess
+V     = ones(n,1);
+delta = zeros(n,1);
 
-    % H = NaN(theta_size, theta_size);
-    % % N = zeros(theta_size, pq_size);
-    % % M = zeros(pq_size, theta_size);
-    % L = NaN(pq_size, pq_size);
-    % 
-    % 
-    % N = NaN(theta_size, theta_size);
-    % M = NaN(theta_size, theta_size);
+% Apply specified |V| to generator buses (V0 is given in order of 'ipv' in data file).
+% If user provided V0 including the slack in 'ipv', map by indices safely.
+if numel(V0) == numel(ipv)
+    V(ipv) = V0(:);
+else
+    % If V0 was provided for [is; ipv] as in the sample file (three generators),
+    % map the entries by matching indices.
+    Vgen_idx = [is; ipv(:)];
+    Vgen_idx = unique(Vgen_idx(:),'stable');
+    k = min(numel(V0), numel(Vgen_idx));
+    V(Vgen_idx(1:k)) = V0(1:k);
+end
 
-    % jac_size = size(approx, 1); 
+% Indexing for unknowns (order: all non-slack angles [PV;PQ], then PQ magnitudes)
+iang = [ipv; ipq];                    % angles unknown at all non-slack
+iV   = ipq;                           % magnitudes unknown at PQ only
 
-    J = zeros(jsize, jsize);
-
-    G = real(Y);
-    B = imag(Y);
-    
-    % Net active and reactive power injection
-    P = Pg - Pd; % Net active power injection (generation - demand)
-    Q = Qg - Qd; % Net reactive power injection (generation - demand)
-
-    
-    Inj = [P(jp);Q(jq)];
-
-
-    iter_count = 0; % Iteration counter
-
-
-
-    while (iter_count < maxiter)
-
-
-        delta_full = [0; delta];
-    
-        Vm = [V0; V]
-        V_full = Vm .* exp(1i*delta_full);
-    
-        S = V_full .* conj(Y*V_full);
-    
-        
-        mismatch = [P(jp)-real(S(jp));Q(jq)-imag(S(jq))]
-
-        if (max(abs(mismatch)) < toler)
-            break
+tic
+for N = 1:maxiter
+    % Calculate nodal P,Q from current (V,delta)
+    P = zeros(n,1); Q = zeros(n,1);
+    for i = 1:n
+        for k = 1:n
+            P(i) = P(i) + V(i)*V(k)*( G(i,k)*cos(delta(i)-delta(k)) + B(i,k)*sin(delta(i)-delta(k)) );
+            Q(i) = Q(i) + V(i)*V(k)*( G(i,k)*sin(delta(i)-delta(k)) - B(i,k)*cos(delta(i)-delta(k)) );
         end
-
-        % V = [V0; approx(psize+1:end)];
-        % delta = [1; approx(1:psize)];
-        dSdd = (-1i * diag(V_full) * conj(Y) * diag(conj(V_full)) + 1i * diag(conj(Y) * conj(V_full)) * diag(V_full));
-        dSdVm = (diag(V_full) * conj(Y) * diag(exp(-1i * delta_full)) + diag(conj(Y) * conj(V_full)) * diag(exp(1i * delta_full)));
-    
-        H = real(dSdd);
-        M = imag(dSdd);
-        N_ = diag(Vm) * real(dSdVm); %rename N so it does not cause comflict with N
-        L = diag(Vm) * imag(dSdVm);
-    
-        J(1:psize,1:psize) = H(jp,jp);
-        J(1:psize,psize+1:end) = N_(jp,jq);
-        J(psize+1:end,1:psize) = M(jq,jp);
-        J(psize+1:end,psize+1:end) = L(jq,jq);
-
-        if (max(abs(mismatch)) < toler)
-            break
-        end
-
-        solution = linsolve(J,mismatch) %3 solve to correct
-
-
-        delta = delta + solution(1:psize);
-        V = V + V.*solution(psize+1:end);
-        % profile = [profile(1:psize)+solution(1:psize); profile(psize+1:end)+profile(psize+1:end).*solution(psize+1:end)] %4 update profile
-        
-        % 
-        % mismatch = Inj - approx; %new mismatch
-
-        iter_count = iter_count+1
-
-        J
-
-
     end
 
+    % Mismatches (implicit equations only)
+    dP = Pinj - P;             % all buses, but slack eq. not used
+    dQ = Qinj - Q;             % all buses, only PQ used
 
-    % delta = abs(profile(1:psize));
-    % V = abs(profile(psize+1:end));
+    F  = [ dP(iang) ; dQ(iV) ];     % stacked mismatch (order must match Jacobian)
 
-    N = iter_count;
+    % Convergence check
+    if norm(F, inf) < toler
+        break
+    end
 
-    Psl = delta; % not computed yet
-    Qgv = V;
+    % Build Jacobian sub-blocks H,N,M,L (see course notes) :contentReference[oaicite:13]{index=13}
+    np = numel(iang); nq = numel(iV);
+    H = zeros(np,np); Nblk = zeros(np,nq); M = zeros(nq,np); L = zeros(nq,nq);
 
-    time = toc;
+    for a = 1:np
+        i = iang(a);
+        for b = 1:np
+            k = iang(b);
+            if i == k
+                H(a,b) = -Q(i) - V(i)^2*B(i,i);
+            else
+                H(a,b) = V(i)*V(k)*( G(i,k)*sin(delta(i)-delta(k)) - B(i,k)*cos(delta(i)-delta(k)) );
+            end
+        end
+        for b = 1:nq
+            k = iV(b);
+            if i == k
+                Nblk(a,b) = P(i)/V(i) + G(i,i)*V(i);
+            else
+                Nblk(a,b) = V(i)*( G(i,k)*cos(delta(i)-delta(k)) + B(i,k)*sin(delta(i)-delta(k)) );
+            end
+        end
+    end
 
-    
+    for a = 1:nq
+        i = iV(a);
+        for b = 1:np
+            k = iang(b);
+            if i == k
+                M(a,b) =  P(i) - V(i)^2*G(i,i);
+            else
+                M(a,b) = -V(i)*V(k)*( G(i,k)*cos(delta(i)-delta(k)) + B(i,k)*sin(delta(i)-delta(k)) );
+            end
+        end
+        for b = 1:nq
+            k = iV(b);
+            if i == k
+                L(a,b) = Q(i)/V(i) - B(i,i)*V(i);
+            else
+                L(a,b) = V(i)*( G(i,k)*sin(delta(i)-delta(k)) - B(i,k)*cos(delta(i)-delta(k)) );
+            end
+        end
+    end
 
+    % Solve for updates and update state (no inv) :contentReference[oaicite:14]{index=14}
+    J = [H Nblk; M L];
+    dx = J \ F;
 
-  
+    ddelta = dx(1:np);
+    dV     = dx(np+1:end);
+
+    delta(iang) = delta(iang) + ddelta;
+    V(iV)       = V(iV)       + dV;
+
+    % Enforce slack angle reference and PV magnitudes
+    delta(is) = 0;
+    % Keep PV magnitudes at specified setpoints
+    if numel(V0) == numel(ipv), V(ipv) = V0(:); end
+end
+time = toc;
+
+% Final quantities
+% Slack P generation (MW):  Psl = Pcalc_slack + Pd_slack - Pg_slack (all in p.u., then ×Sbase)
+Psl = ( P(is) + (Pd(is)-Pg(is))/Sbase ) * Sbase;
+
+% Reactive generation at PV buses (MVAr): Qg_i = Qcalc_i + Qd_i  (in p.u. × Sbase)
+Qgv = zeros(n,1);
+for k = 1:numel(ipv)
+    i = ipv(k);
+    Qgv(i) = ( Q(i) + Qd(i)/Sbase ) * Sbase;
+end
+
+% If we broke due to convergence early, N is the number of completed iterations.
+if norm([ dP(iang) ; dQ(iV) ], inf) >= toler && N == maxiter
+    warning('NRPF:MaxIter','NR did not meet tolerance in maxiter.');
+end
 end

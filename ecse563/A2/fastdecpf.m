@@ -1,63 +1,78 @@
-% Q3
 function [V, delta, Psl, Qgv, N, time] = fastdecpf(Y, is, ipq, ipv, Pg, Qg, Pd, Qd, V0, Sbase, toler, maxiter)
-    tic; % Start timing the computation
+%FASTDECPF  Stott's fast-decoupled power flow (B' and B'' constant).
+%   Same I/O as nrpf().
+%
+% Theory (slides): Build constant B' (series-only susceptance Laplacian) for Δδ update
+% and B'' (full susceptance = -imag{Y}) for ΔV update. Solve
+%   B' * Δδ = ΔP./V(ns),  B'' * ΔV = ΔQ./V(PQ)    (element-wise division). 
+%   :contentReference[oaicite:17]{index=17} :contentReference[oaicite:18]{index=18}
+%
+n = size(Y,1); B = imag(Y);
+ipq = unique(ipq(:));
+ipv = setdiff(unique(ipv(:)), is);
 
-    % Extract the dimensions of the system
-    n = size(Y, 1);
+Pinj = (Pg - Pd)/Sbase;  Qinj = (Qg - Qd)/Sbase;
 
-    % Initialize voltage magnitudes and angles
-    V = V0; % Initial voltage magnitudes
-    delta = zeros(n, 1); % Initial voltage angles in radians
+% Build B' from series susceptances only: diag = sum(|offdiag|), offdiag = +b_series
+Bseries = zeros(n);
+for i = 1:n
+    for k = 1:n
+        if i~=k, Bseries(i,k) = B(i,k); end % off-diag of Y is series-only
+    end
+    Bseries(i,i) = -sum(Bseries(i,[1:i-1 i+1:n])); % make Laplacian
+end
+Bprime = -Bseries;    % conventional B'
+Bpp    = -B;          % conventional B'' uses full -imag(Y)
 
-    % Calculate net power injections
-    P = Pg - Pd; % Net active power injection (generation - demand)
-    Q = Qg - Qd; % Net reactive power injection (generation - demand)
+% State
+V     = ones(n,1);
+delta = zeros(n,1);
+if numel(V0)==numel(ipv), V(ipv) = V0(:); end
 
-    % Initialize for iteration
-    Vm = V; % Magnitude of voltage vector
-    Theta = delta; % Angle of voltage vector in radians
-    mismatchP = inf; % Initialize mismatch for active power to a large number
-    mismatchQ = inf; % Initialize mismatch for reactive power to a large number
-    N = 0; % Iteration counter
+iang = [ipv; ipq];  % non-slack angles
+iV   = ipq;
 
-    % Precompute parts of the Jacobian that are constant
-    Bp = -imag(Y(ipq, ipq));
-    Bpp = -imag(Y(ipq, ipq));
+% Reduced matrices
+Bp  = Bprime(iang, iang);
+Bpp = Bpp(iV, iV);
 
-    % Fast Decoupled iterations
-    while (max(abs(mismatchP)) > toler || max(abs(mismatchQ)) > toler) && (N < maxiter)
-        [mismatchP] = calcMismatchP(Y, Vm, Theta, P, ipq);
-        dTheta = -Bp \ mismatchP;
-        Theta(ipq) = Theta(ipq) + dTheta;
-        
-        [mismatchQ] = calcMismatchQ(Y, Vm, Theta, Q, ipq);
-        dV = -Bpp \ mismatchQ;
-        Vm(ipq) = Vm(ipq) + dV;
-        
-        % Increment iteration counter
-        N = N + 1;
+tic
+for N = 1:maxiter
+    % compute P, Q
+    P = zeros(n,1); Q = zeros(n,1);
+    for i = 1:n
+        for k = 1:n
+            Gik = real(Y(i,k));
+            Bik = imag(Y(i,k));
+            P(i) = P(i) + V(i)*V(k)*( Gik*cos(delta(i)-delta(k)) + Bik*sin(delta(i)-delta(k)) );
+            Q(i) = Q(i) + V(i)*V(k)*( Gik*sin(delta(i)-delta(k)) - Bik*cos(delta(i)-delta(k)) );
+        end
+    end
+    dP = Pinj - P; dQ = Qinj - Q;
+
+    if max( [norm(dP(iang),inf) norm(dQ(iV),inf)] ) < toler
+        break
     end
 
-    % Outputs after convergence or reaching max iterations
-    V = Vm;
-    delta = Theta;
-    Psl = P(is) - sum(Y(is,:) .* (Vm .* exp(1j * Theta))); % Slack bus active power
-    Qgv = Q(ipv); % Reactive power at PV nodes
-    
-    % Timing
-    time = toc;
+    % Normalize RHS by |V|
+    rhsP = dP(iang) ./ V(iang);
+    rhsQ = dQ(iV)   ./ V(iV);
 
-    function [mismatchP] = calcMismatchP(Y, Vm, Theta, P, ipq)
-        % Compute the active power mismatch
-        I = Y * (Vm .* exp(1j * Theta));
-        S = Vm .* conj(I);
-        mismatchP = real(S(ipq)) - P(ipq);
-    end
+    % Solve with constant B' and B''
+    ddelta = Bp  \ rhsP;
+    dV     = Bpp \ rhsQ;
 
-    function [mismatchQ] = calcMismatchQ(Y, Vm, Theta, Q, ipq)
-        % Compute the reactive power mismatch
-        I = Y * (Vm .* exp(1j * Theta));
-        S = Vm .* conj(I);
-        mismatchQ = imag(S(ipq)) - Q(ipq);
-    end
+    delta(iang) = delta(iang) + ddelta;
+    V(iV)       = V(iV)       + dV;
+
+    delta(is) = 0;
+    if numel(V0)==numel(ipv), V(ipv) = V0(:); end
+end
+time = toc;
+
+Psl = ( P(is) + (Pd(is)-Pg(is))/Sbase ) * Sbase;
+Qgv = zeros(n,1);
+for k = 1:numel(ipv)
+    i = ipv(k); Qgv(i) = ( Q(i) + Qd(i)/Sbase ) * Sbase;
+end
 end

@@ -1,60 +1,77 @@
-% Q2
 function [V, delta, Psl, Qgv, N, time] = decpf(Y, is, ipq, ipv, Pg, Qg, Pd, Qd, V0, Sbase, toler, maxiter)
-    tic; % Start timing the computation
-    
-    % Number of buses
-    n = length(Y);
-    
-    % Initialize
-    V = V0; % Voltage magnitudes
-    delta = zeros(n, 1); % Voltage angles in radians
-    P = Pg - Pd; % Net active power injection (generation - demand)
-    Q = Qg - Qd; % Net reactive power injection (generation - demand)
-    
-    % Initialize for iteration
-    Vm = V; % Magnitude of voltage vector
-    Theta = delta; % Angle of voltage vector in radians
-    mismatchP = inf; % Initialize mismatch for active power to a large number
-    mismatchQ = inf; % Initialize mismatch for reactive power to a large number
-    N = 0; % Iteration counter
-    
-    % Decoupled iteration
-    while (max(abs(mismatchP)) > toler || max(abs(mismatchQ)) > toler) && (N < maxiter)
-        [mismatchP, Jp] = calcMismatchP(Y, Vm, Theta, P, ipq, is);
-        dTheta = -Jp \ mismatchP;
-        Theta(ipq) = Theta(ipq) + dTheta;
-        
-        [mismatchQ, Jq] = calcMismatchQ(Y, Vm, Theta, Q, ipq);
-        dV = -Jq \ mismatchQ;
-        Vm(ipq) = Vm(ipq) + dV;
-        
-        % Increment iteration counter
-        N = N + 1;
-    end
-    
-    % Outputs after convergence or reaching max iterations
-    V = Vm;
-    delta = Theta;
-    Psl = P(is) - sum(Y(is,:) .* (Vm .* exp(1j * Theta))); % Slack bus active power
-    Qgv = Q(ipv); % Reactive power at PV nodes
-    
-    % Timing
-    time = toc;
+%DECPF  Decoupled power flow (iterates with H and L blocks only).
+%   Same I/O as nrpf().
+%
+% Theory: decouples the NR Jacobian using the empirical weak couplings (P–V and Q–δ),
+% and solves two smaller linear systems per iteration:
+%   H * Δδ = ΔP,   L * ΔV = ΔQ.  :contentReference[oaicite:15]{index=15}
+%
+n = size(Y,1); G = real(Y); B = imag(Y);
+ipq = unique(ipq(:));
+ipv = setdiff(unique(ipv(:)), is);
 
-    function [mismatchP, Jp] = calcMismatchP(Y, Vm, Theta, P, ipq, is)
-        % Compute the active power mismatch and the Jacobian matrix for Theta
-        I = Y * (Vm .* exp(1j * Theta));
-        S = Vm .* conj(I);
-        mismatchP = real(S(ipq)) - P(ipq);
-        Jp = -diag(Vm(ipq)) * imag(Y(ipq, ipq)) * diag(cos(Theta(ipq))) - ...
-             diag(Vm(ipq)) * real(Y(ipq, ipq)) * diag(sin(Theta(ipq)));
+Pinj = (Pg - Pd)/Sbase;  Qinj = (Qg - Qd)/Sbase;
+
+V     = ones(n,1);
+delta = zeros(n,1);
+
+if numel(V0) == numel(ipv), V(ipv) = V0(:); end
+
+iang = [ipv; ipq]; iV = ipq;
+
+tic
+for N = 1:maxiter
+    % compute P, Q
+    P = zeros(n,1); Q = zeros(n,1);
+    for i = 1:n
+        for k = 1:n
+            P(i) = P(i) + V(i)*V(k)*( G(i,k)*cos(delta(i)-delta(k)) + B(i,k)*sin(delta(i)-delta(k)) );
+            Q(i) = Q(i) + V(i)*V(k)*( G(i,k)*sin(delta(i)-delta(k)) - B(i,k)*cos(delta(i)-delta(k)) );
+        end
+    end
+    dP = Pinj - P; dQ = Qinj - Q;
+
+    if max( [norm(dP(iang),inf) norm(dQ(iV),inf)] ) < toler
+        break
     end
 
-    function [mismatchQ, Jq] = calcMismatchQ(Y, Vm, Theta, Q, ipq)
-        % Compute the reactive power mismatch and the Jacobian matrix for Vm
-        I = Y * (Vm .* exp(1j * Theta));
-        S = Vm .* conj(I);
-        mismatchQ = imag(S(ipq)) - Q(ipq);
-        Jq = diag(real(Y(ipq, ipq))) * diag(Vm(ipq));
+    % Build H and L only (see slides for formulas). :contentReference[oaicite:16]{index=16}
+    np = numel(iang); nq = numel(iV);
+    H = zeros(np,np); L = zeros(nq,nq);
+    for a = 1:np
+        i = iang(a);
+        for b = 1:np
+            k = iang(b);
+            if i==k, H(a,b) = -Q(i) - V(i)^2*B(i,i);
+            else,    H(a,b) = V(i)*V(k)*( G(i,k)*sin(delta(i)-delta(k)) - B(i,k)*cos(delta(i)-delta(k)) );
+            end
+        end
     end
+    for a = 1:nq
+        i = iV(a);
+        for b = 1:nq
+            k = iV(b);
+            if i==k, L(a,b) =  Q(i)/V(i) - B(i,i)*V(i);
+            else,    L(a,b) =  V(i)*( G(i,k)*sin(delta(i)-delta(k)) - B(i,k)*cos(delta(i)-delta(k)) );
+            end
+        end
+    end
+
+    % Solve decoupled systems
+    ddelta = H \ dP(iang);
+    dV     = L \ dQ(iV);
+
+    delta(iang) = delta(iang) + ddelta;
+    V(iV)       = V(iV)       + dV;
+    delta(is)   = 0;
+    if numel(V0) == numel(ipv), V(ipv) = V0(:); end
+end
+time = toc;
+
+% Outputs as in NR
+Psl = ( P(is) + (Pd(is)-Pg(is))/Sbase ) * Sbase;
+Qgv = zeros(n,1);
+for k = 1:numel(ipv)
+    i = ipv(k); Qgv(i) = ( Q(i) + Qd(i)/Sbase ) * Sbase;
+end
 end
