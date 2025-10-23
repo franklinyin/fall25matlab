@@ -5,20 +5,18 @@ feas = false(numel(P7_vals), numel(Q7_vals))
 for a = 1:numel(P7_vals)
     for b = 1:numel(Q7_vals)
         Pd_try = Pd; Qd_try = Qd;
-        % Qd_try
         Pd_try(7) = P7_vals(a);
         Qd_try(7) = Q7_vals(b);
         % toler = 0.00001; maxiter = 10;
-        % try
-        [V, ~, ~, ~, N, ~] = nrpf(Y, is, ipq, ipv, Pg, Qg, Pd_try, Qd_try, V0, Sbase, toler, maxiter);
-        if N < maxiter
-            if all(abs(V)>=0.95 & abs(V)<=1.05)
-                feas(a,b) = true;
+        try:
+            [V, ~, ~, ~, N, ~] = nrpf(Y, is, ipq, ipv, Pg, Qg, Pd_try, Qd_try, V0, Sbase, toler, maxiter);
+            if N < maxiter
+                if all(abs(V)>=0.95 & abs(V)<=0.95)
+                    feas(a,b) = true;
+                end
             end
-        end
-        % catch
-        %     feas(a,b) = false;
-        % end
+        catch:
+            pass
     end
 end
 end
