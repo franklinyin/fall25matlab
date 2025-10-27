@@ -1,22 +1,20 @@
-function [Pf_MW, Sf_MVA] = compute_acpf(Vm, delta, Y, nfrom, nto, Sbase)
-    % Compute AC power flows for each transmission line
+function Sij_complex = compute_acpf(Vm, delta, Y, nfrom, nto, Sbase)
+    % Helper function for Q5 to compute AC power flows for each transmission line
     % Inputs:
     %   Vm - voltage magnitudes (p.u.)
     %   delta - voltage angles (radians)
     %   Y - admittance matrix
     %   nfrom, nto - line connection vectors
     %   Sbase - base power (MVA)
-    % Outputs:
-    %   Pf_MW - active power flows (MW)
-    %   Sf_MVA - apparent power flows (MVA)
+    % Output:
+    %   Sij_complex - complex power flows (MVA)
     
     % Construct complex voltages
     Vcomplex = Vm .* exp(1j * delta);
     
     % Get power flow per line
     nl = length(nfrom);
-    Pf_MW = zeros(nl,1);
-    Sf_MVA = zeros(nl,1);
+    Sij_complex = zeros(nl,1);
 
     for k = 1:nl
         i = nfrom(k); 
@@ -28,7 +26,6 @@ function [Pf_MW, Sf_MVA] = compute_acpf(Vm, delta, Y, nfrom, nto, Sbase)
         Iij = (Vi - Vj) * y_series;   
         Sij_pu = Vi * conj(Iij);
 
-        Pf_MW(k) = real(Sij_pu) * Sbase;
-        Sf_MVA(k) = abs(Sij_pu) * Sbase;
+        Sij_complex(k) = Sij_pu * Sbase;
     end
 end

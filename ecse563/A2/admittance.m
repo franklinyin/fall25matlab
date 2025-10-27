@@ -1,4 +1,4 @@
-%% Q1
+%% Q1 from assignment 1
 function Y = admittance(nfrom, nto, r, x, b)
     % admittance - calculate the admittance matrix Y
     % Input:

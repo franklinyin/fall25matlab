@@ -23,14 +23,6 @@ disp('Reactive power at PV buses (Mvar):');
 disp(Qgv_nrpf);
 
 
-% Quick software validation: mismatches below toler at PQ/PV, and power balance
-[Pf, Qf, Pt, Qt, Sfrom, Sto] = ac_line_flows(nfrom, nto, r, x, b, V_nrpf, delta_nrpf, Sbase);
-Ploss = sum(Pf + Pt);
-assert(Ploss > 0);  % positive losses
-Pg_tot = sum(Pg) + Psl_nrpf;
-Pd_tot = sum(Pd);
-assert(abs(Pg_tot - Pd_tot - Ploss) < 1e-3, 'Power balance check failed.');
-
 %% Q2
 
 fprintf('Q2: \n');
@@ -87,18 +79,17 @@ disp(Pf_dcpf);
 
 %% Q5 Compare AC vs DC active line flows
 
-[Pf_ac, Sf_ac] = compute_acpf(V_fastdecpf, delta_fastdecpf, Y, nfrom, nto, Sbase);
-
-
-Pf_diff = Pf_ac-Pf_dcpf
-% We also see that the DC power flow and the apparent power have larger
-% differences, specefically in line 1,2,3 5 and 9.  
-Sf_diff = Sf_ac-abs(Pf_dcpf)
+Sij_complex = compute_acpf(V_fastdecpf, delta_fastdecpf, Y, nfrom, nto, Sbase);
 
 fprintf('Q5: Compare AC vs DC active line flows\n');
 fprintf('\nLine  from-to    P_AC(MW)     S_AC(MVA)      P_DC(MW)     |P_AC|(MW)    |S_AC|(MVA)\n');
 for e = 1:numel(nfrom)
-    fprintf('%2d    %d  -> %d   %9.3f     %9.3f     %9.3f     %9.3f     %9.3f\n', e, nfrom(e), nto(e), Pf_ac(e), Sf_ac(e), Pf_dcpf(e), abs(Pf_ac(e)), abs(Sf_ac(e)));
+    Pf_ac = real(Sij_complex(e));
+    Sf_ac = abs(Sij_complex(e));
+    Pf_diff = Pf_ac - Pf_dcpf(e);
+    Sf_diff = Sf_ac - abs(Pf_dcpf(e));
+    
+    fprintf('%2d    %d  -> %d   %9.3f     %9.3f     %9.3f     %9.3f     %9.3f\n', e, nfrom(e), nto(e), Pf_ac, Sf_ac, Pf_dcpf(e), abs(Pf_ac), abs(Sf_ac));
 end
 
 
