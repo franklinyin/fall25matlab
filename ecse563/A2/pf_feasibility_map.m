@@ -1,7 +1,7 @@
 % Q6
 function feas = pf_feasibility_map(Y, is, ipq, ipv, Pg, Qg, Pd, Qd, V0, Sbase, P7_vals, Q7_vals, toler, maxiter)
-n = numel(Pd)
-feas = false(numel(P7_vals), numel(Q7_vals))
+
+feas = false(numel(P7_vals), numel(Q7_vals));
 for a = 1:numel(P7_vals)
     for b = 1:numel(Q7_vals)
         Pd_try = Pd; Qd_try = Qd;
