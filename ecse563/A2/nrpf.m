@@ -1,4 +1,21 @@
 function [V, delta, Psl, Qgv, N, time] = nrpf(Y, is, ipq, ipv, Pg, Qg, Pd, Qd, V0, Sbase, toler, maxiter)
+    % nrpf - Newton-Raphson AC power flow (polar coordinates)
+    % Input:
+    %   Y - admittance matrix
+    %   is - slack bus index
+    %   ipq, ipv - PQ and PV bus indices
+    %   Pg, Qg - generation vectors
+    %   Pd, Qd - demand vectors
+    %   V0 - initial voltage magnitudes
+    %   Sbase - base power (MVA)
+    %   toler, maxiter - convergence parameters
+    % Output:
+    %   V - voltage magnitudes (p.u.)
+    %   delta - voltage angles (radians)
+    %   Psl - slack bus active power (MW)
+    %   Qgv - PV bus reactive power (MVAr)
+    %   N - number of iterations
+    %   time - computation time (seconds)
 %NRPF  Newton–Raphson AC power flow (polar coordinates).
 %   [V, delta, Psl, Qgv, N, time] = nrpf(Y, is, ipq, ipv, Pg, Qg, Pd, Qd, V0, Sbase, toler, maxiter)
 %

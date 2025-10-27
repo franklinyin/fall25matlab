@@ -1,6 +1,15 @@
 function [delta, Psl, Pf] = dcpf(nfrom, nto, x, is, Pg, Pd, Sbase)
-%DCPF  DC power flow (angles only; line MW flows from nfrom->nto).
-%   [delta, Psl, Pf] = dcpf(nfrom, nto, x, is, Pg, Pd, Sbase)
+    % dcpf - DC power flow (angles only; line MW flows from nfrom->nto)
+    % Input:
+    %   nfrom, nto - line connection vectors
+    %   x - line reactance vector
+    %   is - slack bus index
+    %   Pg, Pd - generation and demand vectors
+    %   Sbase - base power (MVA)
+    % Output:
+    %   delta - voltage angles (radians)
+    %   Psl - slack bus active power (MW)
+    %   Pf - line active power flows (MW)
 %
 % Assumptions: |V|≈1 p.u., small angles, R≈0, shunts ignored.
 % Angles solve  B' * delta = Pinj   (slack removed), and line flows are

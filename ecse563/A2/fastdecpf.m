@@ -1,6 +1,22 @@
+% Q3
 function [V, delta, Psl, Qgv, N, time] = fastdecpf(Y, is, ipq, ipv, Pg, Qg, Pd, Qd, V0, Sbase, toler, maxiter)
-%FASTDECPF  Stott's fast-decoupled power flow (B' and B'' constant).
-%   Same I/O as nrpf().
+    % fastdecpf - Stott's fast-decoupled power flow (B' and B'' constant)
+    % Input:
+    %   Y - admittance matrix
+    %   is - slack bus index
+    %   ipq, ipv - PQ and PV bus indices
+    %   Pg, Qg - generation vectors
+    %   Pd, Qd - demand vectors
+    %   V0 - initial voltage magnitudes
+    %   Sbase - base power (MVA)
+    %   toler, maxiter - convergence parameters
+    % Output:
+    %   V - voltage magnitudes (p.u.)
+    %   delta - voltage angles (radians)
+    %   Psl - slack bus active power (MW)
+    %   Qgv - PV bus reactive power (MVAr)
+    %   N - number of iterations
+    %   time - computation time (seconds)
 %
 % Theory (slides): Build constant B' (series-only susceptance Laplacian) for Δδ update
 % and B'' (full susceptance = -imag{Y}) for ΔV update. Solve

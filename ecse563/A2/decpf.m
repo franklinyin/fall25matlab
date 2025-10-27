@@ -1,6 +1,21 @@
 function [V, delta, Psl, Qgv, N, time] = decpf(Y, is, ipq, ipv, Pg, Qg, Pd, Qd, V0, Sbase, toler, maxiter)
-%DECPF  Decoupled power flow (iterates with H and L blocks only).
-%   Same I/O as nrpf().
+    % decpf - decoupled power flow (iterates with H and L blocks only)
+    % Input:
+    %   Y - admittance matrix
+    %   is - slack bus index
+    %   ipq, ipv - PQ and PV bus indices
+    %   Pg, Qg - generation vectors
+    %   Pd, Qd - demand vectors
+    %   V0 - initial voltage magnitudes
+    %   Sbase - base power (MVA)
+    %   toler, maxiter - convergence parameters
+    % Output:
+    %   V - voltage magnitudes (p.u.)
+    %   delta - voltage angles (radians)
+    %   Psl - slack bus active power (MW)
+    %   Qgv - PV bus reactive power (MVAr)
+    %   N - number of iterations
+    %   time - computation time (seconds)
 %
 % Theory: decouples the NR Jacobian using the empirical weak couplings (P–V and Q–δ),
 % and solves two smaller linear systems per iteration:

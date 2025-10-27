@@ -1,5 +1,18 @@
-% Q6
+% Q6 helper function
 function feas = pf_feasibility_map(Y, is, ipq, ipv, Pg, Qg, Pd, Qd, V0, Sbase, P7_vals, Q7_vals, toler, maxiter)
+    % pf_feasibility_map - compute feasibility map for varying load at bus 7
+    % Input:
+    %   Y - admittance matrix
+    %   is - slack bus index
+    %   ipq, ipv - PQ and PV bus indices
+    %   Pg, Qg - generation vectors
+    %   Pd, Qd - demand vectors
+    %   V0 - initial voltage magnitudes
+    %   Sbase - base power (MVA)
+    %   P7_vals, Q7_vals - load variation ranges for bus 7
+    %   toler, maxiter - convergence parameters
+    % Output:
+    %   feas - feasibility matrix (boolean)
 
 feas = false(numel(P7_vals), numel(Q7_vals));
 for a = 1:numel(P7_vals)
