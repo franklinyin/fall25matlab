@@ -1,10 +1,9 @@
 % Q7
-function out = pf_security_analysis(nfrom, nto, r, x, b, baseY, is, ipq, ipv, Pg, Qg, Pd, Qd, V0, Sbase, contingencies, toler, maxiter)
+function out = pf_security_analysis(nfrom, nto, r, x, b, is, ipq, ipv, Pg, Qg, Pd, Qd, V0, Sbase, contingencies, toler, maxiter)
     % pf_security_analysis - perform N-1 contingency analysis
     % Input:
     %   nfrom, nto - line connection vectors
     %   r, x, b - line parameters
-    %   baseY - base case admittance matrix
     %   is - slack bus index
     %   ipq, ipv - PQ and PV bus indices
     %   Pg, Qg - generation vectors
@@ -15,7 +14,7 @@ function out = pf_security_analysis(nfrom, nto, r, x, b, baseY, is, ipq, ipv, Pg
     %   toler, maxiter - convergence parameters
     % Output:
     %   out - struct array with contingency results
-    
+
     out = struct('pair',{},'converged',{},'N',{},'Vmin',{},'Vmax',{});
     for c = 1:size(contingencies,1)
         i = contingencies(c,1); k = contingencies(c,2);

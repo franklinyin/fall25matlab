@@ -113,7 +113,7 @@ saveas(gcf, 'feasibility_map_bus7.png');
 %% Q7 Security analysis (N-1)
 fprintf('Q7: Security analysis (N-1)\n');
 cont = [4 5; 4 9; 5 6; 6 7; 7 8; 8 9];
-out = pf_security_analysis(nfrom, nto, r, x, b, Y, is, ipq, ipv, Pg, Qg, Pd, Qd, V0, Sbase, cont, toler, maxiter);
+out = pf_security_analysis(nfrom, nto, r, x, b, is, ipq, ipv, Pg, Qg, Pd, Qd, V0, Sbase, cont, toler, maxiter);
 fprintf('\nN-1 contingencies (acceptable range 0.95–1.05 p.u.):\n');
 for k = 1:numel(out)
     fprintf('Outage %d-%d: Vmin=%.3f, Vmax=%.3f\n', out(k).pair(1), out(k).pair(2), out(k).Vmin, out(k).Vmax);
