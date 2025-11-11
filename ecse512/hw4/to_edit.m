@@ -219,12 +219,6 @@ function [bz, az] = manual_bilinear(bs, as, Td)
 end
 
 function H = manual_freqz(bz, az, z)
-    % Manual frequency response: H(z) = B(z)/A(z) evaluated at z values
-    % bz, az are polynomial coefficients in z^-1 (standard MATLAB format)
-    % z can be scalar, vector, or array
-    
-    % Evaluate numerator B(z) = sum(bz(k) * z^-(k-1))
-    % Use explicit computation: z^-n = 1/(z^n) for better numerical stability
     B = zeros(size(z));
     for k = 1:length(bz)
         if bz(k) ~= 0
@@ -237,7 +231,6 @@ function H = manual_freqz(bz, az, z)
         end
     end
     
-    % Evaluate denominator A(z) = sum(az(k) * z^-(k-1))
     A = zeros(size(z));
     for k = 1:length(az)
         if az(k) ~= 0
