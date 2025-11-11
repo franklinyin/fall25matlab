@@ -50,6 +50,14 @@ bs = Kc;
 Td = 1;
 [bz, az] = manual_bilinear(bs, as, Td);
 
+% Normalize to ensure DC gain is 1 (H(1) = 1)
+% At DC, z=1, so H(1) = sum(bz) / sum(az)
+dc_gain = sum(bz) / sum(az);
+if abs(dc_gain - 1.0) > 1e-10
+    bz = bz / dc_gain;  % normalize numerator to get H(1) = 1
+    fprintf('Normalized filter: DC gain was %.6f, normalized to 1.0\n', dc_gain);
+end
+
 
 A = zeros(numel(k), 3);
 for i = 1:numel(k)
@@ -76,6 +84,13 @@ end
 %---------------------------------------
 % Fig. 7.11-style plots
 %---------------------------------------
+% Check DC gain (should be 1)
+z_dc = 1;  % at ω=0, z = exp(j*0) = 1
+H_dc = manual_freqz(bz, az, z_dc);
+fprintf('DC gain check: H(1) = %.6f (should be 1.0)\n', H_dc);
+fprintf('  sum(bz) = %.6f, sum(az) = %.6f\n', sum(bz), sum(az));
+fprintf('  sum(bz)/sum(az) = %.6f\n\n', sum(bz)/sum(az));
+
 nfft = 4096;
 % Manual frequency response calculation
 w = linspace(0, pi, nfft)';
@@ -204,17 +219,34 @@ function [bz, az] = manual_bilinear(bs, as, Td)
 end
 
 function H = manual_freqz(bz, az, z)
+    % Manual frequency response: H(z) = B(z)/A(z) evaluated at z values
+    % bz, az are polynomial coefficients in z^-1 (standard MATLAB format)
+    % z can be scalar, vector, or array
+    
+    % Evaluate numerator B(z) = sum(bz(k) * z^-(k-1))
+    % Use explicit computation: z^-n = 1/(z^n) for better numerical stability
     B = zeros(size(z));
     for k = 1:length(bz)
         if bz(k) ~= 0
-            B = B + bz(k) * (z.^-(k-1));
+            n = k - 1;  % power of z^-1
+            if n == 0
+                B = B + bz(k);
+            else
+                B = B + bz(k) ./ (z.^n);
+            end
         end
     end
     
+    % Evaluate denominator A(z) = sum(az(k) * z^-(k-1))
     A = zeros(size(z));
     for k = 1:length(az)
         if az(k) ~= 0
-            A = A + az(k) * (z.^-(k-1));
+            n = k - 1;  % power of z^-1
+            if n == 0
+                A = A + az(k);
+            else
+                A = A + az(k) ./ (z.^n);
+            end
         end
     end
     
