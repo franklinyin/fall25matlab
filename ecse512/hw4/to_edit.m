@@ -128,25 +128,40 @@ fprintf('At w = 0.2pi:  %6.3f dB\n', 20*log10(abs(Hcpts(1))));
 fprintf('At w = 0.3pi:  %6.3f dB\n', 20*log10(abs(Hcpts(2))));
 
 % Plot (a) log magnitude, (b) magnitude, (c) group delay
-figure('Name','Example 7.3 Butterworth via Bilinear Transform','Color','w');
+% Create 3 separate figures and save each to a file
 
-subplot(3,1,1);
+% Figure 1: Log magnitude
+figure('Name','Log magnitude','Color','w');
 plot(w/pi, magdB, 'LineWidth', 1.2); grid on;
 xline(0.2,'--'); xline(0.3,'--');
-ylabel('Magnitude (dB)'); xlim([0 1]);
+ylabel('Magnitude (dB)'); xlabel('\omega/\pi'); 
+xlim([0 1]); ylim([-100 20]);
+xticks([0.2 0.4 0.6 0.8 1.0]);
+xticklabels({'0.2\pi', '0.4\pi', '0.6\pi', '0.8\pi', '\pi'});
 title('Fig. 7.11(a): Log magnitude');
+saveas(gcf, 'log_magnitude.png');
 
-subplot(3,1,2);
+% Figure 2: Magnitude
+figure('Name','Magnitude','Color','w');
 plot(w/pi, mag, 'LineWidth', 1.2); grid on;
 xline(0.2,'--'); xline(0.3,'--');
-ylabel('Magnitude'); xlim([0 1]);
+ylabel('Magnitude'); xlabel('\omega/\pi'); 
+xlim([0 1]); ylim([0 1.2]);
+xticks([0.2 0.4 0.6 0.8 1.0]);
+xticklabels({'0.2\pi', '0.4\pi', '0.6\pi', '0.8\pi', '\pi'});
 title('Fig. 7.11(b): Magnitude');
+saveas(gcf, 'magnitude.png');
 
-subplot(3,1,3);
+% Figure 3: Group delay
+figure('Name','Group delay','Color','w');
 plot(wgd/pi, gd, 'LineWidth', 1.2); grid on;
 xline(0.2,'--'); xline(0.3,'--');
-xlabel('\omega/\pi'); ylabel('Group delay [samples]'); xlim([0 1]);
+xlabel('\omega/\pi'); ylabel('Group delay [samples]'); 
+xlim([0 1]); ylim([0 12]);
+xticks([0.2 0.4 0.6 0.8 1.0]);
+xticklabels({'0.2\pi', '0.4\pi', '0.6\pi', '0.8\pi', '\pi'});
 title('Fig. 7.11(c): Group delay');
+saveas(gcf, 'group_delay.png');
 
 %---------------------------------------
 % 7) (Optional) Cross-check with buttord
