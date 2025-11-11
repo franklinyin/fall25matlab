@@ -40,7 +40,7 @@ function [V, delta, Psl, Qgv, N, time] = nrpf(Y, is, ipq, ipv, Pg, Qg, Pd, Qd, V
     k = min(numel(V0), numel(Vgen_idx));
     V(Vgen_idx(1:k)) = V0(1:k);
     
-    % Indexing for unknowns (order: all non-slack angles [PV;PQ], then PQ magnitudes)
+    % indexing for unknowns (order: all non-slack angles [PV;PQ], then PQ magnitudes)
     iang = [ipv; ipq]; % angles unknown at all non-slack
     iV   = ipq; % magnitudes unknown at PQ only
     
@@ -66,9 +66,9 @@ function [V, delta, Psl, Qgv, N, time] = nrpf(Y, is, ipq, ipv, Pg, Qg, Pd, Qd, V
             break
         end
     
-        % build jacobian sub-blocks H,N,M,L (ref. p. 26 Power Flow slides)
+        % build jacobian sub-blocks H,N,M,L
         np = numel(iang); nq = numel(iV);
-        H = zeros(np,np); Nblk = zeros(np,nq); M = zeros(nq,np); L = zeros(nq,nq);
+        H = zeros(np,np); Nblk = zeros(np,nq); M = zeros(nq,np); L = zeros(nq,nq); % N:=Nblk
     
         for a = 1:np
             i = iang(a);
@@ -80,6 +80,7 @@ function [V, delta, Psl, Qgv, N, time] = nrpf(Y, is, ipq, ipv, Pg, Qg, Pd, Qd, V
                     H(a,b) = V(i)*V(k)*( G(i,k)*sin(delta(i)-delta(k)) - B(i,k)*cos(delta(i)-delta(k)) );
                 end
             end
+
             for b = 1:nq
                 k = iV(b);
                 if i == k
@@ -100,6 +101,7 @@ function [V, delta, Psl, Qgv, N, time] = nrpf(Y, is, ipq, ipv, Pg, Qg, Pd, Qd, V
                     M(a,b) = -V(i)*V(k)*( G(i,k)*cos(delta(i)-delta(k)) + B(i,k)*sin(delta(i)-delta(k)) );
                 end
             end
+
             for b = 1:nq
                 k = iV(b);
                 if i == k
@@ -127,10 +129,10 @@ function [V, delta, Psl, Qgv, N, time] = nrpf(Y, is, ipq, ipv, Pg, Qg, Pd, Qd, V
     time = toc;
     
     
-    % Slack P generation (MW):  Psl = Pcalc_slack + Pd_slack - Pg_slack (all in p.u., then ×Sbase)
+    % slack P generation(MW):  Psl = Pcalc_slack + Pd_slack - Pg_slack (all in p.u., then *Sbase)
     Psl = ( P(is) + (Pd(is)-Pg(is))/Sbase ) * Sbase;
     
-    % Reactive generation at PV buses (MVAr): Qg_i = Qcalc_i + Qd_i  (in p.u. * Sbase)
+    % reactive generation at PV buses (MVAr): Qg_i = Qcalc_i + Qd_i  (in p.u. * Sbase)
     Qgv = zeros(n,1);
     for k = 1:numel(ipv)
         i = ipv(k);

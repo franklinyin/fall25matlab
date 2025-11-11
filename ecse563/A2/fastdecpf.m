@@ -44,7 +44,7 @@ function [V, delta, Psl, Qgv, N, time] = fastdecpf(Y, is, ipq, ipv, Pg, Qg, Pd, 
     iang = [ipv; ipq];  % non-slack angles
     iV   = ipq;
     
-    % Reduced matrices
+    % reduced matrices
     Bp  = Bprime(iang, iang);
     Bpp = Bpp(iV, iV);
     
@@ -56,6 +56,7 @@ function [V, delta, Psl, Qgv, N, time] = fastdecpf(Y, is, ipq, ipv, Pg, Qg, Pd, 
             for k = 1:n
                 Gik = real(Y(i,k));
                 Bik = imag(Y(i,k));
+
                 P(i) = P(i) + V(i)*V(k)*( Gik*cos(delta(i)-delta(k)) + Bik*sin(delta(i)-delta(k)) );
                 Q(i) = Q(i) + V(i)*V(k)*( Gik*sin(delta(i)-delta(k)) - Bik*cos(delta(i)-delta(k)) );
             end
@@ -66,11 +67,11 @@ function [V, delta, Psl, Qgv, N, time] = fastdecpf(Y, is, ipq, ipv, Pg, Qg, Pd, 
             break
         end
     
-        % Normalize RHS by |V|
+        % normalize RHS by |V|
         rhsP = dP(iang) ./ V(iang);
         rhsQ = dQ(iV)   ./ V(iV);
     
-        % Solve with constant B' and B''
+        % solve with constant B' and B''
         ddelta = Bp  \ rhsP;
         dV     = Bpp \ rhsQ;
     

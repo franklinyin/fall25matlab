@@ -35,10 +35,10 @@ function [delta, Psl, Pf] = dcpf(nfrom, nto, x, is, Pg, Pd, Sbase)
     delta(keep) = dred; % slack angle = 0
     
 
-    % Slack active power (MW) by balance (no losses in DC):
+    % slack active power (MW) by balance (no losses in DC):
     Psl = Pd(is) - sum( Pg(keep) - Pd(keep) );
     
-    % Line flows (MW) from nfrom->nto
+    % line flows (MW) from nfrom->nto
     Pf = zeros(m,1);
     for e = 1:m
         i = nfrom(e); k = nto(e);
