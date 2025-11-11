@@ -23,7 +23,6 @@ N = ceil(N_real);
 Oc = Ws / (((1/As_amp)^2 - 1)^(1/(2*N)));  % analog 3 dB cutoff
 
 fprintf('Eq. (7.33): N* = %.6f  → choose N = %d\n', N_real, N);
-fprintf('From (7.32b): Omega_c = %.6f rad/s\n\n', Oc);
 
 %continuous-time Butterworth Hc(s)
 k  = 1:(N/2);
@@ -46,13 +45,8 @@ end
 
 bs = Kc;
 
-fprintf('Hc(s) in the (7.34) factored form:\n');
-for i = 1:numel(k)
-    fprintf('  (s^2 + %.4f s + %.4f)\n', a1(i), a0(i));
-end
-fprintf('Numerator constant Kc = Oc^N = %.5f\n\n', Kc);
 
-% Bilinear transform to get H(z) (Td=1)
+% bilinear transform to get H(z) (Td=1)
 Td = 1;
 [bz, az] = manual_bilinear(bs, as, Td);
 
@@ -78,8 +72,6 @@ for i = 1:size(A,1)
     fprintf('  Denominator section %d: 1 %+.4f z^{-1} %+0.4f z^{-2}\n', ...
         i, A(i,2), A(i,3));
 end
-fprintf('\nCheck (numerator): max|b_bilinear - g*(1+z^{-1})^N| = %.3e\n\n', ...
-        norm(bz - b_factored, inf));
 
 %---------------------------------------
 % Fig. 7.11-style plots
