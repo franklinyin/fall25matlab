@@ -96,13 +96,6 @@ magdB = 20*log10(mag);
 wgd = w;
 gd = manual_grpdelay(bz, az, z, w);
 
-% Evaluate at the two edges for verification
-wcheck = [0.2*pi 0.3*pi];
-zcheck = exp(1j*wcheck);
-Hcpts = manual_freqz(bz, az, zcheck);
-fprintf('At w = 0.2pi:  %6.3f dB\n', 20*log10(abs(Hcpts(1))));
-fprintf('At w = 0.3pi:  %6.3f dB\n', 20*log10(abs(Hcpts(2))));
-
 % Figure 1: Log magnitude
 figure('Name','Log magnitude','Color','w');
 plot(w/pi, magdB, 'LineWidth', 1.2); grid on;
