@@ -55,7 +55,6 @@ Td = 1;
 dc_gain = sum(bz) / sum(az);
 if abs(dc_gain - 1.0) > 1e-10
     bz = bz / dc_gain;  % normalize numerator to get H(1) = 1
-    fprintf('Normalized filter: DC gain was %.6f, normalized to 1.0\n', dc_gain);
 end
 
 
@@ -81,15 +80,7 @@ for i = 1:size(A,1)
         i, A(i,2), A(i,3));
 end
 
-%---------------------------------------
 % Fig. 7.11-style plots
-%---------------------------------------
-% Check DC gain (should be 1)
-z_dc = 1;  % at ω=0, z = exp(j*0) = 1
-H_dc = manual_freqz(bz, az, z_dc);
-fprintf('DC gain check: H(1) = %.6f (should be 1.0)\n', H_dc);
-fprintf('  sum(bz) = %.6f, sum(az) = %.6f\n', sum(bz), sum(az));
-fprintf('  sum(bz)/sum(az) = %.6f\n\n', sum(bz)/sum(az));
 
 nfft = 4096;
 % Manual frequency response calculation

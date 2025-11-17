@@ -23,7 +23,6 @@ N = ceil(N_real);
 Oc = Ws / (((1/As_amp)^2 - 1)^(1/(2*N)));  % analog 3 dB cutoff
 
 fprintf('Eq. (7.33): N* = %.6f  → choose N = %d\n', N_real, N);
-fprintf('From (7.32b): Omega_c = %.6f rad/s\n\n', Oc);
 
 %continuous-time Butterworth Hc(s)
 k  = 1:(N/2);
@@ -46,47 +45,43 @@ end
 
 bs = Kc;
 
-fprintf('Hc(s) in the (7.34) factored form:\n');
-for i = 1:numel(k)
-    fprintf('  (s^2 + %.4f s + %.4f)\n', a1(i), a0(i));
-end
-fprintf('Numerator constant Kc = Oc^N = %.5f\n\n', Kc);
 
-% Bilinear transform to get H(z) (Td=1)
+% bilinear transform to get H(z) (Td=1)
 Td = 1;
 [bz, az] = manual_bilinear(bs, as, Td);
 
-% Factor to three second-order denominators (to match 7.35)
-% Using the closed-form mapping for each analog biquad:
+% Normalize to ensure DC gain is 1 (H(1) = 1)
+% At DC, z=1, so H(1) = sum(bz) / sum(az)
+dc_gain = sum(bz) / sum(az);
+if abs(dc_gain - 1.0) > 1e-10
+    bz = bz / dc_gain;  % normalize numerator to get H(1) = 1
+end
+
+
 A = zeros(numel(k), 3);
 for i = 1:numel(k)
-    den_i = 4 + 2*a1(i) + a0(i);                      % normalizing constant
+    den_i = 4 + 2*a1(i) + a0(i); % normalizing constant
     A(i,:) = [1, (-8 + 2*a0(i))/den_i, (4 - 2*a1(i) + a0(i))/den_i];
 end
 
-% The bilinear transform forces N zeros at z=-1 ⇒ numerator is g*(1+z^-1)^N.
-% Its scalar g comes from the analog constant and the per-section normalizers:
 g = Kc / prod(4 + 2*a1 + a0);
 p = 1;  % build (1 + z^-1)^N
 bin = 1;
 for i = 1:N
     bin = conv(bin, [1 1]);
 end
-b_factored = g * bin;   % expected numerator
+b_factored = g * bin;
 
-% Print (7.35)-style result
+% print (7.35)-style result
 fprintf('H(z) (Eq. 7.35 form):\n');
 fprintf('  Numerator: %.7f * (1 + z^{-1})^%d\n', g, N);
 for i = 1:size(A,1)
     fprintf('  Denominator section %d: 1 %+.4f z^{-1} %+0.4f z^{-2}\n', ...
         i, A(i,2), A(i,3));
 end
-fprintf('\nCheck (numerator): max|b_bilinear - g*(1+z^{-1})^N| = %.3e\n\n', ...
-        norm(bz - b_factored, inf));
 
-%---------------------------------------
-% 6) Frequency response & Fig. 7.11-style plots
-%---------------------------------------
+% Fig. 7.11-style plots
+
 nfft = 4096;
 % Manual frequency response calculation
 w = linspace(0, pi, nfft)';
@@ -98,16 +93,6 @@ magdB = 20*log10(mag);
 % Group delay: -d(angle(H))/dω
 wgd = w;
 gd = manual_grpdelay(bz, az, z, w);
-
-% Evaluate at the two edges for verification
-wcheck = [0.2*pi 0.3*pi];
-zcheck = exp(1j*wcheck);
-Hcpts = manual_freqz(bz, az, zcheck);
-fprintf('At w = 0.2pi:  %6.3f dB\n', 20*log10(abs(Hcpts(1))));
-fprintf('At w = 0.3pi:  %6.3f dB\n', 20*log10(abs(Hcpts(2))));
-
-% Plot (a) log magnitude, (b) magnitude, (c) group delay
-% Create 3 separate figures and save each to a file
 
 % Figure 1: Log magnitude
 figure('Name','Log magnitude','Color','w');
@@ -142,21 +127,11 @@ xticklabels({'0.2\pi', '0.4\pi', '0.6\pi', '0.8\pi', '\pi'});
 title('Fig. 7.11(c): Group delay');
 saveas(gcf, 'group_delay.png');
 
-%---------------------------------------
-% 7) (Optional) Cross-check with buttord
-%---------------------------------------
-% buttord check skipped (requires DSP Toolbox)
-% Already computed N from Eq. (7.33) above
-fprintf('\nFilter order check: N = %d (computed from Eq. 7.33)\n', N);
 
-%---------------------------------------
-% Helper functions (manual implementations without DSP Toolbox)
-%---------------------------------------
+
+%% helper functions
+
 function [bz, az] = manual_bilinear(bs, as, Td)
-    % Manual bilinear transform: s = (2/Td) * (1 - z^-1)/(1 + z^-1)
-    % This converts analog filter (bs, as) to digital filter (bz, az)
-    
-    % Normalize to ensure as(1) = 1
     if as(1) ~= 1
         bs = bs / as(1);
         as = as / as(1);
@@ -165,34 +140,24 @@ function [bz, az] = manual_bilinear(bs, as, Td)
     M = length(bs);
     N = length(as);
     
-    % Transformation constant
     T = 2/Td;
     
-    % Convert to z-domain using substitution
-    % H(z) = Hc(s)|_{s = T*(1-z^-1)/(1+z^-1)}
-    % Standard method: multiply numerator and denominator by (1+z^-1)^(N-1)
-    
-    % Build (1+z^-1)^(N-1) polynomial
-    one_plus_z = [1, 1];  % (1 + z^-1)
+    one_plus_z = [1, 1];
     one_plus_z_power = 1;
     for i = 1:(N-1)
         one_plus_z_power = conv(one_plus_z_power, one_plus_z);
     end
     
-    % Transform numerator: each term bs(k)*s^(k-1) becomes
-    % bs(k) * T^(k-1) * (1-z^-1)^(k-1) * (1+z^-1)^(N-1-(k-1))
     bz_temp = zeros(1, length(one_plus_z_power));
     for k = 1:M
         if bs(k) ~= 0
-            power_s = k - 1;  % power of s
-            % Build (1-z^-1)^power_s
+            power_s = k - 1; 
             one_minus_z = [1, -1];  % (1 - z^-1)
             one_minus_z_power = 1;
             for i = 1:power_s
                 one_minus_z_power = conv(one_minus_z_power, one_minus_z);
             end
             
-            % Build (1+z^-1)^(N-1-power_s)
             one_plus_z_power2 = 1;
             if (N-1-power_s) > 0
                 for i = 1:(N-1-power_s)
@@ -200,10 +165,8 @@ function [bz, az] = manual_bilinear(bs, as, Td)
                 end
             end
             
-            % Combine: T^power_s * (1-z^-1)^power_s * (1+z^-1)^(N-1-power_s)
             term = bs(k) * (T^power_s) * conv(one_minus_z_power, one_plus_z_power2);
             
-            % Pad to match length
             if length(term) < length(bz_temp)
                 term = [term, zeros(1, length(bz_temp) - length(term))];
             elseif length(term) > length(bz_temp)
@@ -213,20 +176,16 @@ function [bz, az] = manual_bilinear(bs, as, Td)
         end
     end
     
-    % Transform denominator: each term as(k)*s^(k-1) becomes
-    % as(k) * T^(k-1) * (1-z^-1)^(k-1) * (1+z^-1)^(N-1-(k-1))
     az_temp = zeros(1, length(one_plus_z_power));
     for k = 1:N
         if as(k) ~= 0
-            power_s = k - 1;  % power of s
-            % Build (1-z^-1)^power_s
-            one_minus_z = [1, -1];  % (1 - z^-1)
+            power_s = k - 1;
+            one_minus_z = [1, -1]; 
             one_minus_z_power = 1;
             for i = 1:power_s
                 one_minus_z_power = conv(one_minus_z_power, one_minus_z);
             end
             
-            % Build (1+z^-1)^(N-1-power_s)
             one_plus_z_power2 = 1;
             if (N-1-power_s) > 0
                 for i = 1:(N-1-power_s)
@@ -234,10 +193,9 @@ function [bz, az] = manual_bilinear(bs, as, Td)
                 end
             end
             
-            % Combine: T^power_s * (1-z^-1)^power_s * (1+z^-1)^(N-1-power_s)
             term = as(k) * (T^power_s) * conv(one_minus_z_power, one_plus_z_power2);
             
-            % Pad to match length
+            % pad to match length
             if length(term) < length(az_temp)
                 term = [term, zeros(1, length(az_temp) - length(term))];
             elseif length(term) > length(az_temp)
@@ -247,29 +205,32 @@ function [bz, az] = manual_bilinear(bs, as, Td)
         end
     end
     
-    % Normalize so az(1) = 1
     bz = bz_temp / az_temp(1);
     az = az_temp / az_temp(1);
 end
 
 function H = manual_freqz(bz, az, z)
-    % Manual frequency response: H(z) = B(z)/A(z) evaluated at z values
-    % bz, az are polynomial coefficients in z^-1 (standard MATLAB format)
-    % z can be scalar, vector, or array
-    
-    % Evaluate numerator B(z) = sum(bz(k) * z^-(k-1))
     B = zeros(size(z));
     for k = 1:length(bz)
         if bz(k) ~= 0
-            B = B + bz(k) * (z.^-(k-1));
+            n = k - 1;  % power of z^-1
+            if n == 0
+                B = B + bz(k);
+            else
+                B = B + bz(k) ./ (z.^n);
+            end
         end
     end
     
-    % Evaluate denominator A(z) = sum(az(k) * z^-(k-1))
     A = zeros(size(z));
     for k = 1:length(az)
         if az(k) ~= 0
-            A = A + az(k) * (z.^-(k-1));
+            n = k - 1;  % power of z^-1
+            if n == 0
+                A = A + az(k);
+            else
+                A = A + az(k) ./ (z.^n);
+            end
         end
     end
     
@@ -277,21 +238,14 @@ function H = manual_freqz(bz, az, z)
 end
 
 function gd = manual_grpdelay(bz, az, z, w)
-    % Manual group delay calculation: -d(angle(H))/dω
-    % Using numerical derivative of phase
     
     H = manual_freqz(bz, az, z);
     phase = angle(H);
     
-    % Compute derivative using central differences for interior points
-    % Use forward difference at start, backward difference at end
     gd = zeros(size(w));
     if length(w) > 1
-        % Interior points: central difference
         gd(2:end-1) = -(phase(3:end) - phase(1:end-2)) ./ (w(3:end) - w(1:end-2));
-        % First point: forward difference
         gd(1) = -(phase(2) - phase(1)) / (w(2) - w(1));
-        % Last point: backward difference
         gd(end) = -(phase(end) - phase(end-1)) / (w(end) - w(end-1));
     end
 end
