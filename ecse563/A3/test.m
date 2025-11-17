@@ -9,9 +9,6 @@ out = sim(mdl);
 %% q1c
 
 fromSim = out.get('omegaPlot');
-if isempty(fromSim)
-    fromSim = out.logsout.get('wScope');
-end
 
 figure;
 hold on; grid on;
