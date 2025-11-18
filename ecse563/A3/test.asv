@@ -1,14 +1,14 @@
-%% Q1
-mdl = 'part1cde';
+%% Q1c
+mdl = 'ass3q1c';
 load_system(mdl);
 set_param(mdl, 'StopTime', '30');
 
 %% Run simulation
 out = sim(mdl);
 
-%% q1c
+%% q1c - Frequency
 
-fromSim = out.get('deltaF');
+fromSim = out.get('wScope');
 
 figure;
 hold on; grid on;
@@ -17,12 +17,12 @@ for i = 1:fromSim.numElements
     plot(toPlot.Values.Time, toPlot.Values.Data, 'DisplayName', toPlot.Name);
 end
 xlabel('Time [s]'); ylabel('\Delta f [Hz]');
-title('Part 1: Frequency deviation'); saveas(gcf, 'part1_freq.png');
+title('Part 1c: Frequency deviation'); saveas(gcf, 'part1_freq.png');
 legend('show');
 
 %% q1d - Powers
 
-scopeNames = {'Pm1','Pm2','PScope'};
+scopeNames = {'Pm1Scope','Pm2Scope','PScope'};
 
 figure;
 hold on; grid on;
