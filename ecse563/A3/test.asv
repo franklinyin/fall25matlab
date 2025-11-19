@@ -102,7 +102,7 @@ legend('show');
 
 %% q2 - Powers
 
-scopeNames = {'Pm1','Pm2','POverall'};
+scopeNames = {'Pm1Scope','Pm2Scope','POverall'};
 
 figure;
 hold on; grid on;
@@ -142,7 +142,7 @@ legend('show');
 
 %% q3 - Powers
 
-scopeNames = {'Pm1','Pm2','POverall'};
+scopeNames = {'Pm1Scope','Pm2Scope','POverall'};
 
 figure;
 hold on; grid on;
@@ -188,7 +188,7 @@ end
 
 %% q4 - System 1 Powers
 
-scopeNames = {'Pm1','Pm2','POverall'};
+scopeNames = {'Pm1Scope','Pm2Scope','POverall'};
 
 figure;
 hold on; grid on;
@@ -206,7 +206,7 @@ legend('show', 'Interpreter', 'none');
 
 %% q4 - System 2 Powers
 
-scopeNames = {'Pm11','Pm21','POverall1'};
+scopeNames = {'Pm1Scope1','Pm2Scope1','POverall1'};
 
 figure;
 hold on; grid on;
@@ -266,7 +266,7 @@ end
 
 %% q4 Control - System 1 Powers
 
-scopeNames = {'Pm1','Pm2','POverall'};
+scopeNames = {'Pm1Scope','Pm2Scope','POverall'};
 
 figure;
 hold on; grid on;
@@ -284,7 +284,7 @@ legend('show', 'Interpreter', 'none');
 
 %% q4 Control - System 2 Powers
 
-scopeNames = {'Pm11','Pm21','POverall1'};
+scopeNames = {'Pm1Scope1','Pm2Scope1','POverall1'};
 
 figure;
 hold on; grid on;
