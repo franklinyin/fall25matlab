@@ -17,12 +17,12 @@ for i = 1:fromSim.numElements
     plot(toPlot.Values.Time, toPlot.Values.Data, 'DisplayName', toPlot.Name);
 end
 xlabel('Time [s]'); ylabel('\Delta f [Hz]');
-title('Part 1: Frequency deviation'); saveas(gcf, 'part1_freq.png');
+title('Part 1: Frequency deviation'); saveas(gcf, 'part1c_freq.png');
 legend('show');
 
 %% q1d - Powers
 
-scopeNames = {'Pm1','Pm2','PScope'};
+scopeNames = {'Pm1','Pm2','POverall'};
 
 figure;
 hold on; grid on;
@@ -35,11 +35,11 @@ for i = 1:numel(scopeNames)
     end
 end
 xlabel('Time [s]'); ylabel('\Delta P_m [MW]');
-title('Part 1d: Mechanical powers'); saveas(gcf, 'part1_powers.png');
+title('Part 1d: Mechanical powers'); saveas(gcf, 'part1d_powers.png');
 legend('show', 'Interpreter', 'none');
 
 %% Q1e
-mdl = 'ass3q1e';
+mdl = 'part1cde';
 load_system(mdl);
 set_param(mdl, 'StopTime', '100');
 
@@ -48,7 +48,7 @@ out = sim(mdl);
 
 %% q1e - Frequency
 
-fromSim = out.get('wScope');
+fromSim = out.get('deltaF');
 
 figure;
 hold on; grid on;
@@ -62,7 +62,7 @@ legend('show');
 
 %% q1e - Powers
 
-scopeNames = {'Pm1Scope','Pm2Scope','PScope'};
+scopeNames = {'Pm1','Pm2','POverall'};
 
 figure;
 hold on; grid on;
