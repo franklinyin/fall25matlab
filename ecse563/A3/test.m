@@ -28,10 +28,10 @@ figure;
 hold on; grid on;
 for i = 1:numel(scopeNames)
     name = scopeNames{i};
-    ds = out.get(name);
-    for j = 1:ds.numElements
-        sig = ds.get(j);
-        plot(sig.Values.Time, sig.Values.Data, 'DisplayName', [name ' - ' sig.Name]);
+    fromSim = out.get(name);
+    for j = 1:fromSim.numElements
+        toPlot = fromSim.get(j);
+        plot(toPlot.Values.Time, toPlot.Values.Data, 'DisplayName', [name ' - ' toPlot.Name]);
     end
 end
 xlabel('Time [s]'); ylabel('\Delta P_m [MW]');
@@ -68,10 +68,10 @@ figure;
 hold on; grid on;
 for i = 1:numel(scopeNames)
     name = scopeNames{i};
-    ds = out.get(name);
-    for j = 1:ds.numElements
-        sig = ds.get(j);
-        plot(sig.Values.Time, sig.Values.Data, 'DisplayName', [name ' - ' sig.Name]);
+    fromSim = out.get(name);
+    for j = 1:fromSim.numElements
+        toPlot = fromSim.get(j);
+        plot(toPlot.Values.Time, toPlot.Values.Data, 'DisplayName', [name ' - ' toPlot.Name]);
     end
 end
 xlabel('Time [s]'); ylabel('\Delta P_m [MW]');
@@ -88,7 +88,7 @@ out = sim(mdl);
 
 %% q2 - Frequency
 
-fromSim = out.get('wScope');
+fromSim = out.get('deltaF');
 
 figure;
 hold on; grid on;
@@ -108,10 +108,10 @@ figure;
 hold on; grid on;
 for i = 1:numel(scopeNames)
     name = scopeNames{i};
-    ds = out.get(name);
-    for j = 1:ds.numElements
-        sig = ds.get(j);
-        plot(sig.Values.Time, sig.Values.Data, 'DisplayName', [name ' - ' sig.Name]);
+    fromSim = out.get(name);
+    for j = 1:fromSim.numElements
+        toPlot = fromSim.get(j);
+        plot(toPlot.Values.Time, toPlot.Values.Data, 'DisplayName', [name ' - ' toPlot.Name]);
     end
 end
 xlabel('Time [s]'); ylabel('\Delta P_m [MW]');
@@ -128,7 +128,7 @@ out = sim(mdl);
 
 %% q3 - Frequency
 
-fromSim = out.get('wScope');
+fromSim = out.get('deltaF');
 
 figure;
 hold on; grid on;
@@ -148,10 +148,10 @@ figure;
 hold on; grid on;
 for i = 1:numel(scopeNames)
     name = scopeNames{i};
-    ds = out.get(name);
-    for j = 1:ds.numElements
-        sig = ds.get(j);
-        plot(sig.Values.Time, sig.Values.Data, 'DisplayName', [name ' - ' sig.Name]);
+    fromSim = out.get(name);
+    for j = 1:fromSim.numElements
+        toPlot = fromSim.get(j);
+        plot(toPlot.Values.Time, toPlot.Values.Data, 'DisplayName', [name ' - ' toPlot.Name]);
     end
 end
 xlabel('Time [s]'); ylabel('\Delta P_m [MW]');
@@ -168,7 +168,7 @@ out = sim(mdl);
 
 %% q4 - Frequency
 
-scopeNames = {'wScope', 'wScope1'};
+scopeNames = {'deltaF', 'deltaF1'};
 
 for i = 1:numel(scopeNames)
     name = scopeNames{i};
@@ -194,10 +194,10 @@ figure;
 hold on; grid on;
 for i = 1:numel(scopeNames)
     name = scopeNames{i};
-    ds = out.get(name);
-    for j = 1:ds.numElements
-        sig = ds.get(j);
-        plot(sig.Values.Time, sig.Values.Data, 'DisplayName', [name ' - ' sig.Name]);
+    fromSim = out.get(name);
+    for j = 1:fromSim.numElements
+        toPlot = fromSim.get(j);
+        plot(toPlot.Values.Time, toPlot.Values.Data, 'DisplayName', [name ' - ' toPlot.Name]);
     end
 end
 xlabel('Time [s]'); ylabel('\Delta P_m [MW]');
@@ -212,10 +212,10 @@ figure;
 hold on; grid on;
 for i = 1:numel(scopeNames)
     name = scopeNames{i};
-    ds = out.get(name);
-    for j = 1:ds.numElements
-        sig = ds.get(j);
-        plot(sig.Values.Time, sig.Values.Data, 'DisplayName', [name ' - ' sig.Name]);
+    fromSim = out.get(name);
+    for j = 1:fromSim.numElements
+        toPlot = fromSim.get(j);
+        plot(toPlot.Values.Time, toPlot.Values.Data, 'DisplayName', [name ' - ' toPlot.Name]);
     end
 end
 xlabel('Time [s]'); ylabel('\Delta P_m [MW]');
@@ -246,7 +246,7 @@ out = sim(mdl);
 
 %% q4 Control - Frequency
 
-scopeNames = {'wScope', 'wScope1'};
+scopeNames = {'deltaF', 'deltaF1'};
 
 for i = 1:numel(scopeNames)
     name = scopeNames{i};
@@ -272,10 +272,10 @@ figure;
 hold on; grid on;
 for i = 1:numel(scopeNames)
     name = scopeNames{i};
-    ds = out.get(name);
-    for j = 1:ds.numElements
-        sig = ds.get(j);
-        plot(sig.Values.Time, sig.Values.Data, 'DisplayName', [name ' - ' sig.Name]);
+    fromSim = out.get(name);
+    for j = 1:fromSim.numElements
+        toPlot = fromSim.get(j);
+        plot(toPlot.Values.Time, toPlot.Values.Data, 'DisplayName', [name ' - ' toPlot.Name]);
     end
 end
 xlabel('Time [s]'); ylabel('\Delta P_m [MW]');
@@ -290,10 +290,10 @@ figure;
 hold on; grid on;
 for i = 1:numel(scopeNames)
     name = scopeNames{i};
-    ds = out.get(name);
-    for j = 1:ds.numElements
-        sig = ds.get(j);
-        plot(sig.Values.Time, sig.Values.Data, 'DisplayName', [name ' - ' sig.Name]);
+    fromSim = out.get(name);
+    for j = 1:fromSim.numElements
+        toPlot = fromSim.get(j);
+        plot(toPlot.Values.Time, toPlot.Values.Data, 'DisplayName', [name ' - ' toPlot.Name]);
     end
 end
 xlabel('Time [s]'); ylabel('\Delta P_m [MW]');
