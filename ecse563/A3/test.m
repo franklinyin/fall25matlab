@@ -8,35 +8,11 @@ out = sim(mdl);
 
 %% q1c
 
-fromSim = out.get('deltaF');
-
-figure;
-hold on; grid on;
-for i = 1:fromSim.numElements
-    toPlot = fromSim.get(i);
-    plot(toPlot.Values.Time, toPlot.Values.Data, 'DisplayName', toPlot.Name);
-end
-xlabel('Time [s]'); ylabel('\Delta f [Hz]');
-title('Part 1: Frequency deviation'); saveas(gcf, 'part1c_freq.png');
-legend('show');
+plot_scope(out, 'deltaF', 'Time [s]', '\Delta f [Hz]', 'Part 1: Frequency deviation', 'part1c_freq.png');
 
 %% q1d - Powers
 
-scopeNames = {'Pm1','Pm2','POverall'};
-
-figure;
-hold on; grid on;
-for i = 1:numel(scopeNames)
-    name = scopeNames{i};
-    fromSim = out.get(name);
-    for j = 1:fromSim.numElements
-        toPlot = fromSim.get(j);
-        plot(toPlot.Values.Time, toPlot.Values.Data, 'DisplayName', [name ' - ' toPlot.Name]);
-    end
-end
-xlabel('Time [s]'); ylabel('\Delta P_m [MW]');
-title('Part 1d: Mechanical powers'); saveas(gcf, 'part1d_powers.png');
-legend('show', 'Interpreter', 'none');
+plot_multiple_scopes(out, {'Pm1','Pm2','POverall'}, 'Time [s]', '\Delta P_m [MW]', 'Part 1d: Mechanical powers', 'part1d_powers.png', true);
 
 %% Q1e
 mdl = 'part1cde';
@@ -48,35 +24,11 @@ out = sim(mdl);
 
 %% q1e - Frequency
 
-fromSim = out.get('deltaF');
-
-figure;
-hold on; grid on;
-for i = 1:fromSim.numElements
-    toPlot = fromSim.get(i);
-    plot(toPlot.Values.Time, toPlot.Values.Data, 'DisplayName', toPlot.Name);
-end
-xlabel('Time [s]'); ylabel('\Delta f [Hz]');
-title('Part 1(e): Frequency with 1 MW/s limit on Gen 1'); saveas(gcf, 'part1e_freq.png');
-legend('show');
+plot_scope(out, 'deltaF', 'Time [s]', '\Delta f [Hz]', 'Part 1(e): Frequency with 1 MW/s limit on Gen 1', 'part1e_freq.png');
 
 %% q1e - Powers
 
-scopeNames = {'Pm1','Pm2','POverall'};
-
-figure;
-hold on; grid on;
-for i = 1:numel(scopeNames)
-    name = scopeNames{i};
-    fromSim = out.get(name);
-    for j = 1:fromSim.numElements
-        toPlot = fromSim.get(j);
-        plot(toPlot.Values.Time, toPlot.Values.Data, 'DisplayName', [name ' - ' toPlot.Name]);
-    end
-end
-xlabel('Time [s]'); ylabel('\Delta P_m [MW]');
-title('Part 1(e): Mechanical powers'); saveas(gcf, 'part1e_powers.png');
-legend('show', 'Interpreter', 'none');
+plot_multiple_scopes(out, {'Pm1','Pm2','POverall'}, 'Time [s]', '\Delta P_m [MW]', 'Part 1(e): Mechanical powers', 'part1e_powers.png', true);
 
 %% Q2
 mdl = 'ass3q2';
@@ -88,35 +40,11 @@ out = sim(mdl);
 
 %% q2 - Frequency
 
-fromSim = out.get('deltaF');
-
-figure;
-hold on; grid on;
-for i = 1:fromSim.numElements
-    toPlot = fromSim.get(i);
-    plot(toPlot.Values.Time, toPlot.Values.Data, 'DisplayName', toPlot.Name);
-end
-xlabel('Time [s]'); ylabel('\Delta f [Hz]');
-title('Part 2: Frequency with AGC'); saveas(gcf, 'part2_freq.png');
-legend('show');
+plot_scope(out, 'deltaF', 'Time [s]', '\Delta f [Hz]', 'Part 2: Frequency with AGC', 'part2_freq.png');
 
 %% q2 - Powers
 
-scopeNames = {'Pm1','Pm2','POverall'};
-
-figure;
-hold on; grid on;
-for i = 1:numel(scopeNames)
-    name = scopeNames{i};
-    fromSim = out.get(name);
-    for j = 1:fromSim.numElements
-        toPlot = fromSim.get(j);
-        plot(toPlot.Values.Time, toPlot.Values.Data, 'DisplayName', [name ' - ' toPlot.Name]);
-    end
-end
-xlabel('Time [s]'); ylabel('\Delta P_m [MW]');
-title('Part 2: Mechanical powers'); saveas(gcf, 'part2_powers.png');
-legend('show', 'Interpreter', 'none');
+plot_multiple_scopes(out, {'Pm1','Pm2','POverall'}, 'Time [s]', '\Delta P_m [MW]', 'Part 2: Mechanical powers', 'part2_powers.png', true);
 
 %% Q3
 mdl = 'ass3q3';
@@ -128,35 +56,11 @@ out = sim(mdl);
 
 %% q3 - Frequency
 
-fromSim = out.get('deltaF');
-
-figure;
-hold on; grid on;
-for i = 1:fromSim.numElements
-    toPlot = fromSim.get(i);
-    plot(toPlot.Values.Time, toPlot.Values.Data, 'DisplayName', toPlot.Name);
-end
-xlabel('Time [s]'); ylabel('\Delta f [Hz]');
-title('Part 3: Frequency with lower M and D'); saveas(gcf, 'part3_freq.png');
-legend('show');
+plot_scope(out, 'deltaF', 'Time [s]', '\Delta f [Hz]', 'Part 3: Frequency with lower M and D', 'part3_freq.png');
 
 %% q3 - Powers
 
-scopeNames = {'Pm1','Pm2','POverall'};
-
-figure;
-hold on; grid on;
-for i = 1:numel(scopeNames)
-    name = scopeNames{i};
-    fromSim = out.get(name);
-    for j = 1:fromSim.numElements
-        toPlot = fromSim.get(j);
-        plot(toPlot.Values.Time, toPlot.Values.Data, 'DisplayName', [name ' - ' toPlot.Name]);
-    end
-end
-xlabel('Time [s]'); ylabel('\Delta P_m [MW]');
-title('Part 3: Mechanical powers'); saveas(gcf, 'part3_powers.png');
-legend('show', 'Interpreter', 'none');
+plot_multiple_scopes(out, {'Pm1','Pm2','POverall'}, 'Time [s]', '\Delta P_m [MW]', 'Part 3: Mechanical powers', 'part3_powers.png', true);
 
 %% Q4 - No control
 mdl = 'ass3q4';
@@ -168,73 +72,19 @@ out = sim(mdl);
 
 %% q4 - Frequency
 
-scopeNames = {'deltaF', 'deltaF1'};
-
-for i = 1:numel(scopeNames)
-    name = scopeNames{i};
-    fromSim = out.get(name);
-    
-    figure;
-    hold on; grid on;
-    for j = 1:fromSim.numElements
-        toPlot = fromSim.get(j);
-        plot(toPlot.Values.Time, toPlot.Values.Data, 'DisplayName', toPlot.Name);
-    end
-    xlabel('Time [s]'); ylabel('\Delta f [Hz]');
-    title(['Part 4: Frequency deviation - ' name]);
-    legend('show');
-    saveas(gcf, ['part4_freq_' name '.png']);
-end
+plot_scopes_separate(out, {'deltaF', 'deltaF1'}, 'Time [s]', '\Delta f [Hz]', 'Part 4: Frequency deviation', 'part4_freq');
 
 %% q4 - System 1 Powers
 
-scopeNames = {'Pm1','Pm2','POverall'};
-
-figure;
-hold on; grid on;
-for i = 1:numel(scopeNames)
-    name = scopeNames{i};
-    fromSim = out.get(name);
-    for j = 1:fromSim.numElements
-        toPlot = fromSim.get(j);
-        plot(toPlot.Values.Time, toPlot.Values.Data, 'DisplayName', [name ' - ' toPlot.Name]);
-    end
-end
-xlabel('Time [s]'); ylabel('\Delta P_m [MW]');
-title('Part 4: System 1 Mechanical powers'); saveas(gcf, 'part4_sys1_powers.png');
-legend('show', 'Interpreter', 'none');
+plot_multiple_scopes(out, {'Pm1','Pm2','POverall'}, 'Time [s]', '\Delta P_m [MW]', 'Part 4: System 1 Mechanical powers', 'part4_sys1_powers.png', true);
 
 %% q4 - System 2 Powers
 
-scopeNames = {'Pm11','Pm21','POverall1'};
-
-figure;
-hold on; grid on;
-for i = 1:numel(scopeNames)
-    name = scopeNames{i};
-    fromSim = out.get(name);
-    for j = 1:fromSim.numElements
-        toPlot = fromSim.get(j);
-        plot(toPlot.Values.Time, toPlot.Values.Data, 'DisplayName', [name ' - ' toPlot.Name]);
-    end
-end
-xlabel('Time [s]'); ylabel('\Delta P_m [MW]');
-title('Part 4: System 2 Mechanical powers'); saveas(gcf, 'part4_sys2_powers.png');
-legend('show', 'Interpreter', 'none');
+plot_multiple_scopes(out, {'Pm11','Pm21','POverall1'}, 'Time [s]', '\Delta P_m [MW]', 'Part 4: System 2 Mechanical powers', 'part4_sys2_powers.png', true);
 
 %% q4 - Tie Line Power
 
-fromSim = out.get('PTieLine');
-
-figure;
-hold on; grid on;
-for i = 1:fromSim.numElements
-    toPlot = fromSim.get(i);
-    plot(toPlot.Values.Time, toPlot.Values.Data, 'DisplayName', toPlot.Name);
-end
-xlabel('Time [s]'); ylabel('P_{tie} [MW]');
-title('Part 4: Tie line power'); saveas(gcf, 'part4_tieline.png');
-legend('show');
+plot_scope(out, 'PTieLine', 'Time [s]', 'P_{tie} [MW]', 'Part 4: Tie line power', 'part4_tieline.png');
 
 %% Q4 - With control
 mdl = 'ass3q4Control';
@@ -246,70 +96,16 @@ out = sim(mdl);
 
 %% q4 Control - Frequency
 
-scopeNames = {'deltaF', 'deltaF1'};
-
-for i = 1:numel(scopeNames)
-    name = scopeNames{i};
-    fromSim = out.get(name);
-    
-    figure;
-    hold on; grid on;
-    for j = 1:fromSim.numElements
-        toPlot = fromSim.get(j);
-        plot(toPlot.Values.Time, toPlot.Values.Data, 'DisplayName', toPlot.Name);
-    end
-    xlabel('Time [s]'); ylabel('\Delta f [Hz]');
-    title(['Part 4 (Control): Frequency deviation - ' name]);
-    legend('show');
-    saveas(gcf, ['part4c_freq_' name '.png']);
-end
+plot_scopes_separate(out, {'deltaF', 'deltaF1'}, 'Time [s]', '\Delta f [Hz]', 'Part 4 (Control): Frequency deviation', 'part4c_freq');
 
 %% q4 Control - System 1 Powers
 
-scopeNames = {'Pm1','Pm2','POverall'};
-
-figure;
-hold on; grid on;
-for i = 1:numel(scopeNames)
-    name = scopeNames{i};
-    fromSim = out.get(name);
-    for j = 1:fromSim.numElements
-        toPlot = fromSim.get(j);
-        plot(toPlot.Values.Time, toPlot.Values.Data, 'DisplayName', [name ' - ' toPlot.Name]);
-    end
-end
-xlabel('Time [s]'); ylabel('\Delta P_m [MW]');
-title('Part 4 (Control): System 1 Mechanical powers'); saveas(gcf, 'part4c_sys1_powers.png');
-legend('show', 'Interpreter', 'none');
+plot_multiple_scopes(out, {'Pm1','Pm2','POverall'}, 'Time [s]', '\Delta P_m [MW]', 'Part 4 (Control): System 1 Mechanical powers', 'part4c_sys1_powers.png', true);
 
 %% q4 Control - System 2 Powers
 
-scopeNames = {'Pm11','Pm21','POverall1'};
-
-figure;
-hold on; grid on;
-for i = 1:numel(scopeNames)
-    name = scopeNames{i};
-    fromSim = out.get(name);
-    for j = 1:fromSim.numElements
-        toPlot = fromSim.get(j);
-        plot(toPlot.Values.Time, toPlot.Values.Data, 'DisplayName', [name ' - ' toPlot.Name]);
-    end
-end
-xlabel('Time [s]'); ylabel('\Delta P_m [MW]');
-title('Part 4 (Control): System 2 Mechanical powers'); saveas(gcf, 'part4c_sys2_powers.png');
-legend('show', 'Interpreter', 'none');
+plot_multiple_scopes(out, {'Pm11','Pm21','POverall1'}, 'Time [s]', '\Delta P_m [MW]', 'Part 4 (Control): System 2 Mechanical powers', 'part4c_sys2_powers.png', true);
 
 %% q4 Control - Tie Line Power
 
-fromSim = out.get('PTieLine');
-
-figure;
-hold on; grid on;
-for i = 1:fromSim.numElements
-    toPlot = fromSim.get(i);
-    plot(toPlot.Values.Time, toPlot.Values.Data, 'DisplayName', toPlot.Name);
-end
-xlabel('Time [s]'); ylabel('P_{tie} [MW]');
-title('Part 4 (Control): Tie line power'); saveas(gcf, 'part4c_tieline.png');
-legend('show');
+plot_scope(out, 'PTieLine', 'Time [s]', 'P_{tie} [MW]', 'Part 4 (Control): Tie line power', 'part4c_tieline.png');
