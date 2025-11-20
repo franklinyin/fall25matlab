@@ -1,5 +1,5 @@
 %% Q1
-mdl = 'part1cde';
+mdl = 'q1cd';
 load_system(mdl);
 set_param(mdl, 'StopTime', '30');
 
@@ -12,12 +12,12 @@ plot_scope(out, 'deltaF', 'Time [s]', '\Delta f [Hz]', 'Part 1: Frequency deviat
 
 %% q1d - Powers
 
-plot_multiple_scopes(out, {'Pm1','Pm2','POverall'}, 'Time [s]', '\Delta P_m [MW]', 'Part 1d: Mechanical powers', 'part1d_powers.png', true);
+plot_multiple_scopes(out, {'Pm1','Pm2'}, 'Time [s]', '\Delta P_m [MW]', 'Part 1d: Mechanical powers', 'part1d_powers.png', true);
 
 %% Q1e
-mdl = 'part1cde';
+mdl = 'q1e';
 load_system(mdl);
-set_param(mdl, 'StopTime', '100');
+set_param(mdl, 'StopTime', '120');
 
 %% Run simulation
 out = sim(mdl);
@@ -28,10 +28,10 @@ plot_scope(out, 'deltaF', 'Time [s]', '\Delta f [Hz]', 'Part 1(e): Frequency wit
 
 %% q1e - Powers
 
-plot_multiple_scopes(out, {'Pm1','Pm2','POverall'}, 'Time [s]', '\Delta P_m [MW]', 'Part 1(e): Mechanical powers', 'part1e_powers.png', true);
+plot_multiple_scopes(out, {'Pm1','Pm2'}, 'Time [s]', '\Delta P_m [MW]', 'Part 1(e): Mechanical powers', 'part1e_powers.png', true);
 
 %% Q2
-mdl = 'ass3q2';
+mdl = 'q2';
 load_system(mdl);
 set_param(mdl, 'StopTime', '1000');
 
