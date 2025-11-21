@@ -3,31 +3,27 @@ simuFile = 'q1cd';
 load_system(simuFile);
 set_param(simuFile, 'StopTime', '30');
 
-%% Run simulation
-simuResult = sim(simuFile);
+simuResult = sim(simuFile); % run simulation
 
-%% q1c
+% q1c - angle
 
 plot_scope(simuResult, 'deltaF', 'Time [s]', '\Delta f [Hz]', 'Q1c: Frequency deviation', 'part1c_freq.png');
 
-%% q1d - Powers
+% q1d - Powers
 
 plot_multiple_scopes(simuResult, {'Pm1','Pm2'}, 'Time [s]', '\Delta P_m [MW]', 'Q1d: Mechanical powers', 'part1d_powers.png', true);
 
-%% Q1e
+% q1e
 simuFile = 'q1e';
 load_system(simuFile);
 set_param(simuFile, 'StopTime', '120');
 
-%% Run simulation
-simuResult = sim(simuFile);
+simuResult = sim(simuFile); % Run simulation
 
-%% q1e - Frequency
-
+% q1e plot requency
 plot_scope(simuResult, 'deltaF', 'Time [s]', '\Delta f [Hz]', 'Q1e: Frequency with 1 MW/s limit on Gen 1', 'part1e_freq.png');
 
-%% q1e - Powers
-
+% q1e plot mechanical power
 plot_multiple_scopes(simuResult, {'Pm1','Pm2'}, 'Time [s]', '\Delta P_m [MW]', 'Part 1(e): Mechanical powers', 'part1e_powers.png', true);
 
 %% Q2
@@ -40,7 +36,7 @@ set_param(simuFile, 'StopTime', '1200');
 % run simulation
 simuResult = sim(simuFile);
 
-% plot requency
+% plot frequency
 plot_scope(simuResult, 'deltaF', 'Time [s]', '\Delta f [Hz]', 'Q2: Frequency with AGC', 'part2_freq.png');
 
 % plot mechanical powers
@@ -61,49 +57,39 @@ plot_scope(simuResult, 'deltaF', 'Time [s]', '\Delta f [Hz]', 'Q3: Frequency wit
 plot_multiple_scopes(simuResult, {'Pm1','Pm2'}, 'Time [s]', '\Delta P_m [MW]', 'Part 3: Mechanical powers', 'part3_powers.png', true);
 
 %% Q4 - No control
-simuFile = 'ass3q4';
+simuFile = 'q4_no_control';
 load_system(simuFile);
 set_param(simuFile, 'StopTime', '1200');
 
-%% Run simulation
-simuResult = sim(simuFile);
+simuResult = sim(simuFile); % run simulation
 
-%% q4 - Frequency
+% plot Frequency
+plot_scopes_separate(simuResult, {'deltaF1', 'deltaF2'}, 'Time [s]', '\Delta f [Hz]', 'Q4: Frequency deviation', 'part4_freq');
 
-plot_scopes_separate(simuResult, {'deltaF', 'deltaF1'}, 'Time [s]', '\Delta f [Hz]', 'Part 4: Frequency deviation', 'part4_freq');
+% plot System 1 Powers
+plot_multiple_scopes(simuResult, {'Pm1','Pm2'}, 'Time [s]', '\Delta P_m [MW]', 'Q4: System 1 Mechanical powers', 'part4_sys1_powers.png', true);
 
-%% q4 - System 1 Powers
+% plot system 2 Powers
+plot_multiple_scopes(simuResult, {'Pm3','Pm4'}, 'Time [s]', '\Delta P_m [MW]', 'Q4: System 2 Mechanical powers', 'part4_sys2_powers.png', true);
 
-plot_multiple_scopes(simuResult, {'Pm1','Pm2','POverall'}, 'Time [s]', '\Delta P_m [MW]', 'Part 4: System 1 Mechanical powers', 'part4_sys1_powers.png', true);
-
-%% q4 - System 2 Powers
-
-plot_multiple_scopes(simuResult, {'Pm11','Pm21','POverall1'}, 'Time [s]', '\Delta P_m [MW]', 'Part 4: System 2 Mechanical powers', 'part4_sys2_powers.png', true);
-
-%% q4 - Tie Line Power
-
-plot_scope(simuResult, 'PTieLine', 'Time [s]', 'P_{tie} [MW]', 'Part 4: Tie line power', 'part4_tieline.png');
+% plot tie Line Power
+plot_scope(simuResult, 'PTieLine', 'Time [s]', 'P_{tie} [MW]', 'Q4: Tie line power', 'part4_tieline.png');
 
 %% Q4 - With control
-simuFile = 'ass3q4Control';
+simuFile = 'q4_with_control';
 load_system(simuFile);
 set_param(simuFile, 'StopTime', '1200');
 
-%% Run simulation
-simuResult = sim(simuFile);
+simuResult = sim(simuFile); % Run simulation
 
-%% q4 Control - Frequency
+% plot Frequency
+plot_scopes_separate(simuResult, {'deltaF1', 'deltaF2'}, 'Time [s]', '\Delta f [Hz]', 'Q4(Control): Frequency deviation', 'part4con_freq');
 
-plot_scopes_separate(simuResult, {'deltaF', 'deltaF1'}, 'Time [s]', '\Delta f [Hz]', 'Part 4 (Control): Frequency deviation', 'part4c_freq');
+% plot System 1 Powers
+plot_multiple_scopes(simuResult, {'Pm1','Pm2'}, 'Time [s]', '\Delta P_m [MW]', 'Q4(Control): System 1 Mechanical powers', 'part4_sys1_powers.png', true);
 
-%% q4 Control - System 1 Powers
+% plot system 2 Powers
+plot_multiple_scopes(simuResult, {'Pm3','Pm4'}, 'Time [s]', '\Delta P_m [MW]', 'Q4(Control): System 2 Mechanical powers', 'part4_sys2_powers.png', true);
 
-plot_multiple_scopes(simuResult, {'Pm1','Pm2','POverall'}, 'Time [s]', '\Delta P_m [MW]', 'Part 4 (Control): System 1 Mechanical powers', 'part4c_sys1_powers.png', true);
-
-%% q4 Control - System 2 Powers
-
-plot_multiple_scopes(simuResult, {'Pm11','Pm21','POverall1'}, 'Time [s]', '\Delta P_m [MW]', 'Part 4 (Control): System 2 Mechanical powers', 'part4c_sys2_powers.png', true);
-
-%% q4 Control - Tie Line Power
-
-plot_scope(simuResult, 'PTieLine', 'Time [s]', 'P_{tie} [MW]', 'Part 4 (Control): Tie line power', 'part4c_tieline.png');
+% plot tie Line Power
+plot_scope(simuResult, 'PTieLine', 'Time [s]', 'P_{tie} [MW]', 'Q4: Tie line power', 'part4_tieline.png');
