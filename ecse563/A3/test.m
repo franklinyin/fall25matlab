@@ -64,7 +64,7 @@ set_param(simuFile, 'StopTime', '1200');
 simuResult = sim(simuFile); % run simulation
 
 % plot Frequency
-plot_scopes_separate(simuResult, {'deltaF1', 'deltaF2'}, 'Time [s]', '\Delta f [Hz]', 'Q4: Frequency deviation', 'part4_freq');
+plot_scopes_separate(simuResult, {'deltaFa', 'deltaFb'}, 'Time [s]', '\Delta f [Hz]', 'Q4: Frequency deviation', 'part4_freq');
 
 % plot System 1 Powers
 plot_multiple_scopes(simuResult, {'Pm1','Pm2'}, 'Time [s]', '\Delta P_m [MW]', 'Q4: System 1 Mechanical powers', 'part4_sys1_powers.png', true);
@@ -73,9 +73,10 @@ plot_multiple_scopes(simuResult, {'Pm1','Pm2'}, 'Time [s]', '\Delta P_m [MW]', '
 plot_multiple_scopes(simuResult, {'Pm3','Pm4'}, 'Time [s]', '\Delta P_m [MW]', 'Q4: System 2 Mechanical powers', 'part4_sys2_powers.png', true);
 
 % plot tie Line Power
-plot_scope(simuResult, 'PTieLine', 'Time [s]', 'P_{tie} [MW]', 'Q4: Tie line power', 'part4_tieline.png');
+plot_scope(simuResult, 'Ptie', 'Time [s]', 'P_{tie} [MW]', 'Q4: Tie line power', 'part4_tieline.png');
 
 %% Q4 - With control
+tune_k = 0.25;
 simuFile = 'q4_with_control';
 load_system(simuFile);
 set_param(simuFile, 'StopTime', '1200');
