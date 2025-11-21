@@ -63,7 +63,7 @@ set_param(simuFile, 'StopTime', '1200');
 simuResult = sim(simuFile); % run simulation
 
 % plot Frequency
-plot_scope(simuResult, {'deltaFa', 'deltaFb'}, 'Time [s]', '\Delta f [Hz]', 'Q4: Frequency deviation', 'part4_freq');
+plot_scope(simuResult, {'deltaFa', 'deltaFb'}, 'Time [s]', '\Delta f [Hz]', 'Q4: Frequency deviation', 'part4_freq.png', true);
 
 % plot System 1 Powers
 plot_scope(simuResult, {'Pm1','Pm2'}, 'Time [s]', '\Delta P_m [MW]', 'Q4: System 1 Mechanical powers', 'part4_sys1_powers.png', true);
@@ -82,7 +82,7 @@ set_param(simuFile, 'StopTime', '1200');
 simuResult = sim(simuFile); % Run simulation
 
 % plot Frequency
-plot_scope(simuResult, {'deltaFa', 'deltaFb'}, 'Time [s]', '\Delta f [Hz]', 'Q4(Control): Frequency deviation', 'part4c_freq');
+plot_scope(simuResult, {'deltaFa', 'deltaFb'}, 'Time [s]', '\Delta f [Hz]', 'Q4(Control): Frequency deviation', 'part4c_freq.png', true);
 
 % plot System 1 Powers
 plot_scope(simuResult, {'Pm1','Pm2'}, 'Time [s]', '\Delta P_m [MW]', 'Q4(Control): System 1 Mechanical powers', 'part4c_sys1_powers.png', true);
