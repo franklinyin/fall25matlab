@@ -28,7 +28,6 @@ plot_multiple_scopes(simuResult, {'Pm1','Pm2'}, 'Time [s]', '\Delta P_m [MW]', '
 
 %% Q2
 
-tune_k = 0.45; % other values (0.45-0.25)have been used for testing
 simuFile = 'q2';
 load_system(simuFile);
 set_param(simuFile, 'StopTime', '1200');
@@ -76,7 +75,6 @@ plot_multiple_scopes(simuResult, {'Pm3','Pm4'}, 'Time [s]', '\Delta P_m [MW]', '
 plot_scope(simuResult, 'Ptie', 'Time [s]', 'P_{tie} [MW]', 'Q4: Tie line power', 'part4_tieline.png');
 
 %% Q4 - With control
-tune_k = 0.25;
 simuFile = 'q4_with_control';
 load_system(simuFile);
 set_param(simuFile, 'StopTime', '1200');
