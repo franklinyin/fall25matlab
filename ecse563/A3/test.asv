@@ -82,13 +82,13 @@ set_param(simuFile, 'StopTime', '1200');
 simuResult = sim(simuFile); % Run simulation
 
 % plot Frequency
-plot_scope(simuResult, {'deltaFa', 'deltaFb'}, 'Time [s]', '\Delta f [Hz]', 'Q4(Control): Frequency deviation', 'part4c_freq');
+plot_scope(simuResult, {'deltaFa', 'deltaFb'}, 'Time [s]', '\Delta f [Hz]', 'Q4(Control): Frequency deviation', 'part4con_freq');
 
 % plot System 1 Powers
-plot_scope(simuResult, {'Pm1','Pm2'}, 'Time [s]', '\Delta P_m [MW]', 'Q4(Control): System 1 Mechanical powers', 'part4c_sys1_powers.png', true);
+plot_scope(simuResult, {'Pm1','Pm2'}, 'Time [s]', '\Delta P_m [MW]', 'Q4(Control): System 1 Mechanical powers', 'part4_sys1_powers.png', true);
 
 % plot system 2 Powers
-plot_scope(simuResult, {'Pm3','Pm4'}, 'Time [s]', '\Delta P_m [MW]', 'Q4(Control): System 2 Mechanical powers', 'part4c_sys2_powers.png', true);
+plot_scope(simuResult, {'Pm3','Pm4'}, 'Time [s]', '\Delta P_m [MW]', 'Q4(Control): System 2 Mechanical powers', 'part4_sys2_powers.png', true);
 
 % plot tie Line Power
-plot_scope(simuResult, {'Ptie'}, 'Time [s]', 'P_{tie} [MW]', 'Q4(Control): Tie line power', 'part4c_tieline.png');
+plot_scope(simuResult, {'Ptie'}, 'Time [s]', 'P_{tie} [MW]', 'Q4: Tie line power', 'part4_tieline.png');
