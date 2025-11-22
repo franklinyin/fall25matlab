@@ -78,7 +78,7 @@ Figure~\ref{fig:p1pm} shows the simulated $\Delta P_{m1}(t)$ and $\Delta P_{m2}(
 \end{figure}
 
 \section*{1(e) Ramping limitation on Generator 1}
-Imposing a \SI{1}{MW/s} rate limit on Gen~1 delays its contribution; the initial burden shifts to Gen~2 and the frequency nadir becomes deeper. In the first \SI{30}{s} the frequency reaches roughly \SI{-0.76}{Hz}, recovering slowly thereafter as Gen~1 ramps. See Figs.~\ref{fig:p1efreq}–\ref{fig:p1epm}.
+Imposing a \SI{1}{MW/s} rate limit on Gen~1 constrains its ability to respond quickly to the load step. This creates a transient period where Gen~2 must provide a larger share of the power compensation. The frequency deviation exhibits a more pronounced minimum value compared to the unconstrained case, and the system takes additional time to reach steady state as Gen~1 gradually increases its output within the rate limit. See Figs.~\ref{fig:p1efreq}–\ref{fig:p1epm}.
 
 % we can observe that setting a slew rate limit of 1 causes
 % the frequency to have a nadir of ~-1.1 HZ so 58.9Hz. We also see that
@@ -98,6 +98,8 @@ Imposing a \SI{1}{MW/s} rate limit on Gen~1 delays its contribution; the initial
 \label{fig:p1epm}
 \end{figure}
 
+
+\newpage
 \section*{2. Secondary control (AGC)}
 
 % other values (0.45-0.25)have been used for testing
@@ -117,6 +119,8 @@ An integral controller produces a bias $u$ (MW) from the frequency error, distri
 \label{fig:p2pm}
 \end{figure}
 
+
+\newpage
 \section*{3. Reduced inertia and load damping}
 
 % For the frequency, we get a lower Nadir as well as more oscillations. 
@@ -127,7 +131,7 @@ An integral controller produces a bias $u$ (MW) from the frequency error, distri
 % same K we selected.
 
 
-With $M$ reduced to $0.6M$ and $D$ to $0.5D$ (to emulate high inverter-based generation and power-electronic loading), the frequency nadir deepens and the rate of change of frequency increases. For the same $K_I$, the closed-loop becomes less well damped; transient oscillations increase but the steady-state error still returns to zero (Fig.~\ref{fig:p3freq}). This illustrates that AGC tuned for a high-inertia system may be too aggressive or too sluggish when inertia and damping decline, and re-tuning (or adding fast synthetic inertia/fast frequency response) becomes necessary.
+With $M$ reduced to $0.6M$ and $D$ to $0.5D$ (to emulate high inverter-based generation and power-electronic loading), the system exhibits faster frequency dynamics and a more severe minimum frequency excursion. The reduced system damping, combined with the unchanged AGC gain $K_I$, results in a less stable closed-loop response characterized by sustained oscillatory behavior during the transient period. Despite these oscillations, the integral action ensures zero steady-state frequency error (Fig.~\ref{fig:p3freq}). This demonstrates the need for controller redesign when system parameters change significantly, potentially requiring gain adjustment or supplementary control mechanisms to maintain acceptable performance.
 
 \begin{figure}[h]\centering
 \includegraphics[width=.72\linewidth]{Power/a3plots/part3_freq.png}
@@ -145,6 +149,7 @@ With $M$ reduced to $0.6M$ and $D$ to $0.5D$ (to emulate high inverter-based gen
 
 
 %%%%%%%%%%%%========Q4
+\newpage
 \section*{4. Two-area system and tie-line control}
 Two copies of the Part~2 area are interconnected by a tie line of $X=0.1$\,p.u. The linearized tie-line flow is
 \[\Delta P_{12} = \frac{P_{\text{base}}}{X}\,\Delta \delta_{12}\,,\quad \frac{d\,\Delta \delta_{12}}{dt} = 2\pi(\Delta f_1 - \Delta f_2).\]
@@ -163,8 +168,8 @@ where $B \approx D + \tfrac{1}{R_1}+\tfrac{1}{R_2} \approx \SI{270}{MW/Hz}$. Int
 % These can be mitigated by adding some delays and ramp controls, as well
 % as fine tuning the control paramters of the model further. 
 
-\subsection*{4(a) Without tie-line control}
-With frequency-only integral control, the frequency error is corrected but the tie-line flow does not return to schedule. Figure~\ref{fig:p4freq} shows the frequency deviations in both areas, and Figure~\ref{fig:p4tie} shows the tie-line power oscillating around \SI{-50}{MW}.
+\subsection*{Without tie-line control}
+When using frequency-only integral control in both areas, each area's controller acts independently based solely on local frequency measurements. While this approach successfully eliminates the steady-state frequency error in both areas, it fails to account for the inter-area power exchange. As a result, the tie-line power settles to a non-zero value, reflecting the mismatch in how the two areas share the load disturbance. Figure~\ref{fig:p4freq} shows the frequency deviations in both areas, and Figure~\ref{fig:p4tie} shows the tie-line power settling to a steady offset.
 
 \begin{figure}[h]\centering
 \includegraphics[width=.72\linewidth]{Power/a3plots/part4_freq.png}
@@ -190,8 +195,9 @@ With frequency-only integral control, the frequency error is corrected but the t
 \label{fig:p4tie}
 \end{figure}
 
-\subsection*{4(b) With ACE-based tie-line control}
-Adding additional controls, we are able to get the frequency to 0 and have the tie-line power stabilize and oscillate around 0. Some problems we notice are how quick the responses are and the oscillations. These can be mitigated by adding some delays and ramp controls, as well as fine tuning the control parameters of the model further.
+\newpage
+\subsection*{With ACE-based tie-line control}
+The ACE-based control scheme incorporates both frequency and tie-line power deviations into the control signal, enabling simultaneous regulation of both quantities. This coordinated approach ensures that both areas contribute appropriately to restore system balance while maintaining the scheduled tie-line exchange. The controller achieves zero steady-state error for both frequency and tie-line power. However, the response characteristics may exhibit rapid dynamics and some oscillatory behavior, which could be improved through additional filtering, rate limiting, or parameter optimization to enhance system stability and reduce overshoot.
 
 \begin{figure}[h]\centering
 \includegraphics[width=.72\linewidth]{Power/a3plots/part4c_freq.png}

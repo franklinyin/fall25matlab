@@ -44,7 +44,7 @@ plot_scope(simuResult, {'Pm1','Pm2'}, 'Time [s]', '\Delta P_m [MW]', 'Part 2: Me
 %% Q3
 simuFile = 'q3';
 load_system(simuFile);
-set_param(simuFile, 'StopTime', '100');
+set_param(simuFile, 'StopTime', '1200');
 
 %Run simulation
 simuResult = sim(simuFile);
