@@ -1,11 +1,6 @@
-function plot_scope(out, scopeNames, xlabel_str, ylabel_str, title_str, filename, useInterpreter)
+function plot_scope(out, scopeNames, xlabel_str, ylabel_str, title_str, filename)
     % Unified function to plot one or multiple scopes
     % scopeNames can be a cell array (even with one element) or a string
-    % useInterpreter is optional (default: false)
-    
-    if nargin < 7
-        useInterpreter = false;
-    end
     
     % Convert string to cell array if needed
     if ischar(scopeNames) || isstring(scopeNames)
@@ -29,11 +24,7 @@ function plot_scope(out, scopeNames, xlabel_str, ylabel_str, title_str, filename
     end
     xlabel(xlabel_str); ylabel(ylabel_str);
     title(title_str);
-    if useInterpreter
-        legend('show', 'Interpreter', 'none');
-    else
-        legend('show');
-    end
+    legend('show');
     saveas(gcf, filename);
 end
 

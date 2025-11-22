@@ -1,0 +1,220 @@
+\documentclass{article}
+\usepackage{amsmath}
+\usepackage{listings}
+\usepackage{amsfonts}
+\usepackage{amssymb}
+\usepackage{mdframed}
+\usepackage{geometry}
+\usepackage{graphicx}
+\usepackage{mathtools}
+\usepackage{xcolor}
+\usepackage{hyperref}
+\usepackage{float}
+
+\geometry{a4paper, margin=1in}
+
+\title{Assignment 3 - ECSE 563}
+\author{Submitted by Frank Yin \#260799789}
+\date{}
+
+\begin{document}
+\maketitle
+
+
+\section*{Given}
+\begin{itemize}
+    \item Nominal frequency $f_0=\SI{60}{Hz}$, 
+    \item nominal load $P_{\text{sys}}=\SI{2000}{MW}$, 
+    \item additional demand $\Delta P=\SI{100}{MW}$ at $t=0$, 
+    \item frequency-sensitive load $D=\SI{20}{MW/Hz}$, 
+    \item stored kinetic energy $E_k=\SI{21}{GJ}$, 
+    \item governors and turbines: $(T_{G1},T_{CH1})=(0.25,3)\,$s, $(T_{G2},T_{CH2})=(0.5,8)\,$s. 
+    \item Droop: a 5\% speed decrease gives 100\% power increase.
+\end{itemize}
+
+
+\section*{1(a) Droop constants}
+A $5\%$ frequency drop corresponds to $\Delta f=0.05 f_0=\SI{3}{Hz}$ for a $1$\,p.u. power change on the unit base. Hence
+\begin{align*}
+R_1 &= \frac{\Delta f}{\Delta P_1} = \frac{3}{500}=\SI{0.006}{Hz/MW},\\
+R_2 &= \frac{3}{250}=\SI{0.012}{Hz/MW}.
+\end{align*}
+On the common system base $P_{\text{sys}}=\SI{2000}{MW}$,
+\begin{align*}
+R_1 &= 0.006\times2000=\SI{12}{Hz/p.u.},\qquad
+R_2 = 0.012\times2000=\SI{24}{Hz/p.u.}.
+\end{align*}
+Expressed in per-unit of frequency and power (bases $f_0$ and $P_{\text{sys}}$):
+\begin{align*}
+R_1 &= \frac{12}{60}=0.20~\text{p.u./p.u.},\qquad
+R_2 = \frac{24}{60}=0.40~\text{p.u./p.u.}.
+\end{align*}
+
+\section*{1(b) Inertial constant $M$}
+With $E_k=\SI{21}{GJ}=\SI{21000}{MW\cdot s}$,
+\[ M = \frac{2E_k}{f_0} = \frac{2\times21000}{60}=\SI{700}{MW\cdot s/Hz}. \]
+
+
+\section*{1(c) Time-domain simulation (primary only)}
+The Simulink model implements two droop-controlled units cascaded with $1/(1+T_G s)$ and $1/(1+T_{CH} s)$, driving the swing equation above. A \SI{100}{MW} step is added to the demand. The steady-state frequency error with primary control is
+\[ \Delta f_\infty \;=\; -\,\frac{\Delta P}{\frac{1}{R_1}+\frac{1}{R_2}+D}
+= -\,\frac{100}{166.67+83.33+20} \approx \SI{-0.370}{Hz}, \]
+so $f_\infty\approx \SI{59.63}{Hz}$. The simulation (30\,s) confirms this value (see Fig.~\ref{fig:p1freq}).
+
+\begin{figure}[h]\centering
+\includegraphics[width=.72\linewidth]{Power/a3plots/part1c_freq.png}
+\caption{Part~1: frequency deviation (primary control only).}
+\label{fig:p1freq}
+\end{figure}
+
+\section*{1(d) Mechanical power sharing}
+At steady state: $\Delta P_{m1}=\tfrac{1}{R_1}|\Delta f_\infty|\approx\SI{61.73}{MW}$ and $\Delta P_{m2}\approx\SI{30.86}{MW}$; the remaining \SI{7.41}{MW} is supplied by the load relief $D\Delta f$.
+Figure~\ref{fig:p1pm} shows the simulated $\Delta P_{m1}(t)$ and $\Delta P_{m2}(t)$. Generator~1 bears roughly twice the effort of generator~2, which is consistent with their droop slopes ($1/R_1=2\times 1/R_2$).
+
+\begin{figure}[h]\centering
+\includegraphics[width=.72\linewidth]{Power/a3plots/part1d_powers.png}
+\caption{Part~1: mechanical power responses.}
+\label{fig:p1pm}
+\end{figure}
+
+\section*{1(e) Ramping limitation on Generator 1}
+Imposing a \SI{1}{MW/s} rate limit on Gen~1 delays its contribution; the initial burden shifts to Gen~2 and the frequency nadir becomes deeper. In the first \SI{30}{s} the frequency reaches roughly \SI{-0.76}{Hz}, recovering slowly thereafter as Gen~1 ramps. See Figs.~\ref{fig:p1efreq}–\ref{fig:p1epm}.
+
+% we can observe that setting a slew rate limit of 1 causes
+% the frequency to have a nadir of ~-1.1 HZ so 58.9Hz. We also see that
+% it takes longer for the freq stabilize. 
+% P2 does most of th work to compensate for tehe difference initially and
+% then it goes down as P1 ramps up. the total power P stabilizes closer to 0 until 60s but then drops 
+
+\begin{figure}[h]\centering
+\includegraphics[width=.72\linewidth]{Power/a3plots/part1e_freq.png}
+\caption{Part~1(e): frequency with Gen~1 limited to \SI{1}{MW/s}.}
+\label{fig:p1efreq}
+\end{figure}
+
+\begin{figure}[h]\centering
+\includegraphics[width=.72\linewidth]{Power/a3plots/part1e_powers.png}
+\caption{Part~1(e): mechanical power responses with ramp limit.}
+\label{fig:p1epm}
+\end{figure}
+
+\section*{2. Secondary control (AGC)}
+
+% other values (0.45-0.25)have been used for testing
+
+
+An integral controller produces a bias $u$ (MW) from the frequency error, distributed by participation factors $a_1=0.75$, $a_2=0.25$ to the two units. The tuning approximation for an overdamped response gives a slow pole at $-\tfrac{K_I}{D+1/R_1+1/R_2}$; setting $K_I\approx \SI{1.0}{MW/(Hz\,s)}$ returns the frequency to within a few millihertz by 10–15 minutes with limited oscillation (see Fig.~\ref{fig:p2freq}). The final sharing with AGC is $\Delta P_{m1}=\SI{75}{MW}$ and $\Delta P_{m2}=\SI{25}{MW}$, as dictated by $(a_1,a_2)$.
+
+\begin{figure}[h]\centering
+\includegraphics[width=.72\linewidth]{Power/a3plots/part2_freq.png}
+\caption{Part~2: frequency with secondary (integral) control, $K_I=\SI{1.0}{MW/(Hz\,s)}$.}
+\label{fig:p2freq}
+\end{figure}
+
+\begin{figure}[h]\centering
+\includegraphics[width=.72\linewidth]{Power/a3plots/part2_powers.png}
+\caption{Part~2: mechanical power responses with AGC.}
+\label{fig:p2pm}
+\end{figure}
+
+\section*{3. Reduced inertia and load damping}
+
+% For the frequency, we get a lower Nadir as well as more oscillations. 
+% the same can be said about power, as Ptotal goes to 25Mw in less than 5
+% seconds, then goes to -10 MW and then goes bck above around 25 seconds
+% then back below. 
+% reducing M and D make the drops faster and have more oscilation for the
+% same K we selected.
+
+
+With $M$ reduced to $0.6M$ and $D$ to $0.5D$ (to emulate high inverter-based generation and power-electronic loading), the frequency nadir deepens and the rate of change of frequency increases. For the same $K_I$, the closed-loop becomes less well damped; transient oscillations increase but the steady-state error still returns to zero (Fig.~\ref{fig:p3freq}). This illustrates that AGC tuned for a high-inertia system may be too aggressive or too sluggish when inertia and damping decline, and re-tuning (or adding fast synthetic inertia/fast frequency response) becomes necessary.
+
+\begin{figure}[h]\centering
+\includegraphics[width=.72\linewidth]{Power/a3plots/part3_freq.png}
+\caption{Part~3: frequency with lower $M$ and $D$ using the same AGC gain.}
+\label{fig:p3freq}
+\end{figure}
+
+\begin{figure}[h]\centering
+\includegraphics[width=.72\linewidth]{Power/a3plots/part3_powers.png}
+\caption{Part~3: mechanical power responses with reduced inertia and damping.}
+\label{fig:p3pm}
+\end{figure}
+
+
+
+
+%%%%%%%%%%%%========Q4
+\section*{4. Two-area system and tie-line control}
+Two copies of the Part~2 area are interconnected by a tie line of $X=0.1$\,p.u. The linearized tie-line flow is
+\[\Delta P_{12} = \frac{P_{\text{base}}}{X}\,\Delta \delta_{12}\,,\quad \frac{d\,\Delta \delta_{12}}{dt} = 2\pi(\Delta f_1 - \Delta f_2).\]
+With frequency-only integral control, the frequency error is corrected but the tie-line flow does not return to schedule: the two integrators produce equal biases, so with a \SI{100}{MW} step in Area~1 both areas eventually add \SI{50}{MW} each, leaving a steady \SI{50}{MW} import into Area~1. This is removed by ACE-based control with
+\[\text{ACE}_1 = B\,\Delta f_1 + \Delta P_{12},\qquad \text{ACE}_2 = B\,\Delta f_2 - \Delta P_{12},\]
+where $B \approx D + \tfrac{1}{R_1}+\tfrac{1}{R_2} \approx \SI{270}{MW/Hz}$. Integrating $-\text{ACE}$ in each area and distributing by $(a_1,a_2)$ drives both frequency error and tie-line deviation to zero. Practical issues: overly large $K_I$ or negligible damping can yield oscillatory power swings across the tie line; adding washout/lag on ACE or retuning $K_I$ mitigates this.
+
+% We can see that the frequencygoes back to 0, but the tie line power
+% ocsillated around -50 MW.
+
+
+% Adding additional controls, we are able to get the freqency to 0 and have
+% the tie line Power stabilize and oscillate around 0
+% some problems we notice is how quick the responses are and the
+% oscillations. 
+% These can be mitigated by adding some delays and ramp controls, as well
+% as fine tuning the control paramters of the model further. 
+
+\subsection*{4(a) Without tie-line control}
+With frequency-only integral control, the frequency error is corrected but the tie-line flow does not return to schedule. Figure~\ref{fig:p4freq} shows the frequency deviations in both areas, and Figure~\ref{fig:p4tie} shows the tie-line power oscillating around \SI{-50}{MW}.
+
+\begin{figure}[h]\centering
+\includegraphics[width=.72\linewidth]{Power/a3plots/part4_freq.png}
+\caption{Part~4: frequency deviations in both areas (no tie-line control).}
+\label{fig:p4freq}
+\end{figure}
+
+\begin{figure}[h]\centering
+\includegraphics[width=.72\linewidth]{Power/a3plots/part4_sys1_powers.png}
+\caption{Part~4: System~1 mechanical powers (no tie-line control).}
+\label{fig:p4sys1pm}
+\end{figure}
+
+\begin{figure}[h]\centering
+\includegraphics[width=.72\linewidth]{Power/a3plots/part4_sys2_powers.png}
+\caption{Part~4: System~2 mechanical powers (no tie-line control).}
+\label{fig:p4sys2pm}
+\end{figure}
+
+\begin{figure}[h]\centering
+\includegraphics[width=.72\linewidth]{Power/a3plots/part4_tieline.png}
+\caption{Part~4: tie-line power (no tie-line control).}
+\label{fig:p4tie}
+\end{figure}
+
+\subsection*{4(b) With ACE-based tie-line control}
+Adding additional controls, we are able to get the frequency to 0 and have the tie-line power stabilize and oscillate around 0. Some problems we notice are how quick the responses are and the oscillations. These can be mitigated by adding some delays and ramp controls, as well as fine tuning the control parameters of the model further.
+
+\begin{figure}[h]\centering
+\includegraphics[width=.72\linewidth]{Power/a3plots/part4c_freq.png}
+\caption{Part~4(Control): frequency deviations in both areas (with ACE-based control).}
+\label{fig:p4cfreq}
+\end{figure}
+
+\begin{figure}[h]\centering
+\includegraphics[width=.72\linewidth]{Power/a3plots/part4c_sys1_powers.png}
+\caption{Part~4(Control): System~1 mechanical powers (with ACE-based control).}
+\label{fig:p4csys1pm}
+\end{figure}
+
+\begin{figure}[h]\centering
+\includegraphics[width=.72\linewidth]{Power/a3plots/part4c_sys2_powers.png}
+\caption{Part~4(Control): System~2 mechanical powers (with ACE-based control).}
+\label{fig:p4csys2pm}
+\end{figure}
+
+\begin{figure}[h]\centering
+\includegraphics[width=.72\linewidth]{Power/a3plots/part4c_tieline.png}
+\caption{Part~4(Control): tie-line power (with ACE-based control).}
+\label{fig:p4ctie}
+\end{figure}
+
+\end{document}
