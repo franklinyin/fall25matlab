@@ -1,0 +1,167 @@
+\documentclass[12pt]{article}
+
+% Fonts and spacing
+\usepackage[T1]{fontenc}
+\usepackage{newtxtext,newtxmath}
+\usepackage{setspace}
+\onehalfspacing
+
+% Page layout
+\usepackage[letterpaper,top=1.25in,bottom=1in,left=1in,right=1in]{geometry}
+
+% Graphics & color
+\usepackage{graphicx}
+\usepackage{caption}
+\usepackage{subcaption}
+\usepackage{float}
+\usepackage{booktabs}
+\usepackage{siunitx}
+
+% Code listings
+\usepackage{listings}
+\lstdefinestyle{mystyle}{
+  language=Matlab,
+  basicstyle=\ttfamily\footnotesize,
+  numbers=left,
+  numberstyle=\tiny,
+  stepnumber=1,
+  numbersep=5pt,
+  frame=single,
+  breaklines=true,
+  showstringspaces=false,
+  tabsize=4
+}
+\lstset{style=mystyle}
+
+% Header
+\usepackage{fancyhdr}
+\pagestyle{fancy}
+\fancyhf{}
+\cfoot{\thepage}
+
+\begin{document}
+
+% ------------------------------ COVER PAGE -------------------------------
+\begin{titlepage}
+  \centering
+  {\Large ECSE 512 -- Digital Signal Processing \par}
+  \vspace{1em}
+  {\Large McGill University, Fall 2022\par}
+  \vspace{2em}
+  {\huge\bfseries Adaptive Equalization for 4--QAM over a Dispersive Channel\par}
+  \vspace{2em}
+  {\large Term Project Report\par}
+  \vspace{1em}
+  {\large Author: \textbf{<Your Name(s)>}, ID: \textbf{<ID(s)>}\par}
+  \vspace{1em}
+  {\large Date: \today\par}
+  \vfill
+  \begin{abstract}
+  We implement and evaluate a complex LMS--based decision--directed adaptive FIR equalizer for 4--QAM transmission over frequency--selective channels that induce inter--symbol interference (ISI). The complete MATLAB simulation chain includes a channel model with unit energy, complex AWGN, a training sequence followed by a decision--directed phase, and performance assessment via learning curves and symbol error rate (SER). We study the impact of SNR, equalizer length, and step size. Results confirm that the LMS equalizer effectively mitigates ISI and tracks slow variations when properly tuned.
+  \end{abstract}
+  \vfill
+\end{titlepage}
+\setcounter{page}{1}
+
+% ------------------------------ TOC --------------------------------------
+\tableofcontents
+\newpage
+
+% ------------------------------ 1. INTRO ---------------------------------
+\section{Introduction}
+Modern digital communication receivers must cope with inter--symbol interference (ISI), which arises when the channel is time--dispersive or frequency--selective. In baseband terms, the received sequence can be written as the convolution of the transmit symbols with the channel impulse response plus additive noise. ISI distorts the constellation and increases the symbol error rate (SER) if left uncompensated. Equalization is therefore required, especially in wireline channels with multipath reflections and in wireless channels with delay spread.
+
+Among the many equalization strategies---including zero--forcing (ZF), minimum mean--square error (MMSE), decision--feedback equalization (DFE), maximum likelihood sequence estimation (MLSE)~\cite{proakis}, and blind methods such as CMA~\cite{qureshi}---adaptive linear equalizers trained with the least mean squares (LMS) algorithm~\cite{haykin} strike an attractive balance between complexity, robustness, and performance. LMS only requires local gradient information and a step--size parameter, which makes it easy to implement in real time. This project implements a complex LMS adaptive FIR equalizer in a 4--QAM link and assesses its performance using Monte Carlo simulations.
+
+\subsection*{Project goals}
+The goals are to: (i) design and code a full simulation chain in MATLAB, (ii) implement training followed by decision--directed adaptation, (iii) evaluate performance as a function of SNR, equalizer length, and LMS step size, and (iv) document the methodology and findings in a technical report.
+
+\subsection*{Report organization}
+Section~\ref{sec:model} describes the system model and problem formulation. Section~\ref{sec:lms} reviews LMS equalization and design trade--offs. Section~\ref{sec:results} presents results and discussions. Section~\ref{sec:conclusion} concludes. A complete listing of our MATLAB code is provided in the Appendix.
+
+% ------------------------------ 2. MODEL ---------------------------------
+\section{System Model and Problem Formulation}\label{sec:model}
+We consider the baseband link depicted in Fig.~\ref{fig:block}. The transmitter emits an IID sequence of 4--QAM symbols $x[n]\in S=\{\frac{\sigma_s}{\sqrt{2}}(1\!\pm\!j),\frac{\sigma_s}{\sqrt{2}}(-1\!\pm\!j)\}$ with average power $E\{|x[n]|^2\}=\sigma_s^2$. The channel is modeled as a finite impulse response (FIR) filter $h[n]$ with unit energy $\sum_{n=0}^{K-1}|h[n]|^2=1$. The received signal is
+\begin{equation}
+y[n] = \sum_{k=0}^{K-1} h[k]\,x[n-k] + w[n] = (h*x)[n] + w[n],
+\end{equation}
+where $w[n]$ is circularly symmetric complex Gaussian noise with variance $\sigma_n^2$.
+
+\begin{figure}[H]
+ \centering
+ \includegraphics[width=\textwidth]{figures/block_diagram.png}
+ \caption*{Fig.~1. Block diagram of the data transmission system with adaptive equalization.}
+ \label{fig:block}
+\end{figure}
+
+The receiver employs an $N$--tap complex FIR equalizer with coefficients $\{c_k[n]\}_{k=0}^{N-1}$ to produce a soft estimate
+\begin{equation}
+\hat{x}[n] = \sum_{k=0}^{N-1} c_k[n]\,y[n-k].
+\end{equation}
+During an initial training interval of length $L_{\mathrm{tr}}$, the desired signal is $d[n]=x[n-D]$, where $D$ is a \emph{decision delay} that aligns the equalizer's main tap with the dominant path of $h[n]$. After training, the system switches to decision--directed mode in which $d[n] = \mathcal{Q}(\hat{x}[n])$ is the nearest 4--QAM symbol.
+
+Performance metrics include: (i) the learning curve $E\{|e[n]|^2\}$ where $e[n]=d[n]-\hat{x}[n]$, and (ii) SER at the output of the decision device during decision--directed operation. We average these quantities over multiple independent Monte Carlo realizations.
+
+% ------------------------------ 3. LMS -----------------------------------
+\section{Adaptive LMS Equalization}\label{sec:lms}
+Let $\mathbf{y}[n] = [y[n], y[n-1],\ldots, y[n-N+1]]^T$. The LMS equalizer uses the update
+\begin{align}
+\hat{x}[n] &= \mathbf{c}^H[n]\,\mathbf{y}[n],\\
+e[n] &= d[n]-\hat{x}[n],\\
+\mathbf{c}[n+1] &= \mathbf{c}[n] + \mu\, \mathbf{y}[n]\; e^*[n],
+\end{align}
+with step size $\mu>0$. This is the complex LMS derived from a stochastic gradient descent on the instantaneous squared error $|e[n]|^2$~\cite{haykin}. A practical initialization is to set $\mathbf{c}[0]$ to a delayed delta so that the equalizer starts by forwarding one of the received samples.
+
+\subsection*{Design considerations}
+\textbf{Equalizer length $N$.} $N$ must span the significant delay spread of $h[n]$; too small an $N$ leaves residual ISI, while too large an $N$ slows convergence and increases steady--state misadjustment.
+
+\noindent\textbf{Step size $\mu$.} Convergence requires $0<\mu<2/\mathrm{tr}\{\mathbf{R}_y\}$, where $\mathbf{R}_y=E\{\mathbf{y}\mathbf{y}^H\}$ is the input correlation matrix. A convenient rule of thumb is $\mu \lesssim 1/(N\,P_y)$ with $P_y\approx E\{|y[n]|^2\}$.\footnote{In our simulations, the channel is unit energy and $P_y\approx\sigma_s^2+\sigma_n^2$.} Larger $\mu$ accelerates convergence but yields a higher residual error.
+
+\noindent\textbf{Decision delay $D$.} Align the desired symbol $x[n-D]$ with the main lobe of the effective channel $h[n]*c[n]$. We pick $D$ near the dominant tap of $h[n]$ and clip it to $[0,N-1]$.
+
+\noindent\textbf{Training vs decision--directed.} Training avoids error propagation during acquisition; decision--directed adaptation maintains tracking with minimal overhead once the equalizer has converged~\cite{lucky,qureshi}.
+
+% ------------------------------ 4. RESULTS --------------------------------
+\section{Results and Discussion}\label{sec:results}
+All results were produced with the provided MATLAB code. Unless stated otherwise, the default configuration uses an $N=11$ tap equalizer, step size $\mu=0.003$, a ``severe'' 5--tap channel normalized to unit energy, a training length of $1500$ symbols followed by $15000$ payload symbols, and decision delay chosen automatically from the dominant channel tap.
+
+\subsection*{Learning curve}
+The learning curve $|e[n]|^2$ (smoothed) illustrates convergence to a steady residual level determined by the noise floor and misadjustment. A vertical dashed line marks the switch from training to decision--directed mode. The corresponding constellation diagrams show the compression of the distorted cluster at the equalizer output onto the ideal 4--QAM points.
+
+\subsection*{SER versus SNR}
+Using Monte Carlo averaging over several trials, we estimate the SER in decision--directed operation for SNRs from \SI{5}{dB} to \SI{30}{dB}. As expected, SER improves with SNR and exhibits an error floor that depends on $N$ and $\mu$. A longer equalizer generally reduces the error floor up to the point of diminishing returns.
+
+\subsection*{Impact of $\mu$ and $N$}
+At a fixed SNR, sweeping $\mu$ shows the classical trade--off: too small $\mu$ converges slowly and may under--train within the given preamble, while too large $\mu$ increases misadjustment and may even destabilize the loop. Varying $N$ reveals that values just above the channel memory tend to be most efficient.
+
+% ------------------------------ 5. CONCLUSION -----------------------------
+\section{Conclusion}\label{sec:conclusion}
+We developed a complete MATLAB framework for 4--QAM transmission over an ISI channel with an adaptive LMS linear equalizer. The system performs training followed by decision--directed tracking. Simulations show effective ISI mitigation and quantify the dependence of performance on step size, equalizer length, and SNR. The provided code can serve as a basis for further extensions such as decision--feedback equalization, MMSE training, or blind initialization.
+
+% ------------------------------ REFERENCES --------------------------------
+\begin{thebibliography}{9}
+\bibitem{haykin} S.~Haykin, \emph{Adaptive Filter Theory}, 4th~ed., Prentice Hall, 2002.
+\bibitem{proakis} J.~G.~Proakis, \emph{Digital Communications}, McGraw--Hill, 2001.
+\bibitem{lucky} R.~W.~Lucky, ``Techniques for adaptive equalization of digital communication,'' \emph{Bell Syst.\ Tech.\ J.}, vol.~45, pp.~255--286, Feb.~1966.
+\bibitem{qureshi} S.~U.~H.~Qureshi, ``Adaptive equalization,'' \emph{Proc.\ IEEE}, vol.~73, pp.~1349--1387, Sept.~1985.
+\end{thebibliography}
+
+% ------------------------------ APPENDIX ----------------------------------
+\appendix
+\section*{Appendix: MATLAB Listings}
+All MATLAB source files are reproduced below for completeness. Paths are relative to the \texttt{matlab/} directory.
+
+\subsection*{main.m}\lstinputlisting{../matlab/main.m}
+\subsection*{simulate\_one\_run.m}\lstinputlisting{../matlab/simulate_one_run.m}
+\subsection*{lms\_equalizer.m}\lstinputlisting{../matlab/lms_equalizer.m}
+\subsection*{qam4\_constellation.m}\lstinputlisting{../matlab/qam4_constellation.m}
+\subsection*{qam4\_mod.m}\lstinputlisting{../matlab/qam4_mod.m}
+\subsection*{qam4\_demod.m}\lstinputlisting{../matlab/qam4_demod.m}
+\subsection*{generate\_channel.m}\lstinputlisting{../matlab/generate_channel.m}
+\subsection*{normalize\_channel.m}\lstinputlisting{../matlab/normalize_channel.m}
+\subsection*{pick\_decision\_delay.m}\lstinputlisting{../matlab/pick_decision_delay.m}
+\subsection*{add\_awgn.m}\lstinputlisting{../matlab/add_awgn.m}
+\subsection*{plot\_constellation.m}\lstinputlisting{../matlab/plot_constellation.m}
+\subsection*{measure\_ser.m}\lstinputlisting{../matlab/measure_ser.m}
+
+\end{document}
