@@ -1,0 +1,23 @@
+% --- Parameters ---
+M = 48;
+N = M + 1;
+beta = 3.68;
+w1 = 0.3*pi;
+w2 = 0.6*pi;
+n = 0:M;
+k = n - M/2;
+
+% --- Ideal hd[n] (shifted by M/2) ---
+hd_lp1 = sin(w1*k)./(pi*k); hd_lp1(k==0) = w1/pi;
+hd_lp2 = sin(w2*k)./(pi*k); hd_lp2(k==0) = w2/pi;
+hd = hd_lp1 + 0.5*(double(k==0) - hd_lp2);   % LP(0.3π) + 0.5*HP(0.6π)
+
+% --- Window and FIR coefficients ---
+w  = kaiser(N, beta).';
+h  = hd .* w;
+
+% --- Frequency response ---
+[H, wgrid] = freqz(h, 1, 4096);
+figure; plot(wgrid/pi, abs(H)); grid on
+xlabel('\omega/\pi'); ylabel('|H(e^{j\omega})|');
+title('Kaiser-window multiband FIR (M=48, \beta=3.68)');
