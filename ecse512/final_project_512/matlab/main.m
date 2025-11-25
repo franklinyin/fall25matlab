@@ -60,6 +60,9 @@ xlabel('n'); ylabel('E[|e[n]|^2] (dB)'); grid on;
 title(sprintf('Learning curve, SNR=%.1f dB, N=%d, \\mu=%.4f, D=%d', ...
       SNR_show, cfg.equalizerLenN, cfg.mu, D));
 legend('MSE (smoothed)','Steady‑state (avg last 100)','Training/Decision switch','Location','best');
+if cfg.saveFigs
+    saveas(gcf, fullfile(resultsDir, sprintf('learning_curve_SNR%ddB.png',round(SNR_show))));
+end
 
 % Constellations before/after
 figure('Name','Constellations (one run)','Color','w');
