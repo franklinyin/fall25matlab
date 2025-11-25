@@ -103,10 +103,10 @@ grid on; xlabel('\omega/\pi'); ylabel('Magnitude (dB)');
 title('Kaiser vs. Parks–McClellan (dB)  [firpm weights = [1 1 2]]');
 legend('Kaiser-window', 'Parks–McClellan (firpm)', 'Location','Best');
 
-% Annotate spec bands on the dB plot (optional helper lines)
+% adding bands on the dB plot
 yl = ylim;
 for xx = [wp1, ws1, ws2, wp2]/pi
-    xline(xx, ':', 'Color',[0.5 0.5 0.5]);
+    xline(xx, ':', 'Color','r');
 end
 ylim(yl);
 
