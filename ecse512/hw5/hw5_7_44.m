@@ -36,6 +36,8 @@ plot(wgrid/pi, magK, 'LineWidth',1.2); hold on;
 grid on; xlabel('\omega/\pi'); ylabel('|H(e^{j\omega})|');
 title('Kaiser Magnitude Response (linear magnitude)');
 legend('Kaiser-window', 'Parks–McClellan (firpm)', 'Location','Best');
+% Save plot to PNG
+saveas(gcf, 'hw5_7_44_d_linear.png');
 
 % dB magnitude
 figure('Name','Magnitude in dB');
@@ -43,6 +45,8 @@ plot(wgrid/pi, magK_dB, 'LineWidth',1.2); hold on;
 grid on; xlabel('\omega/\pi'); ylabel('Magnitude (dB)');
 title('Kaiser Magnitude Response (dB)');
 legend('Kaiser-window', 'Parks–McClellan (firpm)', 'Location','Best');
+% Save plot to PNG
+saveas(gcf, 'hw5_7_44_d_db.png');
 
 %% part e getting numerical Measure δ1, δ2, δ3 on spec bands
 % Spec bands from wp1, ws1, ws2, wp2
@@ -50,9 +54,16 @@ idx_p1 = find(wgrid >= 0 & wgrid <= wp1);
 idx_s = find(wgrid >= ws1 & wgrid <= ws2);
 idx_p2 = find(wgrid >= wp2 & wgrid <= pi);
 
-delta1_K = max(abs(magK(idx_p1) - B)); % passband-1 ripple (abs)
-delta2_K = max(magK(idx_s)); % stopband max magnitude
-delta3_K = max(abs(magK(idx_p2) - C)); % passband-2 ripple (abs)
+delta1_K = max(abs(magK(idx_p1) - B));
+delta2_K = max(magK(idx_s));
+delta3_K = max(abs(magK(idx_p2) - C));
+
+fprintf('part e');
+fprintf('  delta1 (low passband) = %.6g\n', delta1_K);
+fprintf('  delta2 (stopband) = %.6g\n', delta2_K);
+fprintf('  delta3 (high passband) = %.6g\n', delta3_K);
+fprintf('  (Approx attenuation = %.1f dB → delta ≈ %.3g)\n', A_dB, 10^(-A_dB/20));
+fprintf('\n');
 
 %% part f, choosing firpm (Parks–McClellan)
 % Frequency grid for firpm is normalized to 1 ↔ π (use /pi).
@@ -82,6 +93,8 @@ plot(wgrid2/pi, magPM, 'LineWidth',1.2);
 grid on; xlabel('\omega/\pi'); ylabel('|H(e^{j\omega})|');
 title('Kaiser vs. Parks–McClellan (linear magnitude)  [firpm weights = [1 1 2]]');
 legend('Kaiser-window', 'Parks–McClellan (firpm)', 'Location','Best');
+% Save plot to PNG
+saveas(gcf, 'hw5_7_44_f_linear.png');
 
 % dB magnitude
 figure('Name','Magnitude in dB');
@@ -97,6 +110,9 @@ for xx = [wp1, ws1, ws2, wp2]/pi
     xline(xx, ':', 'Color',[0.5 0.5 0.5]);
 end
 ylim(yl);
+
+% Save plot to PNG
+saveas(gcf, 'hw5_7_44_f_db.png');
 
 %% ---------------- Console summary ----------------
 fprintf('=== SPEC BANDS (from Kaiser Δω estimate) ===\n');
