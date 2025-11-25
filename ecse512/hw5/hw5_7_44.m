@@ -112,30 +112,3 @@ ylim(yl);
 
 % Save plot to PNG
 saveas(gcf, 'hw5_7_44_f_db.png');
-
-%% ---------------- Console summary ----------------
-fprintf('=== SPEC BANDS (from Kaiser Δω estimate) ===\n');
-fprintf('  wp1/pi = %.6f\n', wp1/pi);
-fprintf('  ws1/pi = %.6f\n', ws1/pi);
-fprintf('  ws2/pi = %.6f\n', ws2/pi);
-fprintf('  wp2/pi = %.6f\n', wp2/pi);
-fprintf('\n');
-
-fprintf('=== (e) Kaiser-window measured ripples ===\n');
-fprintf('  delta1 (low passband) = %.6g\n', delta1_K);
-fprintf('  delta2 (stopband) = %.6g\n', delta2_K);
-fprintf('  delta3 (high passband) = %.6g\n', delta3_K);
-fprintf('  (Approx attenuation = %.1f dB → delta ≈ %.3g)\n', A_dB, 10^(-A_dB/20));
-fprintf('\n');
-
-fprintf('=== (f) firpm measured ripples (weights = [%g %g %g]) ===\n', wts(1), wts(2), wts(3));
-fprintf('  delta1 (low passband) = %.6g\n', delta1_PM);
-fprintf('  delta2 (stopband) = %.6g\n', delta2_PM);
-fprintf('  delta3 (high passband) = %.6g\n', delta3_PM);
-fprintf('\n');
-
-% High-level comparison
-fprintf('=== (g) Brief comparison ===\n');
-fprintf('- Kaiser-window: quick, predictable Δω & δ from (beta,N); not equiripple.\n');
-fprintf('- firpm: equiripple; generally achieves smaller max error per band for same M.\n');
-fprintf('- Using weights [1 1 2] balances relative passband ripples (since high band level is 0.5).\n');
