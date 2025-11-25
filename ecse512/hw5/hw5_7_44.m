@@ -1,33 +1,27 @@
 clc; clear; close all;
 
-%% ---------------- Parameters ----------------
-M = 48; % Filter order (even) -> integer delay M/2 = 24
-N = M + 1; % Length
-beta = 3.68; % Kaiser parameter (given)
-B = 1.0; % Low-band level
-C = 0.5; % High-band level
+M = 48;
+N = M + 1;
+beta = 3.68;
+B = 1.0;
+C = 0.5;
 
-% Frequency edges of the *ideal* piecewise response (reference only)
 w1 = 0.3*pi;
 w2 = 0.6*pi;
 
-% For Kaiser-derived *spec* edges (used for measuring ripple & firpm)
-% Beta -> A (attenuation) via Kaiser empirical relation (we take A≈42.4 dB)
-A_dB = 42.4; % derived from beta ≈ 3.68
-Dw = (A_dB - 8) / (2.285 * N); % transition width (radians)
+A_dB = 42.4;
+Dw = (A_dB - 8) / (2.285 * N);
 wp1 = 0.3*pi - Dw/2; ws1 = 0.3*pi + Dw/2;
 ws2 = 0.6*pi - Dw/2; wp2 = 0.6*pi + Dw/2;
 
-%% ---------------- Ideal impulse response hd[n] ----------------
-% Use textbook-equivalent form: sum of baseband LP (0.3π) and a modulated
-% LP (0.4π) shifted to high band by (-1)^k, both centered at n=M/2.
+%% result from part c
 n = 0:M;
 k = n - M/2; % centered index (M/2=24)
 hd = sin(0.3*pi*(n-24))./(pi*(n-24)) + ...
      0.5*(-1).^(n-24).*sin(0.4*pi*(n-24))./(pi*(n-24));
 hd(n==24) = 0.3 + 0.5*0.4;
 
-%% ---------------- (d) Kaiser-window design ----------------
+%% part d, choosing Kaiser window design
 wK = kaiser(N, beta).';
 hK = hd .* wK;
 
@@ -35,7 +29,22 @@ hK = hd .* wK;
 magK = abs(Hk);
 magK_dB = 20*log10(max(magK, 1e-12));
 
-%% ---------------- (e) Measure δ1, δ2, δ3 on spec bands ----------------
+
+% Linear magnitude
+figure('Name','Linear Magnitude');
+plot(wgrid/pi, magK, 'LineWidth',1.2); hold on;
+grid on; xlabel('\omega/\pi'); ylabel('|H(e^{j\omega})|');
+title('Kaiser Magnitude Response (linear magnitude)');
+legend('Kaiser-window', 'Parks–McClellan (firpm)', 'Location','Best');
+
+% dB magnitude
+figure('Name','Magnitude in dB');
+plot(wgrid/pi, magK_dB, 'LineWidth',1.2); hold on;
+grid on; xlabel('\omega/\pi'); ylabel('Magnitude (dB)');
+title('Kaiser Magnitude Response (dB)');
+legend('Kaiser-window', 'Parks–McClellan (firpm)', 'Location','Best');
+
+%% part e getting numerical Measure δ1, δ2, δ3 on spec bands
 % Spec bands from wp1, ws1, ws2, wp2
 idx_p1 = find(wgrid >= 0 & wgrid <= wp1);
 idx_s = find(wgrid >= ws1 & wgrid <= ws2);
@@ -45,7 +54,7 @@ delta1_K = max(abs(magK(idx_p1) - B)); % passband-1 ripple (abs)
 delta2_K = max(magK(idx_s)); % stopband max magnitude
 delta3_K = max(abs(magK(idx_p2) - C)); % passband-2 ripple (abs)
 
-%% ---------------- (f) Parks–McClellan (firpm) design ----------------
+%% part f, choosing firpm (Parks–McClellan)
 % Frequency grid for firpm is normalized to 1 ↔ π (use /pi).
 f = [0  wp1 ws1 ws2 wp2 pi]/pi;
 a = [B B 0 0 C C];
