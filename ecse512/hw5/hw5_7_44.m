@@ -35,7 +35,7 @@ figure('Name','Linear Magnitude');
 plot(wgrid/pi, magK, 'LineWidth',1.2); hold on;
 grid on; xlabel('\omega/\pi'); ylabel('|H(e^{j\omega})|');
 title('Kaiser Magnitude Response (linear magnitude)');
-legend('Kaiser-window', 'Parks–McClellan (firpm)', 'Location','Best');
+legend('Kaiser-window','Location','Best');
 % Save plot to PNG
 saveas(gcf, 'hw5_7_44_d_linear.png');
 
@@ -44,8 +44,8 @@ figure('Name','Magnitude in dB');
 plot(wgrid/pi, magK_dB, 'LineWidth',1.2); hold on;
 grid on; xlabel('\omega/\pi'); ylabel('Magnitude (dB)');
 title('Kaiser Magnitude Response (dB)');
-legend('Kaiser-window', 'Parks–McClellan (firpm)', 'Location','Best');
-% Save plot to PNG
+legend('Kaiser-window','Location','Best');
+% save plot to PNG
 saveas(gcf, 'hw5_7_44_d_db.png');
 
 %% part e getting numerical Measure δ1, δ2, δ3 on spec bands
@@ -58,11 +58,11 @@ delta1_K = max(abs(magK(idx_p1) - B));
 delta2_K = max(magK(idx_s));
 delta3_K = max(abs(magK(idx_p2) - C));
 
-fprintf('part e');
-fprintf('  delta1 (low passband) = %.6g\n', delta1_K);
-fprintf('  delta2 (stopband) = %.6g\n', delta2_K);
-fprintf('  delta3 (high passband) = %.6g\n', delta3_K);
-fprintf('  (Approx attenuation = %.1f dB → delta ≈ %.3g)\n', A_dB, 10^(-A_dB/20));
+fprintf('part e\n');
+fprintf('  delta1 (low passband) = %.2f dB, delta ≈ %.6g\n', -20*log10(delta1_K), delta1_K);
+fprintf('  delta2 (stopband) = %.2f dB, delta ≈ %.6g\n', -20*log10(delta2_K), delta2_K);
+fprintf('  delta3 (high passband) = %.2f dB, delta ≈ %.6g\n', -20*log10(delta3_K), delta3_K);
+fprintf('  (Approx attenuation = %.1f dB, delta ≈ %.3g)\n', A_dB, 10^(-A_dB/20));
 fprintf('\n');
 
 %% part f, choosing firpm (Parks–McClellan)
@@ -70,17 +70,16 @@ fprintf('\n');
 f = [0  wp1 ws1 ws2 wp2 pi]/pi;
 a = [B B 0 0 C C];
 
-% Weight selection: Balance relative ripple (weight high band ~ 2x)
+% weight selection: Balance relative ripple (weight high band ~ 2x)
 wts = [1 1 2];  % [pass1, stop, pass2]
 
-% Equiripple design
-hPM = firpm(M, f, a, wts);
+hPM = firpm(M, f, a, wts); % Equiripple design
 
 [Hpm, wgrid2] = freqz(hPM, 1, 32768);
 magPM = abs(Hpm);
 magPM_dB = 20*log10(max(magPM, 1e-12));
 
-% Measure firpm ripples on the same spec bands
+% measure firpm ripples on the same spec bands
 delta1_PM = max(abs(magPM(idx_p1) - B));
 delta2_PM = max(magPM(idx_s));
 delta3_PM = max(abs(magPM(idx_p2) - C));
