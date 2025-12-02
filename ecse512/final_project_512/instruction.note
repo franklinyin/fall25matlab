@@ -1,0 +1,100 @@
+\section*{ECSE 512 - Digital Signal Processing}
+
+\section*{McGill University, Fall 2022}
+
+\section*{Term Project}
+
+\section*{Overview:}
+
+Working alone or in team of two, students will be required to complete a term project on a selected topic/algorithm as described below. The aim of this activity is to help students expand their knowledge/understanding of DSP and gain practical experience through the solution of an engineering problem. Realization of the project will involve the following steps:
+- Reading related scientific/engineering literature;
+- Developing and implementing algorithm in MATLAB;
+- Testing and evaluating algorithm;
+- Writing a short technical report.
+
+A detailed project description for this year, along with important related information on report format, deadlines, etc., is provided below.
+
+\section*{Project description:}
+
+This project involves implementing and evaluating the performance of an adaptive equalizer for 4-QAM data transmission over a dispersive channel that causes inter-symbol interference (ISI).
+
+Fig. 1 shows the basic elements of a digital communication system for data transmission over a time dispersive (or frequency selective) channel. In this configuration:
+- The source (data generator) transmits a sequence of independent and identically distributed (IID) information symbols $x[n]$ taken from a finite constellation $S=\left\{s_{1}, s_{2}, \ldots, s_{M}\right\}$.
+- The channel filter, with impulse response $h[n]$, represents the combined effect of the transmit filter, propagation channel and receive filter.
+- The additive channel noise $w[n]$ accounts for thermal noise and other extraneous signals.
+- The signal $y[n]$ at the receiver input can be expressed
+$$
+y[n]=h[n] * x[n]+w[n]
+$$
+
+The net effect of the channel filter and additive noise is to distort the transmitted symbols $\mathrm{x}[\mathrm{n}]$, so that symbol detection from $y[n]$ is impaired.
+- The adaptive equalizer is an adaptive FIR filter located at the receiver front-end, and used to correct this distortion; it produces a sequence of soft estimates $\hat{x}[n]$.
+- For each $\hat{x}[n]$, the decision device determines which one of the possible symbols $\left\{s_{i}\right\}$ was transmitted and outputs a corresponding sequence of hard estimates $\tilde{x}[n]$.
+
+Initially, the system operates in a so-called training mode, where a short training sequence known to the receiver is employed to adjust the coefficients of the adaptive equalizer. Following convergence of the equalizer, the system switches to a decision-directed mode, where the detected symbols at the output of the decision device are treated as correct and used for continued adaptation of the equalizer. This is needed track slow variations in the channel filter over time while receiving data from the transmitter. In practice, the transmitted signal $x[n]$ would be modulated onto a carrier wave in order to occupy a designated frequency band, and demodulated to baseband at the receiver. We need not implement these operations in this project, although all processing involves complex arithmetic operations, i.e., $s_{i}, x[n], h[n], w[n]$, etc., all belong to $\mathbb{C}$.
+
+\begin{figure}
+\includegraphics[width=\textwidth]{https://cdn.mathpix.com/cropped/2025_10_15_673777387e521ab4e82eg-2.jpg?height=665&width=1549&top_left_y=249&top_left_x=330}
+\captionsetup{labelformat=empty}
+\caption{Fig. 1 Block diagram of data transmission system with adaptive equalization}
+\end{figure}
+
+The objective of the project is to implement and simulate the above transmission system in Matlab (or equivalent), and evaluate the performance of the adaptive equalizer under different channel and noise conditions. Specifically, the following procedures need to be considered:
+- Each transmitted symbol $x[n]$ is taken from an $M=4$ QAM constellation, i.e.:
+$$
+s_{1}=\frac{\sigma_{s}}{\sqrt{2}}(1+i), s_{2}=\frac{\sigma_{s}}{\sqrt{2}}(-1+i), s_{3}=\frac{\sigma_{s}}{\sqrt{2}}(-1-i), s_{4}=\frac{\sigma_{s}}{\sqrt{2}}(1-i)
+$$
+where $\sigma_{s}^{2}$ represents the transmit power.
+- The channel filter $h[n]$ is an FIR filter, normalized such that $\sum_{n=0}^{K-1}|h[n]|^{2}=1$ (i.e., unit energy). In particular, $h[n]=\delta\left[n-n_{0}\right]$ corresponds to distortionless transmission with pure delay $n_{0}$.
+- The noise samples $w[n]$ are drawn from a complex circularly symmetric Gaussian distribution with zero-mean and variance $\sigma_{n}^{2}$.
+- The equalizer is an adaptive FIR filter updated with the complex LMS algorithm [1]. Specifically, denoting the filter coefficients as $c_{0}[n], \ldots, c_{N-1}[n]$, the recursive equations for the adaptive equalizer can be expressed as:
+$$
+\begin{gathered}
+\hat{x}[n]=\sum_{k=0}^{N-1} c_{k}[n] y[n-k] \\
+e[n]=d[n]-\hat{x}[n] \\
+c_{k}[n+1]=c_{k}[n]+\mu y[n-k] e[n]^{*}
+\end{gathered}
+$$
+where $\mu>0$ is the step size.
+- The decision device takes $\hat{x}[n]$ as input and outputs the closest symbol 4-QAM symbol in $\left\{s_{i}\right\}$.
+
+For the evaluation, you may consider the effect of various parameters on system performance, including: signal-to-noise ratio (SNR); channel filter type and length $K, \mathrm{LMS}$ adaptive filter length $N$ and step size $\mu$. The following performance metrics, averaged over a sufficiently large number of independent realizations (i.e., Monte Carlo simulations), can be used for system evaluation:
+- Learning curve of the equalizer in training mode, i.e. $E\left[|e[n]|^{2}\right]$ versus time $n$, from which the convergence rate and residual error level of the equalizer can be observed.
+- Symbol error rate (SER) or bit eror rate (BER) at the output of the decision device in decisiondirected mode.
+It is also of interest to plot sample values of $y[n]$ and $\widehat{x}[n]$ along with the constellation points $s_{i}$ in the complex plane, to verify that the equalizer properly reshapes the distribution of received symbols.
+
+\section*{Report:}
+
+Your report should contain the following elements:
+- A cover page with a short abstract.
+- A table of content
+- Section 1: An introduction providing (2 pages max):
+- A high-level overview of the project topic (Context of application, need for equalization, existing solutions) along with some references.
+- Specific goals of the project and brief overview of the report's content.
+- Section 2: Description of system model along with problem formulation, using equations and mathematical notations as needed (2-3 pages).
+- Section 3: Review of adaptive LMS equalization (basic principles), summary of algorithm and design trade-off in choice of parameters (2-3 pages).
+- Section 4: Results/figures and relevant discussions (3-4 pages).
+- Section 5: Conclusion (. 5 page max).
+- List of references, presented professionally.
+- Appendix containing all your Matalb code.
+
+You should follow the guidelines below to ensure a professional and uniform presentation:
+- Use $8.5 \times 11$ paper, single column (portrait) mode, with black print.
+- Set top margin to 1.25 in and side/bottom margins to 1 in .
+- Use Times New Roman, size 12 pt font, with 1.5 line spacing.
+- Your report should include a cover page, 10-12 pages of descriptive text and figures, and listing of your Matlab code with comments.
+- Except for cover page, include page number at bottom.
+- On cover page, indicate: project title; names and ID; brief abstract (5-6 lines), date, etc.
+- Use a professional word processor, with equation editing and referencing capabilities.
+
+\section*{Due date:}
+
+The report is due on Monday, Dec. 5th, before $\mathbf{4 h 0 0 p m}$. This includes:
+- 1 paper copy of your final printed report (see formatting info above).
+- 1 uploaded directory containing all relevant files: report file in pdf, Matlab code of your algorithm, etc.
+
+\section*{Selected References:}
+[1] S. Haykin, Adaptive Filter Theory, $4{ }^{\text {th }}$ Ed., Prentice Hall, 2002.
+[2] J. G. Proakis, Digital Communications, McGraw Hill, New York, 2001.
+[3] R. W. Lucky, Techniques for adaptive equalization of digital communication. Bell Syst. Tech. J., vol. 45, pp. 255-286, Feb. 1966.
+[4] S. U. H. Qureshi, Adaptive equalization, Proc. IEEE, vol. 73, pp. 1349-1387, Sept. 1985.
