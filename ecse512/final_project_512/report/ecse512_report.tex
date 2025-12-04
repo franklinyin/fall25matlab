@@ -371,20 +371,56 @@ The framework provides a solid foundation for further extensions, including deci
 
 % ------------------------------ APPENDIX ----------------------------------
 \appendix
-\section*{Appendix: MATLAB Listings}
-All MATLAB source files are reproduced below for completeness. Paths are relative to the \texttt{matlab/} directory.
+\section*{Appendix: MATLAB Code Organization}
+This appendix describes the MATLAB source files and their purpose. All files are located in the \texttt{matlab/} directory.
 
-\subsection*{main.m}\lstinputlisting{../matlab/main.m}
-\subsection*{simulate\_one\_run.m}\lstinputlisting{../matlab/simulate_one_run.m}
-\subsection*{lms\_equalizer.m}\lstinputlisting{../matlab/lms_equalizer.m}
-\subsection*{qam4\_constellation.m}\lstinputlisting{../matlab/qam4_constellation.m}
-\subsection*{qam4\_mod.m}\lstinputlisting{../matlab/qam4_mod.m}
-\subsection*{qam4\_demod.m}\lstinputlisting{../matlab/qam4_demod.m}
-\subsection*{generate\_channel.m}\lstinputlisting{../matlab/generate_channel.m}
-\subsection*{normalize\_channel.m}\lstinputlisting{../matlab/normalize_channel.m}
-\subsection*{pick\_decision\_delay.m}\lstinputlisting{../matlab/pick_decision_delay.m}
-\subsection*{add\_awgn.m}\lstinputlisting{../matlab/add_awgn.m}
-\subsection*{plot\_constellation.m}\lstinputlisting{../matlab/plot_constellation.m}
-\subsection*{measure\_ser.m}\lstinputlisting{../matlab/measure_ser.m}
+\subsection*{Main Scripts}
+\begin{itemize}
+\item \texttt{main.m}: Main driver script that orchestrates the complete simulation. Configures system parameters (SNR, equalizer length $N$, step size $\mu$, training length), generates the channel, runs Monte Carlo trials, and produces all performance plots including learning curves, SER versus SNR, SER versus $\mu$, and SER versus $N$.
+\item \texttt{simulate\_one\_run.m}: Executes a single Monte Carlo realization of the transmission system. Generates random 4--QAM symbols, passes them through the channel with AWGN, applies the LMS equalizer, and computes the symbol error rate. Returns all internal signals for analysis and plotting.
+\end{itemize}
+
+\subsection*{Equalization Core}
+\begin{itemize}
+\item \texttt{lms\_equalizer.m}: Implements the complex LMS adaptive FIR equalizer. Performs the core adaptation loop: computes equalizer output $\hat{x}[n]$, determines the desired signal $d[n]$ (training or decision--directed), computes the error $e[n]$, and updates coefficients via $\mathbf{c}[n+1] = \mathbf{c}[n] + \mu \mathbf{y}[n]e^*[n]$. Returns the equalized output, error signal, coefficient history, and MSE learning curve.
+\end{itemize}
+
+\subsection*{Modulation and Demodulation}
+\begin{itemize}
+\item \texttt{qam4\_constellation.m}: Defines the 4--QAM constellation points $S = \frac{\sigma_s}{\sqrt{2}}[1+j, -1+j, -1-j, 1-j]$ with configurable power scaling.
+\item \texttt{qam4\_mod.m}: Maps integer indices $\{1,2,3,4\}$ to 4--QAM constellation symbols for transmission.
+\item \texttt{qam4\_demod.m}: Implements minimum--distance detection, mapping received complex samples to the nearest constellation point and returning both the symbol index and the hard decision.
+\end{itemize}
+
+\subsection*{Channel Modeling}
+\begin{itemize}
+\item \texttt{generate\_channel.m}: Generates channel impulse responses for three scenarios: (i) mild 3--tap ISI, (ii) severe 5--tap ISI with precursor and postcursor interference, and (iii) random Rayleigh fading channels with configurable length.
+\item \texttt{normalize\_channel.m}: Normalizes the channel impulse response to unit energy, ensuring $\sum_n |h[n]|^2 = 1$ so the channel does not amplify or attenuate average signal power.
+\item \texttt{pick\_decision\_delay.m}: Selects the optimal decision delay $D$ by aligning the equalizer's center tap with the dominant channel tap, computed as $D = \arg\max_k |h[k]| - 1$ clipped to $[0, N-1]$.
+\end{itemize}
+
+\subsection*{Noise and Signal Processing}
+\begin{itemize}
+\item \texttt{add\_awgn.m}: Adds complex circularly symmetric additive white Gaussian noise to achieve a target SNR. Computes noise variance as $\sigma_n^2 = \sigma_s^2 / 10^{\text{SNR}_{\text{dB}}/10}$ and generates noise samples $w[n] \sim \mathcal{CN}(0, \sigma_n^2)$.
+\end{itemize}
+
+\subsection*{Visualization and Metrics}
+\begin{itemize}
+\item \texttt{plot\_constellation.m}: Utility function to plot complex scatter diagrams showing received or equalized samples along with the ideal 4--QAM constellation reference points.
+\item \texttt{measure\_ser.m}: Computes the symbol error rate by comparing ground truth symbol indices to detected symbol indices, returning the fraction of incorrect decisions.
+\end{itemize}
+
+% \subsection*{main.m}\lstinputlisting{../matlab/main.m}
+% \subsection*{simulate\_one\_run.m}\lstinputlisting{../matlab/simulate_one_run.m}
+% \subsection*{lms\_equalizer.m}\lstinputlisting{../matlab/lms_equalizer.m}
+% \subsection*{qam4\_constellation.m}\lstinputlisting{../matlab/qam4_constellation.m}
+% \subsection*{qam4\_mod.m}\lstinputlisting{../matlab/qam4_mod.m}
+% \subsection*{qam4\_demod.m}\lstinputlisting{../matlab/qam4_demod.m}
+% \subsection*{generate\_channel.m}\lstinputlisting{../matlab/generate_channel.m}
+% \subsection*{normalize\_channel.m}\lstinputlisting{../matlab/normalize_channel.m}
+% \subsection*{pick\_decision\_delay.m}\lstinputlisting{../matlab/pick_decision_delay.m}
+% \subsection*{add\_awgn.m}\lstinputlisting{../matlab/add_awgn.m}
+% \subsection*{plot\_constellation.m}\lstinputlisting{../matlab/plot_constellation.m}
+% \subsection*{measure\_ser.m}\lstinputlisting{../matlab/measure_ser.m}
 
 \end{document}
