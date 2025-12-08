@@ -1,4 +1,4 @@
 function h = normalize_channel(h)
-% Normalize channel to unit energy
+%NORMALIZE_CHANNEL Scales h[n] to unit energy.
     h = h / norm(h);
 end
