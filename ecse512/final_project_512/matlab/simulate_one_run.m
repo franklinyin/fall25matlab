@@ -1,6 +1,6 @@
 function [x, y, w, noiseVar, xhat, e, d_used, c_hist, decisions, mse, idxTrainEnd, ser] = ...
     simulate_one_run(cfg, h, D, SNRdB)
-%SIMULATE_ONE_RUN Generate one Monte‑Carlo realization and equalize.
+% Generate one Monte‑Carlo realization and equalize.
 %   Returns many internal signals for analysis/plotting.
 
     L = cfg.trainLen + cfg.dataLen;

@@ -1,5 +1,5 @@
 function [xhat, e, c_hist, d_used, decisions, mse, idxTrainEnd] = lms_equalizer(y, x, N, mu, Ltrain, D, S)
-%LMS_EQUALIZER Complex LMS adaptive FIR equalizer with training then DD.
+% Complex LMS adaptive FIR equalizer with training then DD.
 %   Implements:
 %       xhat[n] = sum_{k=0}^{N-1} c_k[n] * y[n-k]
 %       e[n]    = d[n] - xhat[n]
