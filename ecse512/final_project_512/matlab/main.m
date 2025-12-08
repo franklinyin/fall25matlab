@@ -9,8 +9,8 @@ cfg.M = 4; % QAM order (fixed to 4‑QAM)
 cfg.sigma_s2 = 1; % symbol power (E{|x|^2})
 cfg.trainLen = 1500; % training symbols
 cfg.dataLen = 15000; % data symbols (decision‑directed phase)
-cfg.equalizerLenN = 11; % LMS equalizer length (N taps)
-cfg.mu = 0.005; % LMS step size (tune per scenario)
+cfg.equalizerLenN = 5; % LMS equalizer length (N taps)
+cfg.mu = 0.01; % LMS step size (tune per scenario)
 cfg.numMC = 5; % Monte‑Carlo trials (increase for stats)
 cfg.SNRdB_grid = 5:5:30; % SNR sweep for SER curves
 cfg.saveFigs = true; % save figures to ../results
@@ -145,6 +145,92 @@ xlabel('Equalizer length N'); ylabel('SER');
 title(sprintf('SER vs N at SNR=%.1f dB (\\mu=%.4f)', cfg.plotOneRunSNRdB, cfg.mu));
 if cfg.saveFigs
     saveas(gcf, fullfile(resultsDir, 'SER_vs_N.png'));
+end
+
+
+% comprehensive joint parameter search (mu, N)
+fprintf('\n=== Joint Grid Search: Optimal (mu, N) ===\n');
+muGrid_full = [0.0005 0.001 0.002 0.003 0.005 0.007 0.01 0.015];
+Ngrid_full = [5 7 9 11 13 15 17];
+SNR_opt = cfg.plotOneRunSNRdB; % test at this SNR
+
+SER_grid = zeros(numel(muGrid_full), numel(Ngrid_full));
+fprintf('Testing %d mu values x %d N values = %d combinations...\n', ...
+    numel(muGrid_full), numel(Ngrid_full), numel(muGrid_full)*numel(Ngrid_full));
+
+for imu = 1:numel(muGrid_full)
+    for iN = 1:numel(Ngrid_full)
+        cfg_test = cfg;
+        cfg_test.mu = muGrid_full(imu);
+        cfg_test.equalizerLenN = Ngrid_full(iN);
+        D_test = pick_decision_delay(h, cfg_test.equalizerLenN);
+        
+        ser_mc = zeros(1, cfg.numMC);
+        for it = 1:cfg.numMC
+            [~, ~, ~, ~, ~, ~, ~, ~, ~, ~, ~, ser_val] = ...
+                simulate_one_run(cfg_test, h, D_test, SNR_opt);
+            ser_mc(it) = ser_val;
+        end
+        SER_grid(imu, iN) = mean(ser_mc);
+        fprintf('  mu=%.5f, N=%2d --> SER = %.4e\n', ...
+            cfg_test.mu, cfg_test.equalizerLenN, SER_grid(imu, iN));
+    end
+end
+
+% find optimal combination
+[minSER, idx] = min(SER_grid(:));
+[opt_imu, opt_iN] = ind2sub(size(SER_grid), idx);
+opt_mu = muGrid_full(opt_imu);
+opt_N = Ngrid_full(opt_iN);
+
+fprintf('\n*** OPTIMAL PARAMETERS ***\n');
+fprintf('    mu = %.5f\n', opt_mu);
+fprintf('    N  = %d\n', opt_N);
+fprintf('    SER @ %ddB = %.4e\n', SNR_opt, minSER);
+fprintf('**************************\n');
+
+% visualize as heatmap
+figure('Name','Joint Parameter Search','Color','w');
+imagesc(Ngrid_full, 1:numel(muGrid_full), log10(SER_grid));
+colorbar; colormap('hot');
+set(gca, 'YTick', 1:numel(muGrid_full), 'YTickLabel', arrayfun(@(x) sprintf('%.5f',x), muGrid_full, 'UniformOutput', false));
+xlabel('Equalizer Length N'); 
+ylabel('\mu (step size)');
+title(sprintf('log_{10}(SER) at SNR=%ddB - Joint Grid Search', SNR_opt));
+hold on;
+plot(opt_N, opt_imu, 'c*', 'MarkerSize', 20, 'LineWidth', 2);
+text(opt_N, opt_imu, sprintf('  Optimal\n  (%.5f, %d)', opt_mu, opt_N), ...
+    'Color', 'cyan', 'FontWeight', 'bold', 'FontSize', 10);
+if cfg.saveFigs
+    saveas(gcf, fullfile(resultsDir, 'joint_grid_search.png'));
+end
+
+% plot SER vs N for each mu
+figure('Name','SER vs N for different mu','Color','w');
+for imu = 1:numel(muGrid_full)
+    semilogy(Ngrid_full, SER_grid(imu,:), '-o', 'LineWidth', 1.2, ...
+        'DisplayName', sprintf('\\mu=%.5f', muGrid_full(imu)));
+    hold on;
+end
+grid on; xlabel('Equalizer Length N'); ylabel('SER');
+title(sprintf('SER vs N for various \\mu at SNR=%ddB', SNR_opt));
+legend('Location', 'best');
+if cfg.saveFigs
+    saveas(gcf, fullfile(resultsDir, 'SER_vs_N_all_mu.png'));
+end
+
+% plot SER vs mu for each N
+figure('Name','SER vs mu for different N','Color','w');
+for iN = 1:numel(Ngrid_full)
+    semilogy(muGrid_full, SER_grid(:,iN), '-o', 'LineWidth', 1.2, ...
+        'DisplayName', sprintf('N=%d', Ngrid_full(iN)));
+    hold on;
+end
+grid on; xlabel('\mu (step size)'); ylabel('SER');
+title(sprintf('SER vs \\mu for various N at SNR=%ddB', SNR_opt));
+legend('Location', 'best');
+if cfg.saveFigs
+    saveas(gcf, fullfile(resultsDir, 'SER_vs_mu_all_N.png'));
 end
 
 % save workspace with results
