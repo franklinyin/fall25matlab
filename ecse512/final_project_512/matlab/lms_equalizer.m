@@ -56,6 +56,7 @@ function [xhat, e, c_hist, d_used, decisions, mse, idxTrainEnd] = lms_equalizer(
         end
         d_used(n) = d;
         e(n) = d - xhat(n);
+        % abs(e(n))^2
         c = c + mu * yvec * conj(e(n));
         c_hist(:,n) = c;
         decisions(n) = d;  % in training equals reference x (delayed)

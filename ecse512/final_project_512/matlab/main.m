@@ -86,6 +86,7 @@ for iS = 0:numel(SNRdB)-1
         [~, ~, ~, ~, ~, ~, ~, ~, ~, ~, ~, ser_val] = ...
             simulate_one_run(cfg, h, D, snrdb);
         ser_mc(it) = ser_val;
+        % ser_val
     end
     SER(iS+1) = mean(ser_mc);
     fprintf('SNR = %2d dB --> SER = %.3e\n', snrdb, SER(iS+1));

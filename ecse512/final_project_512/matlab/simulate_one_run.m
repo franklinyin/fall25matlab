@@ -10,6 +10,7 @@ function [x, y, w, noiseVar, xhat, e, d_used, c_hist, decisions, mse, idxTrainEn
 
     % channel + noise (unit energy channel -> output power ~ sigma_s2)
     y_clean = filter(h, 1, x);
+    % mean(abs(y_clean).^2)
     [y, w, noiseVar] = add_awgn(y_clean, SNRdB, cfg.sigma_s2);
 
     % equalization (training then decision‑directed)
@@ -36,6 +37,7 @@ function [x, y, w, noiseVar, xhat, e, d_used, c_hist, decisions, mse, idxTrainEn
         % map to indices to avoid comparing complex floats
         [idx_true,~] = qam4_demod(x_true, sqrt(cfg.sigma_s2));
         [idx_hard,~] = qam4_demod(x_hard, sqrt(cfg.sigma_s2));
+        % sum(idx_true~=idx_hard)
         ser = measure_ser(idx_true, idx_hard);
     end
 end
