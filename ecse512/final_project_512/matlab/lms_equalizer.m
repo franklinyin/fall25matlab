@@ -6,21 +6,21 @@ function [xhat, e, c_hist, d_used, decisions, mse, idxTrainEnd] = lms_equalizer(
 %       c[n+1]  = c[n] + mu * y_vec[n] * conj(e[n])
 %   where y_vec[n] = [y[n], y[n-1], ..., y[n-N+1]]^T
 %
-%   y      : received samples (1xL or Lx1)
-%   x      : transmitted symbol sequence aligned as d[n] = x[n-D]
-%   N      : number of equalizer taps
-%   mu     : LMS step size
-%   Ltrain : number of training iterations
-%   D      : decision delay (0..N-1)
-%   S      : 4‑QAM constellation (1x4)
+%   y: received samples (1xL or Lx1)
+%   x: transmitted symbol sequence aligned as d[n] = x[n-D]
+%   N: number of equalizer taps
+%   mu: LMS step size
+%   Ltrain: number of training iterations
+%   D: decision delay (0..N-1)
+%   S: 4‑QAM constellation (1x4)
 %
-%   xhat        : equalized output (1xL)
-%   e           : error signal used by LMS (1xL)
-%   c_hist      : N x L evolution of the equalizer taps
-%   d_used      : desired sequence actually used at each n
-%   decisions   : hard decisions in DD mode
-%   mse         : |e[n]|^2 (vector)
-%   idxTrainEnd : index where training stopped (N-1 + Ltrain clipped)
+%   xhat: equalized output (1xL)
+%   e: error signal used by LMS (1xL)
+%   c_hist: N x L evolution of the equalizer taps
+%   d_used: desired sequence actually used at each n
+%   decisions: hard decisions in DD mode
+%   mse: |e[n]|^2 (vector)
+%   idxTrainEnd: index where training stopped (N-1 + Ltrain clipped)
 %
 %   Updates start at n = N (1‑based) so that y[n-k] is defined.
 %   During training, d[n] = x[n-D].

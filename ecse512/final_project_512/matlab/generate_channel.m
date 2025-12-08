@@ -1,8 +1,8 @@
 function [h, descr] = generate_channel(ch)
 %GENERATE_CHANNEL Returns an example ISI channel impulse response.
 %   ch.type: 'mild' | 'severe' | 'random'
-%   ch.K   : length when 'random'
-%   ch.randSTD : std for Rayleigh taps (before normalization)
+%   ch.K: length when 'random'
+%   ch.randSTD: std for Rayleigh taps (before normalization)
 
     if ~isfield(ch,'type'), ch.type='mild'; end
     switch lower(ch.type)
