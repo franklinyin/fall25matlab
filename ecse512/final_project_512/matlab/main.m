@@ -1,10 +1,9 @@
-% ECSE 512 – Digital Signal Processing (McGill)
-% Term Project: Adaptive Equalization for 4‑QAM over Dispersive Channel
-% Main driver script
+% main script
 
 clear; clc; close all;
 
 cfg = struct();
+
 % simulation parameters
 cfg.M = 4; % QAM order (fixed to 4‑QAM)
 cfg.sigma_s2 = 1; % symbol power (E{|x|^2})
