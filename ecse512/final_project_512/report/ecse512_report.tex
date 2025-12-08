@@ -47,7 +47,7 @@
 % ------------------------------ COVER PAGE -------------------------------
 \begin{titlepage}
   \centering
-  {\Large ECSE 512 -- Digital Signal Processing \par}
+  {\Large ECSE 512 -- Digital Signal Processing 1\par}
   \vspace{1em}
   {\Large McGill University, Fall 2025\par}
   \vspace{2em}
@@ -60,93 +60,107 @@
   {\large Date: \today\par}
   \vfill
   \begin{abstract}
-  We implement and evaluate a complex LMS--based decision--directed adaptive FIR equalizer for 4--QAM transmission over frequency--selective channels that induce inter--symbol interference (ISI). The complete MATLAB simulation chain includes a channel model with unit energy, complex AWGN, a training sequence followed by a decision--directed phase, and performance assessment via learning curves and symbol error rate (SER). We study the impact of SNR, equalizer length, and step size. Results confirm that the LMS equalizer effectively mitigates ISI and tracks slow variations when properly tuned.
+  This project implements and evaluate a LMS--based decision--directed adaptive FIR equalizer for 4--QAM transmission over frequency--selective channels that induce inter--symbol interference (ISI). The complete MATLAB simulation chain includes a channel model with unit energy, complex AWGN, a training sequence followed by a decision--directed phase, and performance assessment via learning curves and symbol error rate (SER). It studies the impact of SNR, equalizer length, and step size. Results confirm that the LMS equalizer effectively mitigates ISI and tracks slow variations when properly tuned.
   \end{abstract}
   \vfill
 \end{titlepage}
 \setcounter{page}{1}
 
 % ------------------------------ TOC --------------------------------------
-\setcounter{tocdepth}{2}
 \tableofcontents
 \newpage
 
+
 % ------------------------------ 1. INTRO ---------------------------------
 \section{Introduction}
-Modern digital communication receivers must cope with inter--symbol interference (ISI), which arises when the channel is time--dispersive or frequency--selective. In baseband terms, the received sequence can be written as the convolution of the transmit symbols with the channel impulse response plus additive noise. ISI distorts the constellation and increases the symbol error rate (SER) if left uncompensated. Equalization is therefore required, especially in wireline channels with multipath reflections and in wireless channels with delay spread.
+Dispersive (frequency--selective) channels smear each transmitted symbol across multiple sampling intervals, producing inter--symbol interference (ISI) that rotates and compresses the constellation and degrades symbol error rate (SER). Such conditions arise in wireline links with impedance mismatches and reflections (e.g., copper, coax) as well as in wireless links with multipath delay spread. Equalization is therefore a central receiver function that attempts to undo the channel's memory and restore reliable decisions at the detector.
 
-Among the many equalization strategies---including zero--forcing (ZF), minimum mean--square error (MMSE), decision--feedback equalization (DFE), maximum likelihood sequence estimation (MLSE)~\cite{proakis}, and blind methods such as CMA~\cite{qureshi}---adaptive linear equalizers trained with the least mean squares (LMS) algorithm~\cite{haykin} strike an attractive balance between complexity, robustness, and performance. LMS only requires local gradient information and a step--size parameter, which makes it easy to implement in real time. This project implements a complex LMS adaptive FIR equalizer in a 4--QAM link and assesses its performance using Monte Carlo simulations.
+Classical solutions span linear and nonlinear strategies. Linear time--invariant equalizers include the zero--forcing (ZF) and minimum mean--square error (MMSE) designs; ZF removes ISI at the cost of noise enhancement, whereas MMSE trades residual ISI for reduced noise amplification \cite{proakis}. Nonlinear receivers, notably decision--feedback equalizers (DFE), cancel postcursor ISI more effectively by leveraging past decisions, and maximum likelihood sequence estimation (MLSE) achieves optimal sequence detection at substantially higher complexity \cite{proakis}. Since channel statistics and propagation conditions vary across time, practical receivers employ \emph{adaptive} algorithms to track the optimum equalizer in situ. Early adaptive equalization work (e.g., Lucky) and comprehensive surveys (e.g., Qureshi) established the foundational architectures and operating modes (training vs.\ decision--directed) used today \cite{lucky,qureshi}. Among adaptive algorithms, least mean squares (LMS) is particularly attractive for its simplicity, modest computational load, and robustness to modeling uncertainties; it performs stochastic gradient descent with a single step--size parameter that governs the speed/misadjustment trade--off \cite{haykin,qureshi}. Variants such as normalized LMS (NLMS), recursive least squares (RLS), and blind methods like the constant modulus algorithm (CMA) further broaden the design space \cite{haykin,qureshi}.
 
-\subsection{Project goals}
-The goals are to: (i) design and code a full simulation chain in MATLAB, (ii) implement training followed by decision--directed adaptation, (iii) evaluate performance as a function of SNR, equalizer length, and LMS step size, and (iv) document the methodology and findings in a technical report.
+\paragraph{Project scope and context.}
+This project implements and evaluates an LMS--based, decision--directed adaptive FIR \emph{linear} equalizer for 4--QAM transmission over frequency--selective channels with complex AWGN. The simulation (in MATLAB) reflects a standard baseband receiver: a known training preamble initializes adaptation, after which the loop switches to decision--directed (DD) operation for continued tracking \cite{qureshi,haykin}. Channels are modeled as unit--energy FIR responses to cleanly separate ISI effects from SNR scaling. This project consider three representative channels that span typical use cases: a mild 3--tap profile, a severe 5--tap profile with pre/postcursor ISI, and a random Rayleigh multipath profile (all normalized to unit energy). The equalizer employs an automatically chosen decision delay aligned to the dominant channel tap (a common heuristic in adaptive linear equalization) and measures both learning behavior and decision performance.
 
-\subsection{Report organization}
-Section~\ref{sec:model} describes the system model and problem formulation. Section~\ref{sec:lms} reviews LMS equalization and design trade--offs. Section~\ref{sec:results} presents results and discussions. Section~\ref{sec:conclusion} concludes. A complete listing of our MATLAB code is provided in the Appendix.
+\paragraph{Objectives.}
+Guided by the theory in \cite{haykin,proakis} and the adaptive equalization practices summarized in \cite{qureshi,lucky}, the project pursues four concrete goals:
+\begin{enumerate}
+  \item Build a reproducible end--to--end 4--QAM simulation including channel, AWGN, training, decision device, and a LMS adaptive FIR equalizer.
+  \item Implement two operating modes---training and decision--directed---with an automatic decision delay selection tied to the channel impulse response.
+  \item Quantify performance via (i) learning curves $|e[n]|^2$ that expose convergence speed and steady--state misadjustment and (ii) symbol error rate (SER) measured in DD mode.
+  \item Study key design knobs and trade--offs predicted by theory: SNR, equalizer length $N$ (span vs.\ complexity/misadjustment), and LMS step size $\mu$ (convergence speed vs.\ misadjustment/stability).
+\end{enumerate}
+
+\paragraph{Contributions and takeaways.}
+Within this scope, the report (i) provides a MATLAB reference implementation for LMS equalization with training and DD operation; (ii) connects empirical behavior (learning curves, SER, constellations) to LMS theory---including step--size stability bounds and misadjustment scaling with $N$ and received power \cite{haykin}; and (iii) identifies practical settings of $(N,\mu)$ that balance convergence and steady--state error on channels with different ISI profiles.
+
+\paragraph{Organization of the report.}
+Section~\ref{sec:model} formalizes the system model used throughout (constellation, channels, noise, equalizer structure, training/DD switching, and metrics). Section~\ref{sec:lms} reviews the LMS update, initialization, and design rules--of--thumb that motivate the parameter choices. Section~\ref{sec:results} presents learning curves, constellations, and SER trends versus SNR, $\mu$, and $N$, and discusses the observed error floors and trade--offs. Section~\ref{sec:conclusion} concludes and outlines extensions such as DFE, NLMS, and blind CMA equalization.
 
 % ------------------------------ 2. MODEL ---------------------------------
 \section{System Model and Problem Formulation}\label{sec:model}
-This section provides a comprehensive mathematical description of the adaptive equalization system, with each component corresponding to the block diagram in Fig.~\ref{fig:block} and the MATLAB implementation.
+This section provides mathematical descriptions of the adaptive equalization system, with each component corresponding to the block diagram in Fig.~\ref{fig:block}.
 
 \subsection{Transmitter and Signal Generation}
 The data generator produces an independent and identically distributed (IID) sequence of information symbols $x[n]$ drawn from a 4--QAM constellation $S$. The constellation consists of four equi--spaced points in the complex plane:
 \begin{equation}
 S = \left\{s_1, s_2, s_3, s_4\right\} = \frac{\sigma_s}{\sqrt{2}}\left\{1+j, -1+j, -1-j, 1-j\right\},
 \end{equation}
-where $\sigma_s^2$ is the symbol power, ensuring $E\{|x[n]|^2\} = \sigma_s^2$. Each symbol is selected with equal probability $P(x[n]=s_i) = 1/4$ for $i=1,\ldots,4$. In our implementation, symbols are generated by mapping random indices $\{1,2,3,4\}$ to constellation points via the function \texttt{qam4\_mod()}, which directly implements the mapping $x[n] = S[\text{idx}[n]]$.
+where $\sigma_s^2$ is the symbol power, ensuring $E\{|x[n]|^2\} = \sigma_s^2$. Each symbol is selected with equal probability $P(x[n]=s_i) = 1/4$ for $i=1,\ldots,4$. In the simulation, symbols are generated by mapping random indices to these constellation points.
 
 \subsection{Channel Model and Inter--Symbol Interference}
 The channel filter $h[n]$ models the combined effect of transmit filtering, physical propagation (multipath, reflections), and receive filtering. It is represented as a finite impulse response (FIR) filter of length $K$:
 \begin{equation}
 h[n] = \begin{cases} h_n & \text{for } n=0,1,\ldots,K-1 \\ 0 & \text{otherwise} \end{cases}
 \end{equation}
-The channel is normalized to unit energy such that $\sum_{n=0}^{K-1}|h[n]|^2 = 1$, ensuring that the channel does not amplify or attenuate the average signal power. This normalization is implemented via \texttt{normalize\_channel()}, which computes $h \leftarrow h/\|h\|_2$.
+The channel is normalized to unit energy such that $\sum_{n=0}^{K-1}|h[n]|^2 = 1$, so it does not amplify or attenuate the average signal power.
 
-Our simulation supports three channel types, implemented in \texttt{generate\_channel()}:
+The simulation considers three representative channel types:
 \begin{itemize}
-\item \textbf{Mild ISI:} A 3--tap channel $h = [0.9+0j, 0.3-0.2j, 0.15+0.05j]$ with modest postcursor interference, representing a relatively benign dispersive channel.
-\item \textbf{Severe ISI:} A 5--tap channel $h = [0.3+0.2j, 0.9+0j, 0.25-0.15j, 0.15+0.10j, 0.05-0.06j]$ with both precursor and postcursor interference, modeling strong multipath effects.
+\item \textbf{Mild ISI:} A 3--tap channel $h = [0.9+0j, 0.3-0.2j, 0.15+0.05j]$ with modest postcursor interference.
+\item \textbf{Severe ISI:} A 5--tap channel $h = [0.3+0.2j, 0.9+0j, 0.25-0.15j, 0.15+0.10j, 0.05-0.06j]$ with both precursor and postcursor interference.
 \item \textbf{Random Rayleigh:} A $K$--tap channel with complex Gaussian taps $h[k] \sim \mathcal{CN}(0, \sigma_h^2)$ before normalization, representing a frequency--selective fading channel.
 \end{itemize}
 
-The channel output before noise addition is the convolution:
+The channel output before noise addition is the convolution
 \begin{equation}
 y_{\text{clean}}[n] = \sum_{k=0}^{K-1} h[k]\,x[n-k] = (h*x)[n],
 \end{equation}
 which introduces inter--symbol interference (ISI) when $K > 1$, as each received sample contains contributions from multiple transmitted symbols.
 
 \subsection{Additive Noise Model}
-The noise generator produces complex circularly symmetric additive white Gaussian noise (AWGN) $w[n] \sim \mathcal{CN}(0, \sigma_n^2)$, where $\sigma_n^2$ is chosen to achieve a target signal--to--noise ratio (SNR) defined as:
+The noise generator produces complex circularly symmetric additive white Gaussian noise (AWGN) $w[n] \sim \mathcal{CN}(0, \sigma_n^2)$, where $\sigma_n^2$ is chosen to achieve a target signal--to--noise ratio (SNR) defined as
 \begin{equation}
 \text{SNR}_{\text{dB}} = 10\log_{10}\left(\frac{\sigma_s^2}{\sigma_n^2}\right).
 \end{equation}
-Since the channel is unit energy, $E\{|y_{\text{clean}}[n]|^2\} \approx \sigma_s^2$, and the noise variance is computed as $\sigma_n^2 = \sigma_s^2 / 10^{\text{SNR}_{\text{dB}}/10}$. The function \texttt{add\_awgn()} generates noise samples as $w[n] = \sqrt{\sigma_n^2/2}(w_r[n] + jw_i[n])$ where $w_r[n], w_i[n] \sim \mathcal{N}(0,1)$ are independent real Gaussian random variables.
-
-The final received signal at the equalizer input is:
+Since the channel is unit energy, $E\{|y_{\text{clean}}[n]|^2\} \approx \sigma_s^2$, and the noise variance is computed as $\sigma_n^2 = \sigma_s^2 / 10^{\text{SNR}_{\text{dB}}/10}$. The final received signal at the equalizer input is
 \begin{equation}
-y[n] = y_{\text{clean}}[n] + w[n] = \sum_{k=0}^{K-1} h[k]\,x[n-k] + w[n].
+y[n] = y_{\text{clean}}[n] + w[n] = \sum_{k=0}^{K-1} h[k]\,x[n-k] + w[n],
 \end{equation}
-This signal exhibits both ISI distortion and noise corruption, making direct symbol detection unreliable.
+which exhibits both ISI distortion and noise corruption.
 
 \subsection{Adaptive Equalizer Structure}
 The adaptive equalizer is an $N$--tap complex FIR filter with time--varying coefficients $\mathbf{c}[n] = [c_0[n], c_1[n], \ldots, c_{N-1}[n]]^T$. At each time $n$, it forms a linear combination of the $N$ most recent received samples:
 \begin{equation}
 \hat{x}[n] = \sum_{k=0}^{N-1} c_k[n]\,y[n-k] = \mathbf{c}^H[n]\,\mathbf{y}[n],
 \end{equation}
-where $\mathbf{y}[n] = [y[n], y[n-1], \ldots, y[n-N+1]]^T$ is the input regressor vector. The equalizer output $\hat{x}[n]$ is a soft estimate of the transmitted symbol, which must be processed by a decision device to produce a hard decision.
+where $\mathbf{y}[n] = [y[n], y[n-1], \ldots, y[n-N+1]]^T$ is the input regressor vector. The equalizer output $\hat{x}[n]$ is a soft estimate of the transmitted symbol.
 
 \subsection{Decision Device and Symbol Detection}
 The decision device implements minimum--distance detection, mapping the equalizer output $\hat{x}[n]$ to the nearest constellation point:
 \begin{equation}
 \tilde{x}[n] = \mathcal{Q}(\hat{x}[n]) = \arg\min_{s \in S} |\hat{x}[n] - s|^2.
 \end{equation}
-This is implemented in \texttt{qam4\_demod()} by computing distances to all four constellation points and selecting the index $k$ that minimizes $|\hat{x}[n] - S[k]|^2$, then outputting $\tilde{x}[n] = S[k]$.
+That is, the detector computes distances to all four 4--QAM points and selects the symbol with minimum Euclidean distance.
 
 \subsection{Training and Decision--Directed Modes}
 The system operates in two distinct phases, controlled by a switch in the block diagram (Fig.~\ref{fig:block}):
 
-\textbf{Training Phase ($n \leq L_{\text{tr}}$):} During the initial $L_{\text{tr}}$ symbols, the transmitter sends a known training sequence. The desired signal for the equalizer is set to $d[n] = x[n-D]$, where $D$ is the \emph{decision delay}. This delay accounts for the fact that the equalizer output $\hat{x}[n]$ estimates a symbol transmitted $D$ samples earlier due to the channel's memory. The delay $D$ is chosen to align the equalizer's center tap with the dominant channel tap, as computed by \texttt{pick\_decision\_delay()}, which selects $D = \arg\max_k |h[k]| - 1$ (clipped to $[0, N-1]$).
+\textbf{Training Phase:} During the initial $L_{\text{tr}}$ symbols, the transmitter sends a known training sequence. The desired signal for the equalizer is set to $d[n] = x[n-D]$, where $D$ is the \emph{decision delay}. This delay accounts for the fact that the equalizer output $\hat{x}[n]$ estimates a symbol transmitted $D$ samples earlier due to the channel's memory. The delay $D$ is chosen to align the equalizer's main tap with the dominant channel tap, by selecting the index of the largest $|h[k]|$ and mapping it to an appropriate equalizer tap.
 
-\textbf{Decision--Directed Phase ($n > L_{\text{tr}}$):} After training, the system switches to decision--directed mode, where the desired signal becomes $d[n] = \tilde{x}[n] = \mathcal{Q}(\hat{x}[n])$. This allows the equalizer to continue adapting to track slow channel variations without requiring additional training overhead. The switch occurs at index $n = N-1 + L_{\text{tr}}$ in our implementation, ensuring that $N$ received samples are available before adaptation begins.
+\textbf{Decision--Directed Phase:} After training, the system switches to decision--directed mode, where the desired signal becomes
+\begin{equation}
+d[n] = \tilde{x}[n] = \mathcal{Q}(\hat{x}[n]).
+\end{equation}
+This allows the equalizer to continue adapting to track slow channel variations without requiring additional training overhead.
 
 \subsection{Error Signal and Adaptation}
 The error signal is computed as the difference between the desired and actual equalizer output:
@@ -156,211 +170,173 @@ e[n] = d[n] - \hat{x}[n],
 where $d[n]$ switches between $x[n-D]$ (training) and $\tilde{x}[n]$ (decision--directed) as described above. This error signal drives the LMS adaptation algorithm, which updates the equalizer coefficients to minimize the mean squared error $E\{|e[n]|^2\}$.
 
 \subsection{Performance Metrics}
-We evaluate system performance using two primary metrics:
+The system performance is evaluated using two primary metrics:
 
-\textbf{Learning Curve:} The instantaneous squared error $|e[n]|^2$ versus time $n$, which reveals the convergence behavior during training and the steady--state residual error. The learning curve is computed directly in \texttt{lms\_equalizer()} and averaged over multiple Monte Carlo trials to estimate $E\{|e[n]|^2\}$.
+\textbf{Learning Curve:} The instantaneous squared error $|e[n]|^2$ versus time $n$, which reveals the convergence behavior during training and the steady--state residual error. In the simulations, this curve is often smoothed and averaged over multiple Monte Carlo trials to approximate $E\{|e[n]|^2\}$.
 
-\textbf{Symbol Error Rate (SER):} The probability of symbol detection error, computed as:
+\textbf{Symbol Error Rate (SER):} The probability of symbol detection error, computed as
 \begin{equation}
 \text{SER} = \frac{1}{L_{\text{data}}} \sum_{n=n_0}^{L} \mathbf{1}\{\tilde{x}[n] \neq x[n-D]\},
 \end{equation}
-where $n_0$ marks the start of the decision--directed phase and $L_{\text{data}}$ is the number of data symbols. The SER is measured only during decision--directed operation (implemented in \texttt{measure\_ser()}) and averaged over multiple independent realizations to obtain reliable statistics.
+where $n_0$ marks the start of the decision--directed phase and $L_{\text{data}}$ is the number of data symbols. The SER is measured only during decision--directed operation and averaged over multiple independent realizations.
+
+
 
 \begin{figure}[H]
- \centering
- \includegraphics[width=\textwidth]{figures/block_diagram.png}
- \caption{Block diagram of the data transmission system with adaptive equalization. The system processes transmitted symbols $x[n]$ through a dispersive channel $h[n]$ with additive noise $w[n]$, producing the received signal $y[n]$. The adaptive equalizer with coefficients $c_k[n]$ generates soft estimates $\hat{x}[n]$, which are quantized by the decision device to produce hard decisions $\tilde{x}[n]$. The error signal $e[n] = d[n] - \hat{x}[n]$ drives the LMS adaptation, where $d[n]$ switches between the delayed training sequence $x[n-D]$ and the decision--directed reference $\tilde{x}[n]$.}
- \label{fig:block}
+    \centering
+    \includegraphics[width=\textwidth]{report//figures/reduced_diagram_or.png}
+    \caption{Block diagram of the data transmission system with adaptive equalization.}
+    \label{fig:block}
 \end{figure}
+
+
+% \begin{figure}[H]
+%  \centering
+%  \includegraphics[width=\textwidth]{figures/block_diagram.png}
+%  \caption{Block diagram of the data transmission system with adaptive equalization. The system processes transmitted symbols $x[n]$ through a dispersive channel $h[n]$ with additive noise $w[n]$, producing the received signal $y[n]$. The adaptive equalizer with coefficients $c_k[n]$ generates soft estimates $\hat{x}[n]$, which are quantized by the decision device to produce hard decisions $\tilde{x}[n]$. The error signal $e[n] = d[n] - \hat{x}[n]$ drives the LMS adaptation, where $d[n]$ switches between the delayed training sequence $x[n-D]$ and the decision--directed reference $\tilde{x}[n]$.}
+%  \label{fig:block}
+% \end{figure}
 
 % ------------------------------ 3. LMS -----------------------------------
 \section{Adaptive LMS Equalization}\label{sec:lms}
-This section provides a detailed review of the least mean squares (LMS) algorithm for adaptive equalization, including its mathematical derivation, implementation details, and design trade--offs for parameter selection.
+This section reviews the least mean squares (LMS) algorithm for adaptive equalization, including its mathematical formulation, implementation, and design trade--offs for parameter selection.
 
-\subsection{LMS Algorithm Derivation}
+\subsection{LMS Algorithm and Cost Function}
 The LMS algorithm is a stochastic gradient descent method that minimizes the mean squared error (MSE) cost function:
 \begin{equation}
 J(\mathbf{c}) = E\{|e[n]|^2\} = E\{|d[n] - \mathbf{c}^H\mathbf{y}[n]|^2\},
 \end{equation}
-where $\mathbf{y}[n] = [y[n], y[n-1], \ldots, y[n-N+1]]^T$ is the input regressor vector and $\mathbf{c} = [c_0, c_1, \ldots, c_{N-1}]^T$ is the equalizer coefficient vector. The optimal Wiener solution is $\mathbf{c}_{\text{opt}} = \mathbf{R}_y^{-1}\mathbf{p}_{yd}$, where $\mathbf{R}_y = E\{\mathbf{y}[n]\mathbf{y}^H[n]\}$ is the input correlation matrix and $\mathbf{p}_{yd} = E\{\mathbf{y}[n]d^*[n]\}$ is the cross--correlation vector.
-
-Since computing $\mathbf{R}_y^{-1}$ requires knowledge of channel statistics, LMS uses an instantaneous gradient estimate. The true gradient of $J(\mathbf{c})$ with respect to $\mathbf{c}^*$ is:
+where $\mathbf{y}[n] = [y[n], y[n-1], \ldots, y[n-N+1]]^T$ is the input regressor vector and $\mathbf{c} = [c_0, c_1, \ldots, c_{N-1}]^T$ is the equalizer coefficient vector. Using an instantaneous gradient approximation, the LMS update takes the form~\cite{haykin}:
 \begin{equation}
-\nabla_{\mathbf{c}^*} J = -E\{\mathbf{y}[n]e^*[n]\},
+\mathbf{c}[n+1] = \mathbf{c}[n] + \mu \mathbf{y}[n]e^*[n],
 \end{equation}
-where $e[n] = d[n] - \mathbf{c}^H[n]\mathbf{y}[n]$. LMS approximates this by the instantaneous gradient:
-\begin{equation}
-\hat{\nabla}_{\mathbf{c}^*} J[n] = -\mathbf{y}[n]e^*[n],
-\end{equation}
-leading to the update equation:
-\begin{equation}
-\mathbf{c}[n+1] = \mathbf{c}[n] - \mu \hat{\nabla}_{\mathbf{c}^*} J[n] = \mathbf{c}[n] + \mu \mathbf{y}[n]e^*[n],
-\end{equation}
-where $\mu > 0$ is the step size parameter. This is the complex LMS algorithm~\cite{haykin}, which adapts the equalizer coefficients at each time step using only the current input vector and error signal.
+where $\mu > 0$ is the step size parameter and $e[n] = d[n] - \mathbf{c}^H[n]\mathbf{y}[n]$ is the error signal. This update adapts the equalizer coefficients at each time step using only the current input vector and error.
 
 \subsection{Algorithm Implementation}
-The complete LMS equalization algorithm, as implemented in \texttt{lms\_equalizer()}, proceeds as follows:
+The LMS equalization algorithm proceeds as follows.
 
 \textbf{Initialization:} The equalizer coefficients are initialized as a delayed delta function:
 \begin{equation}
 c_k[0] = \begin{cases} 1 & \text{if } k = D \\ 0 & \text{otherwise} \end{cases},
 \end{equation}
-where $D$ is the decision delay. This initialization, implemented as \texttt{c(min(D+1,N)) = 1}, places the equalizer's main tap at position $D$, providing a reasonable starting point that forwards the $D$--th delayed sample. This accelerates initial convergence compared to zero initialization.
+where $D$ is the decision delay. This places the equalizer's main tap at position $D$, providing a reasonable starting point that forwards the $D$--th delayed sample and accelerates convergence compared to zero initialization.
 
-\textbf{Main Loop:} For each time index $n \geq N$ (ensuring all required input samples are available):
+\textbf{Main Loop:} For each time index $n$ (after enough samples are available to form $\mathbf{y}[n]$):
+
 \begin{enumerate}
-\item \textbf{Form input vector:} $\mathbf{y}[n] = [y[n], y[n-1], \ldots, y[n-N+1]]^T$, implemented as \texttt{flipud(y(n-N+1:n))}.
-\item \textbf{Compute equalizer output:} $\hat{x}[n] = \mathbf{c}^H[n]\mathbf{y}[n]$, using the current coefficient vector.
-\item \textbf{Determine desired signal:}
+\item Form the input vector $\mathbf{y}[n] = [y[n], y[n-1], \ldots, y[n-N+1]]^T$.
+\item Compute the equalizer output $\hat{x}[n] = \mathbf{c}^H[n]\mathbf{y}[n]$.
+\item Determine the desired signal:
 \begin{equation}
 d[n] = \begin{cases}
-x[n-D] & \text{if } n \leq L_{\text{tr}} \text{ (training mode)} \\
-\mathcal{Q}(\hat{x}[n]) & \text{if } n > L_{\text{tr}} \text{ (decision--directed mode)}
+x[n-D] & \text{training mode} \\
+\mathcal{Q}(\hat{x}[n]) & \text{decision--directed mode}
 \end{cases}
 \end{equation}
-where $\mathcal{Q}(\cdot)$ denotes the minimum--distance quantizer to the 4--QAM constellation.
-\item \textbf{Compute error:} $e[n] = d[n] - \hat{x}[n]$.
-\item \textbf{Update coefficients:} $\mathbf{c}[n+1] = \mathbf{c}[n] + \mu \mathbf{y}[n]e^*[n]$.
-\item \textbf{Store metrics:} Record $|e[n]|^2$ for the learning curve and $\mathbf{c}[n]$ for coefficient evolution analysis.
+\item Compute the error $e[n] = d[n] - \hat{x}[n]$.
+\item Update the coefficient vector via $\mathbf{c}[n+1] = \mathbf{c}[n] + \mu \mathbf{y}[n]e^*[n]$.
 \end{enumerate}
 
-The algorithm maintains a history of coefficients $\mathbf{c}_{\text{hist}}[n]$ and error signals, enabling post--processing analysis of convergence behavior.
+This loop produces the equalized output, the error sequence, and the time evolution of the coefficients, which are later used to analyze convergence and steady--state behavior.
 
-\subsection{Convergence Analysis}
-The convergence properties of LMS depend critically on the step size $\mu$. For convergence in the mean, the step size must satisfy:
+\subsection{Convergence Properties}
+The convergence properties of LMS depend critically on the step size $\mu$. For convergence in the mean, the step size must satisfy~\cite{haykin}:
 \begin{equation}
 0 < \mu < \frac{2}{\lambda_{\max}},
 \end{equation}
-where $\lambda_{\max}$ is the largest eigenvalue of $\mathbf{R}_y$. A more practical bound uses the trace of $\mathbf{R}_y$:
+where $\lambda_{\max}$ is the largest eigenvalue of the input correlation matrix $\mathbf{R}_y = E\{\mathbf{y}[n]\mathbf{y}^H[n]\}$. A more practical bound uses the trace of $\mathbf{R}_y$:
 \begin{equation}
 0 < \mu < \frac{2}{\mathrm{tr}\{\mathbf{R}_y\}} = \frac{2}{N P_y},
 \end{equation}
-where $P_y = E\{|y[n]|^2\}$ is the average received power. For a unit--energy channel, $P_y \approx \sigma_s^2 + \sigma_n^2$, leading to the rule of thumb:
+where $P_y = E\{|y[n]|^2\}$ is the average received power. For a unit--energy channel, $P_y \approx \sigma_s^2 + \sigma_n^2$, which leads to the rule of thumb
 \begin{equation}
 \mu \lesssim \frac{1}{N(\sigma_s^2 + \sigma_n^2)}.
 \end{equation}
 
-The convergence rate is approximately exponential with time constant $\tau \approx 1/(\mu \lambda_{\min})$ for small $\mu$, where $\lambda_{\min}$ is the smallest eigenvalue of $\mathbf{R}_y$. The steady--state excess MSE (misadjustment) is:
+The steady--state excess MSE (misadjustment) is approximately
 \begin{equation}
 M = \frac{\mu}{2} \mathrm{tr}\{\mathbf{R}_y\} = \frac{\mu N P_y}{2},
 \end{equation}
-which increases linearly with $\mu$ and $N$. This creates a fundamental trade--off: larger $\mu$ accelerates convergence but increases steady--state error, while smaller $\mu$ reduces misadjustment but slows convergence.
+which increases linearly with $\mu$ and $N$. Thus, larger $\mu$ accelerates convergence but increases steady--state error and the risk of instability, while smaller $\mu$ reduces misadjustment at the cost of slower convergence.
 
 \subsection{Parameter Selection and Design Trade--Offs}
 
-\textbf{Equalizer Length $N$:} The equalizer must span the channel's delay spread to effectively cancel ISI. If the channel has significant energy over $K$ taps, the equalizer length should satisfy $N \gtrsim K$ to capture the channel memory. However, choosing $N$ too large introduces several drawbacks:
-\begin{itemize}
-\item \textbf{Increased complexity:} Each additional tap requires one multiply--accumulate operation per iteration.
-\item \textbf{Slower convergence:} More parameters to adapt increases the convergence time, approximately proportional to $N$.
-\item \textbf{Higher misadjustment:} The excess MSE scales as $M \propto \mu N P_y$, so longer equalizers accumulate more steady--state error for fixed $\mu$.
-\item \textbf{Over--fitting:} Excessively long equalizers may adapt to noise rather than signal structure.
-\end{itemize}
-In practice, $N$ should be chosen as the smallest value that spans the significant channel energy, typically $N = K + 2$ to $N = 2K$ to provide margin for adaptation. Our simulations use $N=11$ for a 5--tap severe channel, providing adequate span without excessive complexity.
+\textbf{Equalizer Length $N$:} The equalizer must span the channel's delay spread to effectively cancel ISI. If the channel has significant energy over $K$ taps, the equalizer length should satisfy $N \gtrsim K$ to capture the channel memory. Choosing $N$ too large increases per--iteration complexity, slows convergence, and raises misadjustment ($M \propto \mu N P_y$), and may lead to over--fitting noise. In practice, $N$ is chosen as the smallest value that spans the significant channel energy, typically around $K$ to $2K$ taps.
 
-\textbf{Step Size $\mu$:} The step size is the most critical parameter, balancing convergence speed and steady--state performance. The selection process involves several considerations:
+\textbf{Step Size $\mu$:} The step size is the most critical parameter, balancing convergence speed and steady--state performance. Larger $\mu$ reduces the convergence time, which is important when the training length $L_{\text{tr}}$ is limited, but increases the steady--state misadjustment and may cause instability, especially in decision--directed mode. Smaller $\mu$ improves steady--state MSE and SER but may not allow the equalizer to converge fully within the training window. In the simulations, $\mu$ is chosen according to the above rule of thumb, and then refined empirically.
 
-\begin{itemize}
-\item \textbf{Convergence speed:} Larger $\mu$ reduces the convergence time constant, allowing the equalizer to adapt quickly during the training phase. This is particularly important when $L_{\text{tr}}$ is limited.
-\item \textbf{Steady--state error:} Smaller $\mu$ reduces misadjustment, leading to lower residual MSE and better SER performance after convergence.
-\item \textbf{Stability:} Very large $\mu$ can cause instability, especially in decision--directed mode where error propagation can amplify coefficient fluctuations.
-\item \textbf{Training duration:} If $L_{\text{tr}}$ is short, a larger $\mu$ may be necessary to achieve convergence within the training window. Conversely, if training is long, smaller $\mu$ can be used to achieve lower steady--state error.
-\end{itemize}
+\textbf{Decision Delay $D$:} The decision delay aligns the desired symbol $x[n-D]$ with the equalizer’s estimate $\hat{x}[n]$. A simple and effective heuristic is to choose $D$ to align the equalizer’s main tap with the dominant channel tap (the index of the largest $|h[k]|$). This tends to maximize the signal--to--interference ratio at the equalizer output and simplifies initialization.
 
-Our implementation uses $\mu = 0.003$ as a default, which provides a good balance for $N=11$ and $L_{\text{tr}}=1500$. This corresponds to $\mu \approx 0.27/(N P_y)$ for typical SNR values, well within the stability bound.
+\textbf{Training Length $L_{\text{tr}}$:} The training duration must be sufficient for the equalizer to approach steady--state. The required length depends on the convergence time constant, which scales inversely with $\mu$ and the smallest eigenvalue of $\mathbf{R}_y$. A rough rule of thumb is to choose $L_{\text{tr}}$ several times larger than the convergence time constant so that the transition to decision--directed mode occurs after the main transient has decayed.
 
-\textbf{Decision Delay $D$:} The decision delay aligns the desired symbol $x[n-D]$ with the equalizer's estimate $\hat{x}[n]$. The optimal $D$ maximizes the signal--to--interference ratio at the equalizer output. A heuristic approach, implemented in \texttt{pick\_decision\_delay()}, selects $D$ to align with the dominant channel tap:
-\begin{equation}
-D = \arg\max_{k} |h[k]| - 1,
-\end{equation}
-clipped to the range $[0, N-1]$. This ensures that the equalizer's center tap (at index $D$) targets the strongest channel path, facilitating effective ISI cancellation. For the severe 5--tap channel with dominant tap at index 1 (0--indexed), this yields $D=1$, placing the main equalizer tap at the second position.
+\subsection{Practical Considerations}
+In the MATLAB implementation, care is taken to handle filter transients, maintain consistent constellation scaling between modulator and detector, and avoid array boundary issues when indexing $x[n-D]$ and $\mathbf{y}[n]$. These implementation details do not change the theoretical formulation above but are important for obtaining stable and reproducible simulation results.
 
-\textbf{Training Length $L_{\text{tr}}$:} The training duration must be sufficient for the equalizer to converge. The required length depends on the convergence time constant $\tau \approx 1/(\mu \lambda_{\min})$ and the desired convergence factor. A rule of thumb is $L_{\text{tr}} \gtrsim 5\tau$ to achieve convergence within 1\% of steady--state. For our parameters ($\mu=0.003$, $N=11$), this suggests $L_{\text{tr}} \gtrsim 1000$ symbols, and we use $L_{\text{tr}} = 1500$ to provide margin. Longer training improves initial convergence but reduces the fraction of time available for data transmission.
 
-\textbf{Training vs Decision--Directed Mode:} The two--phase operation addresses different challenges:
-\begin{itemize}
-\item \textbf{Training phase:} Uses the known transmitted sequence $x[n-D]$ as the desired signal, avoiding error propagation and ensuring reliable convergence. This is essential during initial acquisition when the equalizer coefficients are far from optimal.
-\item \textbf{Decision--directed phase:} Uses the quantized equalizer output $\tilde{x}[n]$ as the desired signal, enabling continuous adaptation without training overhead. This is effective once the equalizer has converged and the decision error rate is low, allowing tracking of slow channel variations.
-\end{itemize}
-The transition occurs automatically at $n = N-1 + L_{\text{tr}}$ in our implementation, ensuring seamless switching once sufficient training has occurred.
-
-\subsection{Implementation Considerations}
-Several practical details in our MATLAB implementation enhance algorithm robustness:
-
-\textbf{Boundary handling:} The algorithm begins adaptation at $n = N$ to ensure all required input samples $y[n-k]$ for $k=0,\ldots,N-1$ are available. The first $N-1$ outputs are set to zero.
-
-\textbf{Delay alignment:} When accessing $x[n-D]$ during training, bounds checking ensures $n-D \in [1, L]$ to avoid array out--of--bounds errors. If the delay places the reference outside the transmitted sequence, $d[n]$ is set to zero.
-
-\textbf{Constellation scaling:} The decision device uses the same constellation scaling $\sigma_s$ as the modulator, ensuring consistent symbol mapping. The function \texttt{qam4\_demod()} computes distances using the normalized constellation points.
-
-\textbf{Error tracking:} The algorithm maintains a complete history of coefficients $\mathbf{c}_{\text{hist}}[n]$ and error signals $e[n]$, enabling detailed analysis of convergence dynamics and coefficient evolution over time.
-
-These implementation details ensure numerical stability and accurate simulation of the adaptive equalization system, providing reliable performance metrics for system evaluation.
 
 % ------------------------------ 4. RESULTS --------------------------------
 \section{Results and Discussion}\label{sec:results}
-All results were produced with the provided MATLAB code. Unless stated otherwise, the default configuration uses an $N=11$ tap equalizer, step size $\mu=0.003$, a ``severe'' 5--tap channel normalized to unit energy, a training length of $1500$ symbols followed by $15000$ payload symbols, and decision delay chosen automatically from the dominant channel tap.
+In this report, results are presented for a representative configuration using an $N=11$ tap equalizer, step size $\mu=0.003$, the ``severe'' 5--tap channel normalized to unit energy, a training length of $L_{\text{tr}}=1500$ symbols followed by $15000$ payload symbols, and decision delay chosen automatically from the dominant channel tap. Reported curves are averaged over multiple Monte Carlo trials except where individual realizations are explicitly shown.
 
-\subsection{Learning curve}
-Figure~\ref{fig:learning} shows the learning curve for a single run at \SI{20}{dB} SNR, displaying the mean squared error (MSE) $|e[n]|^2$ in decibels as a function of time index $n$. The curve is smoothed using a 50--sample moving average to reduce fluctuations. The plot reveals several key characteristics: (i) rapid initial convergence during the training phase, with the MSE dropping by approximately 15--20 dB within the first 500 symbols, (ii) a transition point marked by the vertical dashed line at $n=1500$ where the system switches from training to decision--directed mode, and (iii) a steady--state residual error level (horizontal dashed line) computed as the average of the last 100 samples. 
-
-The convergence rate is consistent with the theoretical time constant $\tau \approx 1/(\mu \lambda_{\min})$, where $\lambda_{\min}$ is the smallest eigenvalue of the input correlation matrix. The steady--state MSE reflects the combined effects of channel noise ($\sigma_n^2$), residual ISI from imperfect equalization, and LMS misadjustment $M = \mu N P_y/2 \approx 0.05$ (in linear scale). The smooth transition at the training/decision--directed boundary indicates that the equalizer has converged sufficiently to maintain stable operation in decision--directed mode, validating the choice of $L_{\text{tr}} = 1500$ symbols.
-
-\begin{figure}[H]
- \centering
- \includegraphics[width=0.85\textwidth]{../results/learning_curve_SNR20dB.png}
- \caption{Learning curve showing MSE convergence for a single run at \SI{20}{dB} SNR. The vertical dashed line indicates the transition from training to decision--directed mode at $n=1500$. The horizontal dashed line shows the steady--state MSE level.}
- \label{fig:learning}
-\end{figure}
-
-Figure~\ref{fig:constellations} presents constellation diagrams before and after equalization. The left subplot shows the received signal $y[n]$ at the equalizer input, where the ISI and noise have spread the four ideal 4--QAM points into overlapping clusters with significant dispersion. The right subplot displays the equalizer output $\hat{x}[n]$, where the symbols have been successfully compressed back toward the ideal constellation points with minimal residual spread. The reduction in cluster size directly corresponds to the ISI cancellation achieved by the adaptive filter. The residual dispersion in the equalized constellation is primarily due to the noise floor (which cannot be removed by linear equalization) and the steady--state misadjustment. This visual confirmation demonstrates that the LMS equalizer effectively mitigates ISI and restores the signal quality necessary for reliable symbol detection, with the decision regions clearly separated.
+\subsection{Constellation Diagrams and Learning Curve}
+Figure~\ref{fig:constellations} presents constellation diagrams before and after equalization for a single run at \SI{20}{dB} SNR. The left subplot shows the received signal $y[n]$ at the equalizer input. Because of ISI and noise, the four ideal 4--QAM points have been smeared into broad, significantly overlapping clouds with a dense central region; the decision boundaries between symbols are not visually apparent. The right subplot shows the equalizer output $\hat{x}[n]$ in steady state. The four symbol clusters are clearly pulled back toward the nominal 4--QAM locations and become much more compact, with a visible ``hole'' around the origin. Some residual spread remains around each point, which is consistent with the AWGN level and LMS misadjustment. This visual comparison confirms that the LMS equalizer reshapes the distorted input distribution into one that is much closer to the ideal constellation, enabling reliable minimum--distance detection.
 
 \begin{figure}[H]
  \centering
  \includegraphics[width=\textwidth]{../results/constellations_one_run_SNR20dB.png}
- \caption{Constellation diagrams before (left) and after (right) equalization at \SI{20}{dB} SNR. The equalizer output shows successful compression of the distorted clusters back toward the ideal 4--QAM constellation points.}
+ \caption{Constellation diagrams before (left) and after (right) equalization at \SI{20}{dB} SNR for the severe 5--tap channel. The equalizer output shows clear separation of the four 4--QAM clusters and a gap around the origin, although residual noise and misadjustment are still visible.}
  \label{fig:constellations}
 \end{figure}
 
-\subsection{SER versus SNR}
-Figure~\ref{fig:ser_snr} presents the symbol error rate (SER) as a function of SNR, obtained through Monte Carlo averaging over 5 independent trials for each SNR point. The results span SNRs from \SI{5}{dB} to \SI{30}{dB} in \SI{5}{dB} increments. As expected, the SER decreases monotonically with increasing SNR, following an approximately exponential trend on the logarithmic scale with a slope of roughly 1--2 dB per decade in the waterfall region (\SI{5}{dB}--\SI{20}{dB}). 
+Figure~\ref{fig:learning} shows the corresponding learning curve for the same run, plotting a smoothed version of $|e[n]|^2$ in decibels as a function of time index $n$. The error power starts around $+1$ to \SI{2}{dB} and falls rapidly during the first few hundred symbols, reaching roughly \SI{-4.5}{dB} by $n \approx 500$. After that, the curve continues to decrease more slowly and approaches a steady level near \SI{-7}{dB}. The vertical dashed line at $n = 1500$ marks the transition from training to decision--directed mode. Importantly, there is no noticeable jump at this point: the mean error level remains essentially unchanged and only the variability increases slightly due to occasional decision errors in the decision--directed phase. The horizontal dashed line indicates the steady--state level estimated from the last 100 samples. The observed residual MSE is in line with LMS theory, which predicts a nonzero misadjustment proportional to $\mu N P_y$, together with the irreducible noise floor set by $\sigma_n^2$.
 
-The curve exhibits a characteristic waterfall region at low to moderate SNRs, where noise dominates performance and the SER improves by approximately an order of magnitude for every 10 dB increase in SNR. Above \SI{25}{dB}, the curve transitions to an error floor where residual ISI and equalizer misadjustment become the limiting factors, preventing further improvement despite increasing SNR. The error floor at approximately $\text{SER} \approx 10^{-3}$ is consistent with the theoretical misadjustment $M = \mu N P_y/2$ and residual ISI from the 5--tap severe channel. For the configuration shown ($N=11$, $\mu=0.003$), the SER reaches approximately $10^{-3}$ at \SI{30}{dB} SNR, demonstrating effective ISI mitigation while highlighting the fundamental limitation of linear equalization in high--SNR regimes.
+\begin{figure}[H]
+ \centering
+ \includegraphics[width=0.85\textwidth]{../results/learning_curve_SNR20dB.png}
+ \caption{Learning curve showing MSE convergence for a single run at \SI{20}{dB} SNR with $N=11$ and $\mu=0.003$. The vertical dashed line indicates the transition from training to decision--directed mode at $n=1500$, and the horizontal dashed line marks the steady--state MSE level.}
+ \label{fig:learning}
+\end{figure}
+
+\subsection{SER versus SNR}
+Figure~\ref{fig:ser_snr} shows the symbol error rate as a function of SNR for the severe 5--tap channel, with $N=11$ and $\mu=0.003$. Each point is obtained by averaging SER over 5 independent realizations. The SER decreases monotonically from about $3\times 10^{-1}$ at \SI{5}{dB} to slightly above $10^{-2}$ at \SI{30}{dB}. When plotted on a logarithmic scale, the curve is approximately straight, indicating an exponential dependence on SNR, but the slope is moderate: a \SI{10}{dB} increase in SNR reduces SER by roughly a factor of 2--3 rather than a full decade. Within the explored SNR range the curve continues to fall and does not exhibit a clear error floor, suggesting that performance remains primarily noise--limited for this choice of equalizer length and step size. At higher SNRs one would expect the SER to eventually saturate to a floor determined by residual ISI and LMS misadjustment, but this regime is not reached in the present simulations.
 
 \begin{figure}[H]
  \centering
  \includegraphics[width=0.75\textwidth]{../results/SER_vs_SNR.png}
- \caption{Symbol error rate versus SNR for the adaptive LMS equalizer. Results are averaged over 5 Monte Carlo trials. The equalizer parameters are $N=11$ and $\mu=0.003$.}
+ \caption{Symbol error rate versus SNR for the adaptive LMS equalizer with $N=11$ and $\mu=0.003$ on the severe 5--tap channel. Results are averaged over 5 Monte Carlo trials.}
  \label{fig:ser_snr}
 \end{figure}
 
-\subsection{Impact of $\mu$ and $N$}
-The step size $\mu$ plays a critical role in balancing convergence speed and steady--state performance. Figure~\ref{fig:ser_mu} shows the SER as a function of $\mu$ at a fixed SNR of \SI{20}{dB}. The results reveal a clear trade--off: for very small step sizes ($\mu < 0.001$), the equalizer converges too slowly and may not fully adapt within the 1500--symbol training period, leading to suboptimal performance with SER $\approx 10^{-2}$. As $\mu$ increases, the SER improves up to an optimal range around $\mu \approx 0.002$--$0.003$, where the equalizer achieves good convergence within the training window while maintaining low misadjustment, reaching SER $\approx 2 \times 10^{-3}$. Beyond this range, larger step sizes ($\mu > 0.005$) increase the steady--state misadjustment according to $M = \mu N P_y/2$, causing the SER to degrade back to $\approx 5 \times 10^{-3}$ at $\mu = 0.01$. The optimal $\mu$ value depends on the channel characteristics, equalizer length, and training duration, with the observed optimum aligning with the theoretical guideline $\mu \approx 1/(N P_y)$.
+\subsection{Impact of Step Size $\mu$ and Equalizer Length $N$}
+
+Figure~\ref{fig:ser_mu} illustrates the effect of the LMS step size on performance at fixed SNR \SI{20}{dB} for $N=11$. For very small step sizes (e.g., $\mu = 5\times 10^{-4}$), the equalizer adapts so slowly that it cannot converge within the $1500$--symbol training window; the resulting SER is close to $0.5$, i.e., only slightly better than random guessing. As $\mu$ increases toward $10^{-3}$, the SER improves dramatically. There is a broad plateau of near--optimal performance for $\mu$ between approximately $0.003$ and $0.005$, where SER is on the order of $2\times 10^{-2}$. For larger $\mu$ values up to $0.01$, misadjustment becomes more significant and the SER starts to increase again, but the degradation is modest in this range. This behavior clearly illustrates the classical trade--off: very small $\mu$ leads to under--adaptation, while very large $\mu$ increases steady--state error and sensitivity to decision errors; between these extremes there is a relatively wide region where performance is robust to the exact choice of $\mu$.
 
 \begin{figure}[H]
  \centering
  \includegraphics[width=0.75\textwidth]{../results/SER_vs_mu.png}
- \caption{Symbol error rate versus LMS step size $\mu$ at \SI{20}{dB} SNR. The equalizer length is $N=11$. Results demonstrate the trade--off between convergence speed and steady--state misadjustment.}
+ \caption{Symbol error rate versus LMS step size $\mu$ at \SI{20}{dB} SNR for $N=11$. Very small step sizes under--adapt within the available training sequence, while excessively large step sizes suffer from increased misadjustment.}
  \label{fig:ser_mu}
 \end{figure}
 
-The equalizer length $N$ determines the span over which the equalizer can compensate for ISI. Figure~\ref{fig:ser_n} illustrates the SER as a function of $N$ at \SI{20}{dB} SNR with $\mu=0.003$. For very short equalizers ($N=7$), the SER is relatively high (approximately $8 \times 10^{-3}$) because the equalizer cannot span the full 5--tap channel memory, leaving residual ISI from the unspanned taps. As $N$ increases to $N=9$ and $N=11$, the SER improves significantly (to approximately $2 \times 10^{-3}$) as the equalizer gains sufficient span to mitigate the ISI, with $N=11$ providing approximately 2.2$\times$ the channel length. However, further increasing $N$ to $13$ and $15$ shows diminishing returns and may even slightly degrade performance due to increased misadjustment $M \propto N$ from the larger number of adaptive parameters. The optimal $N$ should be chosen to slightly exceed the channel memory length while avoiding unnecessary complexity. For the 5--tap channel used here, $N=11$ provides a good balance between ISI cancellation and misadjustment, consistent with the design guideline $N \approx 2K$.
+Figure~\ref{fig:ser_n} shows the dependence of SER on the equalizer length $N$ at \SI{20}{dB} SNR with $\mu=0.003$. For this 5--tap channel, SER values lie between about $2.6\times 10^{-2}$ and $3.1\times 10^{-2}$ for all tested lengths, so the dependence on $N$ is relatively weak once the equalizer is long enough to span the channel memory. The best performance in this set is obtained with $N=7$, which is only slightly longer than the channel. Increasing $N$ to 9, 11, or 13 taps does not significantly change SER, indicating that these filters all have sufficient span to capture the dominant ISI. At $N=15$ the SER rises somewhat, consistent with the increase in misadjustment and slower convergence that occur when more coefficients must be adapted within the same training interval. These results support the common design guideline that $N$ should be chosen just large enough to cover the effective spread of the channel, with little benefit from much longer equalizers in the linear LMS setting.
 
 \begin{figure}[H]
  \centering
  \includegraphics[width=0.75\textwidth]{../results/SER_vs_N.png}
- \caption{Symbol error rate versus equalizer length $N$ at \SI{20}{dB} SNR with $\mu=0.003$. The results show that $N$ should be chosen to span the channel memory while avoiding excessive complexity.}
+ \caption{Symbol error rate versus equalizer length $N$ at \SI{20}{dB} SNR with $\mu=0.003$. For the 5--tap channel, relatively short equalizers already achieve near--optimal performance; very long equalizers yield slightly worse SER due to increased misadjustment.}
  \label{fig:ser_n}
 \end{figure}
 
+
+
 % ------------------------------ 5. CONCLUSION -----------------------------
 \section{Conclusion}\label{sec:conclusion}
-We developed a complete MATLAB framework for 4--QAM transmission over an ISI channel with an adaptive LMS linear equalizer. The system successfully implements training followed by decision--directed tracking, demonstrating effective ISI mitigation across a range of channel conditions and parameter settings.
+This project implemented and evaluated a complete 4--QAM transmission system with an adaptive LMS linear equalizer operating over frequency–selective channels. Using a realistic simulation chain—including controlled ISI, AWGN, a training sequence, and decision–directed tracking—the study examined how the equalizer reshapes distorted constellations, how the LMS algorithm converges in practice, and how symbol error rate varies with SNR, step size, and filter length.
 
-The simulation results validate the theoretical predictions: (i) the learning curve exhibits exponential convergence consistent with LMS theory, reaching steady--state within the training period, (ii) constellation diagrams confirm successful ISI cancellation with clear separation of decision regions, (iii) SER versus SNR shows the expected waterfall region transitioning to an error floor at high SNR, limited by residual ISI and misadjustment, and (iv) parameter sweeps reveal optimal operating points for $\mu$ and $N$ that balance convergence speed, steady--state error, and complexity.
+The results confirm that a properly tuned LMS equalizer can substantially mitigate ISI: the distorted, overlapping input constellation is transformed into four well-separated clusters suitable for reliable detection, and the learning curve shows rapid initial convergence followed by stable decision-directed operation. SER decreases monotonically with SNR across the tested range, remaining noise-limited without exhibiting a strong error floor for the chosen parameters. Parameter sweeps highlight the expected LMS trade-offs: very small step sizes fail to converge within the available training, while very large values suffer from misadjustment; a broad intermediate region provides robust performance. Equalizer-length experiments further show that once $N$ exceeds the channel memory, SER becomes relatively insensitive to additional taps, with excessively long equalizers yielding slightly worse performance due to slower convergence and increased misadjustment.
 
-Key findings include: the optimal step size $\mu \approx 0.003$ aligns with the theoretical guideline $\mu \approx 1/(N P_y)$, the equalizer length $N=11$ provides effective ISI cancellation for the 5--tap channel while avoiding excessive misadjustment, and the error floor at $\text{SER} \approx 10^{-3}$ reflects the fundamental limitations of linear equalization in high--SNR regimes. The two--phase operation (training + decision--directed) enables reliable convergence and continuous tracking without excessive overhead.
+Overall, the study reinforces classical adaptive filter theory in a practical communication scenario and demonstrates how design choices such as $N$, $\mu$, and training duration must be balanced to achieve stable and effective equalization. The provided MATLAB framework can be extended to explore more advanced techniques such as decision–feedback equalization, normalized LMS, or blind initialization methods like CMA.
 
-The framework provides a solid foundation for further extensions, including decision--feedback equalization (DFE) to reduce error floors, normalized LMS (NLMS) for improved convergence, MMSE training for better initial conditions, or blind equalization algorithms such as constant modulus algorithm (CMA) for scenarios without training sequences.
 
 % ------------------------------ REFERENCES --------------------------------
 \begin{thebibliography}{9}
@@ -375,53 +351,40 @@ The framework provides a solid foundation for further extensions, including deci
 \section*{Appendix: MATLAB Code Organization}
 This appendix describes the MATLAB source files and their purpose. All files are located in the \texttt{matlab/} directory.
 
-\subsection{Main Scripts}
+\subsection*{Main Scripts}
 \begin{itemize}
 \item \texttt{main.m}: Main driver script that orchestrates the complete simulation. Configures system parameters (SNR, equalizer length $N$, step size $\mu$, training length), generates the channel, runs Monte Carlo trials, and produces all performance plots including learning curves, SER versus SNR, SER versus $\mu$, and SER versus $N$.
 \item \texttt{simulate\_one\_run.m}: Executes a single Monte Carlo realization of the transmission system. Generates random 4--QAM symbols, passes them through the channel with AWGN, applies the LMS equalizer, and computes the symbol error rate. Returns all internal signals for analysis and plotting.
 \end{itemize}
 
-\subsection{Equalization Core}
+\subsection*{Equalization Core}
 \begin{itemize}
-\item \texttt{lms\_equalizer.m}: Implements the complex LMS adaptive FIR equalizer. Performs the core adaptation loop: computes equalizer output $\hat{x}[n]$, determines the desired signal $d[n]$ (training or decision--directed), computes the error $e[n]$, and updates coefficients via $\mathbf{c}[n+1] = \mathbf{c}[n] + \mu \mathbf{y}[n]e^*[n]$. Returns the equalized output, error signal, coefficient history, and MSE learning curve.
+\item \texttt{lms\_equalizer.m}: Implements the LMS adaptive FIR equalizer. Performs the core adaptation loop: computes equalizer output $\hat{x}[n]$, determines the desired signal $d[n]$ (training or decision--directed), computes the error $e[n]$, and updates coefficients via $\mathbf{c}[n+1] = \mathbf{c}[n] + \mu \mathbf{y}[n]e^*[n]$. Returns the equalized output, error signal, coefficient history, and MSE learning curve.
 \end{itemize}
 
-\subsection{Modulation and Demodulation}
+\subsection*{Modulation and Demodulation}
 \begin{itemize}
 \item \texttt{qam4\_constellation.m}: Defines the 4--QAM constellation points $S = \frac{\sigma_s}{\sqrt{2}}[1+j, -1+j, -1-j, 1-j]$ with configurable power scaling.
 \item \texttt{qam4\_mod.m}: Maps integer indices $\{1,2,3,4\}$ to 4--QAM constellation symbols for transmission.
 \item \texttt{qam4\_demod.m}: Implements minimum--distance detection, mapping received complex samples to the nearest constellation point and returning both the symbol index and the hard decision.
 \end{itemize}
 
-\subsection{Channel Modeling}
+\subsection*{Channel Modeling}
 \begin{itemize}
 \item \texttt{generate\_channel.m}: Generates channel impulse responses for three scenarios: (i) mild 3--tap ISI, (ii) severe 5--tap ISI with precursor and postcursor interference, and (iii) random Rayleigh fading channels with configurable length.
 \item \texttt{normalize\_channel.m}: Normalizes the channel impulse response to unit energy, ensuring $\sum_n |h[n]|^2 = 1$ so the channel does not amplify or attenuate average signal power.
 \item \texttt{pick\_decision\_delay.m}: Selects the optimal decision delay $D$ by aligning the equalizer's center tap with the dominant channel tap, computed as $D = \arg\max_k |h[k]| - 1$ clipped to $[0, N-1]$.
 \end{itemize}
 
-\subsection{Noise and Signal Processing}
+\subsection*{Noise and Signal Processing}
 \begin{itemize}
 \item \texttt{add\_awgn.m}: Adds complex circularly symmetric additive white Gaussian noise to achieve a target SNR. Computes noise variance as $\sigma_n^2 = \sigma_s^2 / 10^{\text{SNR}_{\text{dB}}/10}$ and generates noise samples $w[n] \sim \mathcal{CN}(0, \sigma_n^2)$.
 \end{itemize}
 
-\subsection{Visualization and Metrics}
+\subsection*{Visualization and Metrics}
 \begin{itemize}
 \item \texttt{plot\_constellation.m}: Utility function to plot complex scatter diagrams showing received or equalized samples along with the ideal 4--QAM constellation reference points.
 \item \texttt{measure\_ser.m}: Computes the symbol error rate by comparing ground truth symbol indices to detected symbol indices, returning the fraction of incorrect decisions.
 \end{itemize}
-
-% \subsection*{main.m}\lstinputlisting{../matlab/main.m}
-% \subsection*{simulate\_one\_run.m}\lstinputlisting{../matlab/simulate_one_run.m}
-% \subsection*{lms\_equalizer.m}\lstinputlisting{../matlab/lms_equalizer.m}
-% \subsection*{qam4\_constellation.m}\lstinputlisting{../matlab/qam4_constellation.m}
-% \subsection*{qam4\_mod.m}\lstinputlisting{../matlab/qam4_mod.m}
-% \subsection*{qam4\_demod.m}\lstinputlisting{../matlab/qam4_demod.m}
-% \subsection*{generate\_channel.m}\lstinputlisting{../matlab/generate_channel.m}
-% \subsection*{normalize\_channel.m}\lstinputlisting{../matlab/normalize_channel.m}
-% \subsection*{pick\_decision\_delay.m}\lstinputlisting{../matlab/pick_decision_delay.m}
-% \subsection*{add\_awgn.m}\lstinputlisting{../matlab/add_awgn.m}
-% \subsection*{plot\_constellation.m}\lstinputlisting{../matlab/plot_constellation.m}
-% \subsection*{measure\_ser.m}\lstinputlisting{../matlab/measure_ser.m}
 
 \end{document}

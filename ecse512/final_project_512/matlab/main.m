@@ -100,54 +100,8 @@ if cfg.saveFigs
     saveas(gcf, fullfile(resultsDir, 'SER_vs_SNR.png'));
 end
 
-% sweep of step size mu (optional)
-muGrid = [0.0005 0.001 0.002 0.003 0.005 0.01];
-SER_mu = zeros(size(muGrid));
-for im = 1:numel(muGrid)
-    cfg2 = cfg; cfg2.mu = muGrid(im);
-    ser_mc = zeros(1, cfg.numMC);
-    for it = 1:cfg.numMC
-        [~, ~, ~, ~, ~, ~, ~, ~, ~, ~, ~, ser_val] = ...
-            simulate_one_run(cfg2, h, D, cfg.plotOneRunSNRdB);
-        ser_mc(it) = ser_val;
-    end
-    SER_mu(im) = mean(ser_mc);
-    fprintf('mu = %.5f --> SER@%ddB = %.3e\n', cfg2.mu, cfg.plotOneRunSNRdB, SER_mu(im));
-end
 
-figure('Name','SER vs mu (at fixed SNR)','Color','w');
-semilogy(muGrid, SER_mu, '-o','LineWidth',1.2); grid on;
-xlabel('\mu'); ylabel('SER'); 
-title(sprintf('SER vs \\mu at SNR=%.1f dB (N=%d)', cfg.plotOneRunSNRdB, cfg.equalizerLenN));
-if cfg.saveFigs
-    saveas(gcf, fullfile(resultsDir, 'SER_vs_mu.png'));
-end
-
-% sweep of equalizer length N (optional)
-Ngrid = [7 9 11 13 15];
-SER_N = zeros(size(Ngrid));
-for iN = 1:numel(Ngrid)
-    cfg2 = cfg; cfg2.equalizerLenN = Ngrid(iN);
-    D2 = pick_decision_delay(h, cfg2.equalizerLenN);
-    ser_mc = zeros(1, cfg.numMC);
-    for it = 1:cfg.numMC
-        [~, ~, ~, ~, ~, ~, ~, ~, ~, ~, ~, ser_val] = ...
-            simulate_one_run(cfg2, h, D2, cfg.plotOneRunSNRdB);
-        ser_mc(it) = ser_val;
-    end
-    SER_N(iN) = mean(ser_mc);
-    fprintf('N = %d --> SER@%ddB = %.3e\n', cfg2.equalizerLenN, cfg.plotOneRunSNRdB, SER_N(iN));
-end
-
-figure('Name','SER vs equalizer length N','Color','w');
-semilogy(Ngrid, SER_N, '-o','LineWidth',1.2); grid on;
-xlabel('Equalizer length N'); ylabel('SER'); 
-title(sprintf('SER vs N at SNR=%.1f dB (\\mu=%.4f)', cfg.plotOneRunSNRdB, cfg.mu));
-if cfg.saveFigs
-    saveas(gcf, fullfile(resultsDir, 'SER_vs_N.png'));
-end
-
-
+%% benchmark test
 % comprehensive joint parameter search (mu, N)
 fprintf('\n=== Joint Grid Search: Optimal (mu, N) ===\n');
 muGrid_full = [0.0005 0.001 0.002 0.003 0.005 0.007 0.01 0.015];
