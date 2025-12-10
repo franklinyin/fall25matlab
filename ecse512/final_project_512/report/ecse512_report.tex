@@ -275,39 +275,126 @@ which increases linearly with $\mu$ and $N$. Thus, larger $\mu$ accelerates conv
 
 
 % ------------------------------ 4. RESULTS --------------------------------
+
 \section{Results and Discussion}\label{sec:results}
-Through a benchmark test, the optimal parameters identified are an $N=7$ tap equalizer, step size $\mu=0.015$, the ``severe'' 5--tap channel normalized to unit energy, a training length of $L_{\text{tr}}=1500$ symbols followed by $15000$ payload symbols, and decision delay chosen automatically from the dominant channel tap. The benchmark test evaluated performance at \SI{20}{dB} SNR across a grid of $\mu$ values ($0.0005$ to $0.015$) and equalizer lengths ($N=5$ to $17$). Reported curves are averaged over multiple Monte Carlo trials except where individual realizations are explicitly shown.
+Results are obtained using a 9-tap LMS equalizer with
+step size $\mu = 0.015$, a training length of $1500$ symbols, and a
+decision-directed payload of $15{,}000$ symbols. The decision delay is chosen
+automatically based on the dominant channel tap. Three channel types are evaluated. Performance curves are averaged over five Monte Carlo
+runs. Constellation figures shown are representative examples, as very low-SNR
+realizations often produce heavily fused pre-equalization clouds that are not
+informative for visualization.
 
-\subsection{Constellation Diagrams and Learning Curve}
+
+\subsection{Constellation Diagrams}
+
+% Constellation plots and learning curves provide qualitative insight into the
+% operation of the adaptive equalizer. Several representative examples are
+% presented below. While many Monte Carlo realizations were generated, only those
+% that clearly illustrate the typical behavior are shown. In some runs, especially
+% at low SNR or under severe ISI, the pre-equalization constellations appear as
+% dense, nearly unstructured clusters in which individual symbol regions are not
+% visually separable; such cases, although expected, are not informative to
+% display and are therefore omitted.
+
+% \subsubsection{Constellations for the Mild ISI Channel at 20 dB.}
+
+Figure~\ref{fig:constellation_mild_20dB} shows the received samples and
+equalizer output for the mild 3-tap channel at \SI{20}{dB} SNR. Before
+equalization, the ISI produces a six-lobed distortion pattern typical of 3-tap
+postcursor interference, with substantial overlap between the four QAM
+clusters. After LMS convergence, the output $\hat{x}[n]$ forms four compact,
+well-separated clouds tightly centered around the ideal 4-QAM points. The
+residual spread reflects the AWGN level and the finite LMS misadjustment.
 
 \begin{figure}[h]
- \centering
- \includegraphics[width=.9\textwidth]{../results/constellations_one_run_SNR20dB.png}
- \caption{Constellation diagrams before (left) and after (right) equalization at \SI{20}{dB} SNR for the severe 5--tap channel. After LMS equalization, the output collapses into four compact, well--separated clusters centered near the ideal QAM locations, with only small residual noise visible.}
- \label{fig:constellations}
+  \centering
+  \includegraphics[width=0.85\textwidth]{../results/constellation_mild_SNR20dB.png}
+  \caption{Constellation diagrams for the mild 3-tap channel at \SI{20}{dB} SNR:
+  equalizer input $y[n]$ (left) and equalizer output $\hat{x}[n]$ (right).}
+  \label{fig:constellation_mild_20dB}
 \end{figure}
 
+% \subsubsection{Constellations for the Low-ISI Channel at 30 dB.}
 
-Figure~\ref{fig:constellations} presents constellation diagrams before and after equalization for a single run at \SI{20}{dB} SNR. The left subplot shows the received signal $y[n]$ at the equalizer input. Because of ISI and noise, the four ideal 4--QAM points have been smeared into broad, significantly overlapping clouds with a dense central region; the decision boundaries between symbols are not visually apparent. 
-
-The right subplot displays the equalized output $\hat{x}[n]$ once the LMS filter has reached steady state. In this configuration, the equalizer succeeds significantly reducing the channel distortion: the samples collapse into four compact, well--separated clusters located near the nominal 4--QAM points. The residual spread around each centroid is consistent with the AWGN level and the small steady--state misadjustment inherent to LMS. Compared with the highly entangled pre-equalization cloud, the post-equalization constellation is dramatically more structured and separable, enabling a relatively more reliable minimum--distance symbol detection.
-
-
-% The right subplot shows the equalizer output $\hat{x}[n]$ that exhibits a noticeable grid of sub-clusters, giving the appearance of roughly 16 distinct centroids. This structure arises because residual ISI and the finite-length LMS equalizer leave a weak dependence on neighboring symbols, so each ideal QAM point is effectively split into several nearby variants corresponding to different symbol contexts. Even with the presence of several sub-clusters caused by residual ISI, the post-equalization constellation is vastly more structured and separable than the heavily overlapped input. The symbol regions are distinct enough that we can still map the points back to the four nominal 4-QAM values using standard minimum-distance detection.
-
-
-% The right subplot shows the equalizer output $\hat{x}[n]$ in steady state. The four symbol clusters are clearly pulled back toward the nominal 4--QAM locations and become much more compact, with a visible ``hole'' around the origin. Some residual spread remains around each point, which is consistent with the AWGN level and LMS misadjustment. This visual comparison confirms that the LMS equalizer reshapes the distorted input distribution into one that is much closer to the ideal constellation, enabling reliable minimum--distance detection.
-
-
-
-Figure~\ref{fig:learning} shows the corresponding learning curve for the same run, plotting a smoothed version of $|e[n]|^2$ in decibels as a function of time index $n$. The error power starts around $+1$ to \SI{2}{dB} and falls rapidly during the first few hundred symbols, reaching roughly \SI{-7}{dB} by $n \approx 500$. After that, the curve continues to decrease more slowly and approaches a steady level near \SI{-13}{dB}. The vertical dashed line at $n = 1500$ marks the transition from training to decision--directed mode. Importantly, there is no noticeable jump at this point: the mean error level remains essentially unchanged and only the variability increases slightly due to occasional decision errors in the decision--directed phase. The horizontal dashed line indicates the steady--state level estimated from the last 100 samples. The observed residual MSE is in line with LMS theory, which predicts a nonzero misadjustment proportional to $\mu N P_y$, together with the irreducible noise floor set by $\sigma_n^2$.
+Figure~\ref{fig:constellation_lowISI_30dB} presents a higher-SNR example using a
+real-valued 3-tap channel with substantially weaker ISI. In this regime, the
+input constellation is already partially separable, with noticeable but modest
+smearing around each symbol. After equalization, the four clusters become almost
+point-like, indicating that both the ISI and the AWGN components have been
+highly suppressed. This example highlights that, when channel dispersion is
+minimal, the equalizer operates in a noise-limited regime even at moderate
+filter lengths.
 
 \begin{figure}[h]
- \centering
- \includegraphics[width=0.7\textwidth]{../results/learning_curve_SNR20dB.png}
- \caption{Learning curve showing MSE convergence for a single run at \SI{20}{dB} SNR with $N=5$ and $\mu=0.007$. The vertical dashed line indicates the transition from training to decision--directed mode at $n=1500$, and the horizontal dashed line marks the steady--state MSE level.}
- \label{fig:learning}
+  \centering
+  \includegraphics[width=0.85\textwidth]{../results/constellation_low_SNR30dB.png}
+  \caption{Constellation diagrams for the low-ISI real-valued 3-tap channel at
+  \SI{30}{dB} SNR.}
+  \label{fig:constellation_lowISI_30dB}
 \end{figure}
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.85\textwidth]{../results/constellation_mild_SNR30dB.png}
+  \caption{Constellation diagrams for the mild-ISI 3-tap channel at
+  \SI{30}{dB} SNR.}
+  \label{fig:constellation_mild_30dB}
+\end{figure}
+
+An interesting effect appears in the mild 3-tap channel at high SNR, shown in
+Fig.~\ref{fig:constellation_mild_30dB}: the pre-equalization constellation no
+longer resembles a blurred 4-QAM cloud, but instead forms a structured 4×4 grid.
+This occurs because the channel
+introduces several distinct ISI-induced symbol offsets which, when the noise
+level is very small, become visibly separated and form multiple sub-clusters
+around the nominal constellation points. After the LMS equalizer converges,
+these ISI-related offsets are removed and the output collapses back into four
+tight clusters corresponding to the intended 4-QAM symbols.
+
+
+
+\subsection{Learning Curves}
+% \subsubsection{Learning Curves for Different Channels at Fixed SNR.}
+
+Figure~\ref{fig:learning_channels_20dB} compares the MSE learning curves for the
+three channels (low-ISI, mild, severe) at a fixed SNR of \SI{20}{dB}. The curves
+are shown in decibels after a short smoothing window. All channels exhibit the
+characteristic rapid MSE drop during the training interval ($n < 1500$), followed
+by stabilization once decision-directed operation begins. The steady-state MSE
+plateaus differ substantially across channels: the low-ISI channel reaches the
+lowest MSE (around \SI{-20}{dB}), followed by the mild channel, while the severe
+5-tap channel stabilizes around \SI{-7}{dB}. This ordering directly reflects the
+difficulty of the underlying ISI cancellation task.
+
+\begin{figure}[h]
+  \centering
+  \includegraphics[width=0.85\textwidth]{../results/learning_curve_channel_comparison_SNR20dB.png}
+  \caption{Learning curves for three channel profiles at \SI{20}{dB} SNR. The
+  vertical dashed line marks the transition from training to decision-directed
+  mode.}
+  \label{fig:learning_channels_20dB}
+\end{figure}
+
+% \subsubsection{Learning Curves for the Mild Channel Across SNR Values.}
+
+Figure~\ref{fig:learning_mild_SNRs} illustrates the effect of SNR on the
+learning dynamics for the mild 3-tap channel. The convergence rate during
+training is nearly identical across SNRs, as it is primarily governed by the
+step size $\mu$ and the channel structure rather than by noise. However, the
+steady-state MSE decreases roughly linearly with noise variance, shifting from
+approximately \SI{-10}{dB} at \SI{10}{dB} SNR to \SI{-30}{dB} at \SI{30}{dB} SNR.
+This behavior aligns with standard LMS theory, where the steady-state error floor
+is the sum of the LMS misadjustment and the irreducible noise contribution.
+
+\begin{figure}[h]
+  \centering
+  \includegraphics[width=0.85\textwidth]{../results/learning_curve_mild_SNR_comparison.png}
+  \caption{Learning curves for the mild 3-tap channel at three SNR levels. The
+  training interval ends at $n=1500$ (vertical dashed line).}
+  \label{fig:learning_mild_SNRs}
+\end{figure}
+
 
 \subsection{SER versus SNR for Different Channel Profiles}
 
@@ -348,36 +435,36 @@ range.
 \end{figure}
 
 
-\subsection{Impact of Step Size $\mu$ and Equalizer Length $N$}
+% \subsection{Impact of Step Size $\mu$ and Equalizer Length $N$}
 
-Figure~\ref{fig:ser_mu} illustrates the effect of the LMS step size on performance at fixed SNR \SI{20}{dB} for $N=11$.\footnote{To adequately assess the impact of the $\mu$ and $N$, this section uses an alternative (non-optimal) configuration rather than the globally optimal one.} For very small step sizes (e.g., $\mu = 5\times 10^{-4}$), the equalizer adapts so slowly that it cannot converge within the $1500$--symbol training window; the resulting SER is close to $0.5$, i.e., only slightly better than random guessing. As $\mu$ increases toward $10^{-3}$, the SER improves dramatically. There is a broad plateau of near--optimal performance for $\mu$ between approximately $0.003$ and $0.005$, where SER is on the order of $2\times 10^{-2}$. For larger $\mu$ values up to $0.007$, misadjustment becomes more significant and the SER starts to increase again, but the degradation is modest in this range. This behavior clearly illustrates the classical trade--off: very small $\mu$ leads to under--adaptation, while very large $\mu$ increases steady--state error and sensitivity to decision errors; between these extremes there is a relatively wide region where performance is robust to the exact choice of $\mu$.
+% Figure~\ref{fig:ser_mu} illustrates the effect of the LMS step size on performance at fixed SNR \SI{20}{dB} for $N=11$.\footnote{To adequately assess the impact of the $\mu$ and $N$, this section uses an alternative (non-optimal) configuration rather than the globally optimal one.} For very small step sizes (e.g., $\mu = 5\times 10^{-4}$), the equalizer adapts so slowly that it cannot converge within the $1500$--symbol training window; the resulting SER is close to $0.5$, i.e., only slightly better than random guessing. As $\mu$ increases toward $10^{-3}$, the SER improves dramatically. There is a broad plateau of near--optimal performance for $\mu$ between approximately $0.003$ and $0.005$, where SER is on the order of $2\times 10^{-2}$. For larger $\mu$ values up to $0.007$, misadjustment becomes more significant and the SER starts to increase again, but the degradation is modest in this range. This behavior clearly illustrates the classical trade--off: very small $\mu$ leads to under--adaptation, while very large $\mu$ increases steady--state error and sensitivity to decision errors; between these extremes there is a relatively wide region where performance is robust to the exact choice of $\mu$.
 
-\begin{figure}[H]
- \centering
- \includegraphics[width=0.7\textwidth]{../results/SER_vs_mu_20dB.png}
- \caption{Symbol error rate versus LMS step size $\mu$ at \SI{20}{dB} SNR for $N=11$. Very small step sizes under--adapt within the available training sequence, while excessively large step sizes suffer from increased misadjustment.}
- \label{fig:ser_mu}
-\end{figure}
+% \begin{figure}[H]
+%  \centering
+%  \includegraphics[width=0.7\textwidth]{../results/SER_vs_mu_20dB.png}
+%  \caption{Symbol error rate versus LMS step size $\mu$ at \SI{20}{dB} SNR for $N=11$. Very small step sizes under--adapt within the available training sequence, while excessively large step sizes suffer from increased misadjustment.}
+%  \label{fig:ser_mu}
+% \end{figure}
 
-Figure~\ref{fig:ser_n} shows the dependence of SER on the equalizer length $N$ at \SI{20}{dB} SNR with $\mu=0.003$. For this 5--tap channel, SER values lie between about $2.6\times 10^{-2}$ and $3.1\times 10^{-2}$ for all tested lengths, so the dependence on $N$ is relatively weak once the equalizer is long enough to span the channel memory. The best performance in this set is obtained with $N=7$, which is only slightly longer than the channel. Increasing $N$ to 9, 11, or 13 taps does not significantly change SER, indicating that these filters all have sufficient span to capture the dominant ISI. At $N=15$ the SER rises somewhat, consistent with the increase in misadjustment and slower convergence that occur when more coefficients must be adapted within the same training interval. These results support the common design guideline that $N$ should be chosen just large enough to cover the effective spread of the channel, with little benefit from much longer equalizers in the linear LMS setting.
+% Figure~\ref{fig:ser_n} shows the dependence of SER on the equalizer length $N$ at \SI{20}{dB} SNR with $\mu=0.003$. For this 5--tap channel, SER values lie between about $2.6\times 10^{-2}$ and $3.1\times 10^{-2}$ for all tested lengths, so the dependence on $N$ is relatively weak once the equalizer is long enough to span the channel memory. The best performance in this set is obtained with $N=7$, which is only slightly longer than the channel. Increasing $N$ to 9, 11, or 13 taps does not significantly change SER, indicating that these filters all have sufficient span to capture the dominant ISI. At $N=15$ the SER rises somewhat, consistent with the increase in misadjustment and slower convergence that occur when more coefficients must be adapted within the same training interval. These results support the common design guideline that $N$ should be chosen just large enough to cover the effective spread of the channel, with little benefit from much longer equalizers in the linear LMS setting.
 
-\begin{figure}
- \centering
- \includegraphics[width=0.75\textwidth]{../results/SER_vs_N_20dB.png}
- \caption{Symbol error rate versus equalizer length $N$ at \SI{20}{dB} SNR with $\mu=0.003$. For the 5--tap channel, relatively short equalizers already achieve near--optimal performance; very long equalizers yield slightly worse SER due to increased misadjustment.}
- \label{fig:ser_n}
-\end{figure}
+% \begin{figure}
+%  \centering
+%  \includegraphics[width=0.75\textwidth]{../results/SER_vs_N_20dB.png}
+%  \caption{Symbol error rate versus equalizer length $N$ at \SI{20}{dB} SNR with $\mu=0.003$. For the 5--tap channel, relatively short equalizers already achieve near--optimal performance; very long equalizers yield slightly worse SER due to increased misadjustment.}
+%  \label{fig:ser_n}
+% \end{figure}
 
 
 
 
 % ------------------------------ 5. CONCLUSION -----------------------------
 \section{Conclusion}\label{sec:conclusion}
-This project implemented and evaluated a complete 4--QAM transmission system with an adaptive LMS linear equalizer operating over frequency–selective channels. Using a realistic simulation chain—including controlled ISI, AWGN, a training sequence, and decision–directed tracking—the study examined how the equalizer reshapes distorted constellations, how the LMS algorithm converges in practice, and how symbol error rate varies with SNR, step size, and filter length.
+This project implemented and evaluated a complete 4--QAM transmission system with an adaptive LMS linear equalizer operating over frequency–selective channels. Using a realistic simulation chain—including controlled ISI, AWGN, a training sequence, and decision–directed tracking—the study examined how the equalizer reshapes distorted constellations, how the LMS algorithm converges in practice, and how symbol error rate varies with SNR and filter length.
 
-The results confirm that a properly tuned LMS equalizer can substantially mitigate ISI: the distorted, overlapping input constellation is transformed into four well-separated clusters suitable for reliable detection, and the learning curve shows rapid initial convergence followed by stable decision-directed operation. SER decreases monotonically with SNR across the tested range, remaining noise-limited without exhibiting a strong error floor for the chosen parameters. Parameter sweeps highlight the expected LMS trade-offs: very small step sizes fail to converge within the available training, while very large values suffer from misadjustment; a broad intermediate region provides robust performance. Equalizer-length experiments further show that once $N$ exceeds the channel memory, SER becomes relatively insensitive to additional taps, with excessively long equalizers yielding slightly worse performance due to slower convergence and increased misadjustment.
+The results confirm that a properly tuned LMS equalizer can substantially mitigate ISI: the distorted, overlapping input constellation is transformed into four well-separated clusters suitable for reliable detection, and the learning curve shows rapid initial convergence followed by stable decision-directed operation. SER decreases monotonically with SNR across the tested range, remaining noise-limited without exhibiting a strong error floor for the chosen parameters. 
 
-Overall, the study reinforces classical adaptive filter theory in a practical communication scenario and demonstrates how design choices such as $N$, $\mu$, and training duration must be balanced to achieve stable and effective equalization. The provided MATLAB framework can be extended to explore more advanced techniques such as decision–feedback equalization, normalized LMS, or blind initialization methods like CMA.
+Overall, the study reinforces classical adaptive filter theory in a practical communication scenario and can be extended to explore more advanced techniques such as decision–feedback equalization, normalized LMS, or blind initialization methods like CMA.
 
 
 
