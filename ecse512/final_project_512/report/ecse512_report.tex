@@ -309,15 +309,44 @@ Figure~\ref{fig:learning} shows the corresponding learning curve for the same ru
  \label{fig:learning}
 \end{figure}
 
-\subsection{SER versus SNR}
-Figure~\ref{fig:ser_snr} shows the symbol error rate as a function of SNR for the severe 5--tap channel, with $N=5$ and $\mu=0.007$. Each point is obtained by averaging SER over 5 independent realizations. The SER decreases monotonically from about $6\times 10^{-1}$ at \SI{5}{dB} to roughly $2\times 10^{-5}$ at \SI{20}{dB}. When plotted on a logarithmic scale, the curve is approximately straight (especially between 5-15 dB), indicating an exponential dependence on SNR, but the slope is moderate: a \SI{10}{dB} increase in SNR reduces SER by roughly a factor of 2--3 rather than a full decade. Within the explored SNR range the curve continues to fall and does not exhibit a clear error floor, suggesting that performance remains primarily noise--limited for this choice of equalizer length and step size. At higher SNRs one would expect the SER to eventually saturate to a floor determined by residual ISI and LMS misadjustment, but this regime is not reached in the present simulations.
+\subsection{SER versus SNR for Different Channel Profiles}
+
+Figure~\ref{fig:ser_snr_channels} compares the SER performance of the LMS
+equalizer across three channel types. All simulations use the
+same equalizer configuration ($N=9$ taps, $\mu = 0.015$) and SER values are
+averaged over five Monte Carlo runs.
+
+At low SNR levels (0--6 dB), the differences among the three channels are
+clearly visible. The low-ISI real-valued channel exhibits the lowest SER in this
+range, as its limited intersymbol interference allows the equalizer to operate
+effectively even under substantial noise. The mild 3-tap channel performs
+slightly worse, reflecting the presence of moderate postcursor ISI. The severe
+5-tap channel produces the highest SER at low SNR, due to its longer memory and
+stronger ISI components.
+
+Between 6 and 12 dB, all three curves undergo a rapid drop in SER, indicating
+that the adaptive equalizer is successfully converging toward a suitable set of
+coefficients. The spread between the channels narrows in this region as the
+noise becomes less dominant and the LMS algorithm is able to compensate for ISI
+more effectively.
+
+For SNR values above approximately 12--15 dB, the SER of all three channels
+approaches zero within the resolution of the simulation, and the curves become
+nearly indistinguishable. This indicates that, for sufficiently high SNR, the
+9-tap LMS equalizer is capable of fully mitigating the ISI present in all
+channels considered, and no error floor is observed within the tested SNR
+range.
 
 \begin{figure}[h]
- \centering
- \includegraphics[width=0.7\textwidth]{../results/SER_vs_SNR.png}
- \caption{Symbol error rate versus SNR for the adaptive LMS equalizer with $N=5$ and $\mu=0.007$ on the severe 5--tap channel. Results are averaged over 5 Monte Carlo trials.}
- \label{fig:ser_snr}
+    \centering
+    \includegraphics[width=0.78\textwidth]{../results/SER_vs_SNR_channel_comparison.png}
+    \caption{SER versus SNR for three deterministic channel profiles: a low-ISI
+    real-valued 3-tap channel, a mild 3-tap complex channel, and a severe 5-tap
+    channel. All simulations use an LMS equalizer with $N=9$ and $\mu = 0.015$.
+    Results averaged over five Monte Carlo trials.}
+    \label{fig:ser_snr_channels}
 \end{figure}
+
 
 \subsection{Impact of Step Size $\mu$ and Equalizer Length $N$}
 
