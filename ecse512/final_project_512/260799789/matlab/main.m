@@ -12,13 +12,13 @@ cfg.dataLen = 15000; % data symbols (decision‑directed phase)
 cfg.equalizerLenN = 9; % LMS equalizer length (N taps)
 cfg.mu = 0.015; % LMS step size (tune per scenario)
 cfg.numMC = 5; % Monte‑Carlo trials (increase for stats)
-cfg.SNRdB_grid = 0:3:18; % SNR sweep for SER curves
+cfg.SNRdB_grid = 5:5:30; % SNR sweep for SER curves
 cfg.saveFigs = true; % save figures to ../results
 cfg.randomSeed = 42; % reproducibility
 cfg.channel.type = 'severe'; % 'mild' | 'severe' | 'random'
 cfg.channel.K = 5; % channel length for 'random' type
 cfg.channel.randSTD = 1; % std for Rayleigh taps before normalization
-cfg.plotOneRunSNRdB = 30; % SNR for which to show a detailed run
+cfg.plotOneRunSNRdB = 20; % SNR for which to show a detailed run
 cfg.centerTap = []; % optional target decision delay D (0..N-1)
 
 rng(cfg.randomSeed);
