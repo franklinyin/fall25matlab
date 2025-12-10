@@ -41,3 +41,4 @@ function plot_constellation_comparison(cfg, h, hDescr, D, SNRdB, resultsDir)
     fname = sprintf('constellation_%s_SNR%ddB.png', chtype, round(SNRdB));
     saveas(gcf, fullfile(resultsDir, fname));
 end
+

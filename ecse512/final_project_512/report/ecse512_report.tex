@@ -367,22 +367,58 @@ difficulty of the underlying ISI cancellation task.
   \label{fig:learning_channels_20dB}
 \end{figure}
 
-% \subsubsection{Learning Curves for the Mild Channel Across SNR Values.}
+% % \subsubsection{Learning Curves for the Mild Channel Across SNR Values.}
 
-Figure~\ref{fig:learning_mild_SNRs} illustrates the effect of SNR on the
-learning dynamics for the mild 3-tap channel. The convergence rate during
-training is nearly identical across SNRs, as it is primarily governed by the
-step size $\mu$ and the channel structure rather than by noise. However, the
-steady-state MSE decreases roughly linearly with noise variance, shifting from
-approximately \SI{-10}{dB} at \SI{10}{dB} SNR to \SI{-30}{dB} at \SI{30}{dB} SNR.
-This behavior aligns with standard LMS theory, where the steady-state error floor
-is the sum of the LMS misadjustment and the irreducible noise contribution.
+% Figure~\ref{fig:learning_mild_SNRs} illustrates the effect of SNR on the
+% learning dynamics for the mild 3-tap channel. The convergence rate during
+% training is nearly identical across SNRs, as it is primarily governed by the
+% step size $\mu$ and the channel structure rather than by noise. However, the
+% steady-state MSE decreases roughly linearly with noise variance, shifting from
+% approximately \SI{-10}{dB} at \SI{10}{dB} SNR to \SI{-30}{dB} at \SI{30}{dB} SNR.
+% This behavior aligns with standard LMS theory, where the steady-state error floor
+% is the sum of the LMS misadjustment and the irreducible noise contribution.
+
+% \begin{figure}[h]
+%   \centering
+%   \includegraphics[width=0.85\textwidth]{../results/learning_curve_mild_SNR_comparison.png}
+%   \caption{Learning curves for the mild 3-tap channel at three SNR levels.}
+%   \label{fig:learning_mild_SNRs}
+% \end{figure}
+
+\paragraph{Effect of Step Size \boldmath$\mu$.}
+Figure~\ref{fig:learning_mu} illustrates the learning curves for several step
+sizes at \SI{20}{dB} SNR on the mild 3-tap channel. A very small step size
+($\mu = 0.001$) converges slowly, and the error has not
+fully stabilized by the end of the 1500-symbol training interval. Moderate values ($\mu = 0.01$ and $\mu = 0.05$) yield faster
+convergence and lower steady-state MSE. In contrast, the largest step size
+($\mu = 0.1$) leads to noticeably erratic behavior, with large
+oscillations in the MSE even after training phase, reflecting the instability when $\mu$
+is chosen too large relative to the input power and filter length.
 
 \begin{figure}[h]
   \centering
-  \includegraphics[width=0.85\textwidth]{../results/learning_curve_mild_SNR_comparison.png}
-  \caption{Learning curves for the mild 3-tap channel at three SNR levels.}
-  \label{fig:learning_mild_SNRs}
+  \includegraphics[width=0.80\textwidth]{../results/learning_curve_mu_comparison_mild_SNR20dB.png}
+  \caption{Learning curves for different LMS step sizes at \SI{20}{dB} SNR on the
+  mild 3-tap channel.}
+  \label{fig:learning_mu}
+\end{figure}
+
+\paragraph{Effect of Equalizer Length \boldmath$N$.}
+Figure~\ref{fig:learning_N} compares learning curves for several equalizer
+lengths at \SI{20}{dB} SNR. With $N = 3$, the equalizer is too short to capture
+all relevant ISI components, resulting in a noticeably higher residual MSE. At
+$N = 7$, the performance improves substantially and the steady-state MSE reaches
+a level close to that of the longer filters. Increasing the length further
+($N = 11$ or $N = 17$) provides no significant additional benefit, indicating
+that $N = 7$ is already sufficient for this channel and that longer filters only
+increase computational complexity without improving performance.
+
+\begin{figure}[h]
+  \centering
+  \includegraphics[width=0.80\textwidth]{../results/learning_curve_N_comparison_mild_SNR20dB.png}
+  \caption{Learning curves for different equalizer lengths $N$ at \SI{20}{dB}
+  SNR on the mild 3-tap channel.}
+  \label{fig:learning_N}
 \end{figure}
 
 
@@ -417,10 +453,7 @@ range.
 \begin{figure}[h]
     \centering
     \includegraphics[width=0.78\textwidth]{../results/SER_vs_SNR_channel_comparison.png}
-    \caption{SER versus SNR for three deterministic channel profiles: a low-ISI
-    real-valued 3-tap channel, a mild 3-tap complex channel, and a severe 5-tap
-    channel. All simulations use an LMS equalizer with $N=9$ and $\mu = 0.015$.
-    Results averaged over five Monte Carlo trials.}
+    \caption{SER versus SNR for three deterministic channel profiles.}
     \label{fig:ser_snr_channels}
 \end{figure}
 

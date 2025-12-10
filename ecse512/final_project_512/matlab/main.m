@@ -57,6 +57,20 @@ fprintf('\n=== Generating Learning Curve: Low/Mild/Severe at 20 dB ===\n');
 
 plot_learning_curve_comparison(cfg, {'low', 'mild', 'severe'}, [20], resultsDir, 'channel');
 
+
+%% Generate learning curve comparison for different step sizes
+fprintf('\n=== Generating Learning Curve: Different Step Sizes ===\n');
+
+muGrid = [0.001, 0.01, 0.05, 0.1];
+plot_learning_curve_mu_comparison(cfg, 'mild', 20, muGrid, resultsDir);
+
+%% Generate learning curve comparison for different equalizer lengths
+fprintf('\n=== Generating Learning Curve: Different Equalizer Lengths ===\n');
+
+Ngrid = [3, 7, 11, 17];
+plot_learning_curve_N_comparison(cfg, 'mild', 20, Ngrid, resultsDir);
+
+
 %% Generate SER vs SNR comparison for all channels
 fprintf('\n=== Generating SER vs SNR Comparison: Low/Mild/Severe ===\n');
 

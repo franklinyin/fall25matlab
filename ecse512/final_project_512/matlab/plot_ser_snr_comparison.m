@@ -40,3 +40,4 @@ function plot_ser_snr_comparison(cfg, channels, SNRdB_grid, resultsDir)
     fname = fullfile(resultsDir, 'SER_vs_SNR_channel_comparison.png');
     print(gcf, fname, '-dpng', '-r300');
 end
+
