@@ -50,5 +50,4 @@ function plot_learning_curve_comparison(cfg, channels, SNRdBs, resultsDir, compa
     end
     
     saveas(gcf, fullfile(resultsDir, fname));
-    fprintf('Saved: %s\n', fname);
 end

@@ -457,7 +457,7 @@ This appendix describes the MATLAB source files and their purpose. All files are
 \subsection*{Main Scripts}
 % \hspace{1em}
 \begin{itemize}
-\item \texttt{main.m}: Main driver script that orchestrates the complete simulation. Configures system parameters (SNR, equalizer length $N$, step size $\mu$, training length), generates the channel, runs Monte Carlo trials, and produces all performance plots including learning curves, SER versus SNR, SER versus $\mu$, and SER versus $N$.
+\item \texttt{main.m}: Driver script generating all performance plots and figures.
 \item \texttt{simulate\_one\_run.m}: Executes a single Monte Carlo realization of the transmission system. Generates random 4--QAM symbols, passes them through the channel with AWGN, applies the LMS equalizer, and computes the symbol error rate. Returns all internal signals for analysis and plotting.
 \end{itemize}
 
@@ -475,7 +475,7 @@ This appendix describes the MATLAB source files and their purpose. All files are
 
 \subsection*{Channel Modeling}
 \begin{itemize}
-\item \texttt{generate\_channel.m}: Generates channel impulse responses for three scenarios: (i) mild 3--tap ISI, (ii) severe 5--tap ISI with precursor and postcursor interference, and (iii) random Rayleigh fading channels with configurable length.
+\item \texttt{generate\_channel.m}: Generates channel impulse responses for three scenarios: low-ISI real-valued 3--tap, mild 3--tap, and severe 5--tap.
 \item \texttt{normalize\_channel.m}: Normalizes the channel impulse response to unit energy, ensuring $\sum_n |h[n]|^2 = 1$ so the channel does not amplify or attenuate average signal power.
 \item \texttt{pick\_decision\_delay.m}: Selects a decision delay $D$ near the equalizer center to allow balanced ISI cancellation in LMS equalization.
 \end{itemize}
@@ -487,7 +487,6 @@ This appendix describes the MATLAB source files and their purpose. All files are
 
 \subsection*{Visualization and Metrics}
 \begin{itemize}
-\item \texttt{plot\_constellation.m}: Utility function to plot complex scatter diagrams showing received or equalized samples along with the ideal 4--QAM constellation reference points.
 \item \texttt{measure\_ser.m}: Computes the symbol error rate by comparing ground truth symbol indices to detected symbol indices, returning the fraction of incorrect decisions.
 \item \texttt{plot\_constellation\_comparison.m}: Generates constellation plots for given channel and SNR.
 \item \texttt{plot\_learning\_curve\_comparison.m}: Compares learning curves across SNR or channels.

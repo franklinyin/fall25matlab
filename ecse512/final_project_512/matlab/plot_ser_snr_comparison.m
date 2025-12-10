@@ -13,8 +13,6 @@ function plot_ser_snr_comparison(cfg, channels, SNRdB_grid, resultsDir)
         h = normalize_channel(h);
         D = pick_decision_delay(h, cfg.equalizerLenN);
         
-        fprintf('\nComputing SER vs SNR for %s channel...\n', hdesc);
-        
         SER = zeros(size(SNRdB_grid));
         for is = 1:numel(SNRdB_grid)
             sdb = SNRdB_grid(is);
@@ -24,7 +22,6 @@ function plot_ser_snr_comparison(cfg, channels, SNRdB_grid, resultsDir)
                 smc(it) = sval;
             end
             SER(is) = mean(smc);
-            fprintf('  SNR = %2d dB --> SER = %.3e\n', sdb, SER(is));
         end
         
         semilogy(SNRdB_grid, SER, '-o', 'LineWidth', 1.5, 'Color', cols(ic,:), ...
@@ -42,5 +39,4 @@ function plot_ser_snr_comparison(cfg, channels, SNRdB_grid, resultsDir)
     
     fname = fullfile(resultsDir, 'SER_vs_SNR_channel_comparison.png');
     print(gcf, fname, '-dpng', '-r300');
-    fprintf('\nSaved: SER_vs_SNR_channel_comparison.png\n');
 end
