@@ -1,7 +1,7 @@
 function plot_learning_curve_comparison(cfg, channels, SNRdBs, resultsDir, comparisonType)
 % Generate learning curve comparison (either across SNR or across channels).
 
-    figure('Name', 'Learning Curve Comparison', 'Color', 'w', 'Position', [100 100 800 500]);
+    figure;
     hold on;
     
     legs = {};

@@ -5,7 +5,7 @@ function plot_learning_curve_N_comparison(cfg, channel, SNRdB, Ngrid, resultsDir
     [h, hdesc] = generate_channel(cfg.channel);
     h = normalize_channel(h);
     
-    figure('Name', 'Learning Curve N Comparison', 'Color', 'w', 'Position', [100 100 800 500]);
+    figure;
     hold on;
     cols = lines(length(Ngrid));
     legs = {};
@@ -31,3 +31,4 @@ function plot_learning_curve_N_comparison(cfg, channel, SNRdB, Ngrid, resultsDir
     fname = sprintf('learning_curve_N_comparison_%s_SNR%ddB.png', channel, round(SNRdB));
     saveas(gcf, fullfile(resultsDir, fname));
 end
+

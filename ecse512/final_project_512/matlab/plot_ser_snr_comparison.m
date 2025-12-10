@@ -1,7 +1,7 @@
 function plot_ser_snr_comparison(cfg, channels, SNRdB_grid, resultsDir)
 % Generate SER vs SNR comparison for multiple channels.
 
-    figure('Name', 'SER vs SNR Comparison', 'Color', 'w', 'Position', [100 100 800 500]);
+    figure;
     hold on;
     cols = lines(length(channels));
     legs = {};

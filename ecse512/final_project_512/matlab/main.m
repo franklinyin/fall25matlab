@@ -22,8 +22,8 @@ if ~exist(resultsDir,'dir')
     mkdir(resultsDir);
 end
 
-%% Generate constellation diagrams for all combinations
-fprintf('=== Generating Constellation Diagrams ===\n');
+%% constellation diagrams
+fprintf('\nconstellations...\n');
 
 channelTypes = {'low', 'mild', 'severe'};
 SNRdBs = [10, 20, 30];
@@ -31,53 +31,38 @@ SNRdBs = [10, 20, 30];
 for chIdx = 1:length(channelTypes)
     channelType = channelTypes{chIdx};
     cfg.channel.type = channelType;
-    
-    % Generate and normalize channel
     [h, hDescr] = generate_channel(cfg.channel);
     h = normalize_channel(h);
     D = pick_decision_delay(h, cfg.equalizerLenN);
-    
-    fprintf('\nChannel: %s\n', hDescr);
-    
+    fprintf('  %s\n', hDescr);
     for snrIdx = 1:length(SNRdBs)
         snr = SNRdBs(snrIdx);
-        fprintf('  Generating constellation for SNR = %d dB... ', snr);
-        
         plot_constellation_comparison(cfg, h, hDescr, D, snr, resultsDir);
     end
 end
 
-%% Generate learning curve comparison: mild channel at different SNRs
-fprintf('\n=== Generating Learning Curve: Mild Channel at 10/20/30 dB ===\n');
-
+%% learning curves: mild at different SNRs
+fprintf('\nlearning curves (mild, SNR sweep)...\n');
 plot_learning_curve_comparison(cfg, {'mild'}, [10, 20, 30], resultsDir, 'snr');
 
-%% Generate learning curve comparison: different channels at 20 dB
-fprintf('\n=== Generating Learning Curve: Low/Mild/Severe at 20 dB ===\n');
-
+%% learning curves: channels at 20dB
+fprintf('learning curves (channel sweep, 20dB)...\n');
 plot_learning_curve_comparison(cfg, {'low', 'mild', 'severe'}, [20], resultsDir, 'channel');
 
-
-%% Generate learning curve comparison for different step sizes
-fprintf('\n=== Generating Learning Curve: Different Step Sizes ===\n');
-
+%% learning curves: mu sweep
+fprintf('learning curves (mu sweep)...\n');
 muGrid = [0.001, 0.01, 0.05, 0.1];
 plot_learning_curve_mu_comparison(cfg, 'mild', 20, muGrid, resultsDir);
 
-%% Generate learning curve comparison for different equalizer lengths
-fprintf('\n=== Generating Learning Curve: Different Equalizer Lengths ===\n');
-
+%% learning curves: N sweep
+fprintf('learning curves (N sweep)...\n');
 Ngrid = [3, 7, 11, 17];
 plot_learning_curve_N_comparison(cfg, 'mild', 20, Ngrid, resultsDir);
 
-
-%% Generate SER vs SNR comparison for all channels
-fprintf('\n=== Generating SER vs SNR Comparison: Low/Mild/Severe ===\n');
-
-cfg.numMC = 5; % Monte Carlo trials for SER
-SNRdB_grid = 0:3:30; % SNR range for comparison
-
+%% SER vs SNR
+fprintf('SER vs SNR...\n');
+cfg.numMC = 5;
+SNRdB_grid = 0:3:30;
 plot_ser_snr_comparison(cfg, {'low', 'mild', 'severe'}, SNRdB_grid, resultsDir);
 
-fprintf('\n=== All plots generated successfully! ===\n');
-fprintf('Results saved in: %s\n', resultsDir);
+fprintf('\ndone. saved to %s\n', resultsDir);

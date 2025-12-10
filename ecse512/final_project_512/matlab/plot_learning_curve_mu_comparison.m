@@ -6,7 +6,7 @@ function plot_learning_curve_mu_comparison(cfg, channel, SNRdB, muGrid, resultsD
     h = normalize_channel(h);
     D = pick_decision_delay(h, cfg.equalizerLenN);
     
-    figure('Name', 'Learning Curve mu Comparison', 'Color', 'w', 'Position', [100 100 800 500]);
+    figure;
     hold on;
     cols = lines(length(muGrid));
     legs = {};
@@ -31,3 +31,4 @@ function plot_learning_curve_mu_comparison(cfg, channel, SNRdB, muGrid, resultsD
     fname = sprintf('learning_curve_mu_comparison_%s_SNR%ddB.png', channel, round(SNRdB));
     saveas(gcf, fullfile(resultsDir, fname));
 end
+

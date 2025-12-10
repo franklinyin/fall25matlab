@@ -20,7 +20,7 @@ function plot_constellation_comparison(cfg, h, hDescr, D, SNRdB, resultsDir)
         chname = hDescr;
     end
     
-    figure('Name', sprintf('Constellations %s SNR%ddB', hDescr, round(SNRdB)), 'Color', 'w');
+    figure;
     
     % left: input
     subplot(1,2,1);
