@@ -75,7 +75,7 @@
 \section{Introduction}
 Dispersive (frequency--selective) channels smear each transmitted symbol across multiple sampling intervals, producing inter--symbol interference (ISI) that rotates and compresses the constellation and degrades symbol error rate (SER). Such conditions arise in wireline links with impedance mismatches and reflections (e.g., copper, coax) as well as in wireless links with multipath delay spread. Equalization is therefore a central receiver function that attempts to undo the channel's memory and restore reliable decisions at the detector.
 
-Classical solutions span linear and nonlinear strategies. Linear time--invariant equalizers include the zero--forcing (ZF) and minimum mean--square error (MMSE) designs; ZF removes ISI at the cost of noise enhancement, whereas MMSE trades residual ISI for reduced noise amplification \cite{proakis}. Nonlinear receivers, notably decision--feedback equalizers (DFE), cancel postcursor ISI more effectively by leveraging past decisions, and maximum likelihood sequence estimation (MLSE) achieves optimal sequence detection at substantially higher complexity \cite{proakis}. Since channel statistics and propagation conditions vary across time, practical receivers employ \emph{adaptive} algorithms to track the optimum equalizer in situ. Early adaptive equalization work (e.g., Lucky) and comprehensive surveys (e.g., Qureshi) established the foundational architectures and operating modes (training vs.\ decision--directed) used today \cite{lucky,qureshi}. Among adaptive algorithms, least mean squares (LMS) is particularly attractive for its simplicity, modest computational load, and robustness to modeling uncertainties; it performs stochastic gradient descent with a single step--size parameter that governs the speed/misadjustment trade--off \cite{haykin,qureshi}. Variants such as normalized LMS (NLMS), recursive least squares (RLS), and blind methods like the constant modulus algorithm (CMA) further broaden the design space \cite{haykin,qureshi}.
+Classical solutions span linear and nonlinear strategies. Linear time--invariant equalizers include the zero--forcing (ZF) and minimum mean--square error (MMSE) designs; ZF removes ISI at the cost of noise enhancement, whereas MMSE trades residual ISI for reduced noise amplification \cite{proakis}. Nonlinear receivers, notably decision--feedback equalizers (DFE), cancel postcursor ISI more effectively by leveraging past decisions, and maximum likelihood sequence estimation (MLSE) achieves optimal sequence detection at substantially higher complexity \cite{proakis}. Since channel statistics and propagation conditions vary across time, practical receivers employ \emph{adaptive} algorithms to track the optimum equalizer in situ. Early adaptive equalization work and comprehensive surveys established the foundational architectures and operating modes (training vs.\ decision--directed) used today \cite{lucky,qureshi}. Among adaptive algorithms, least mean squares (LMS) is particularly attractive for its simplicity, modest computational load, and robustness to modeling uncertainties; it performs stochastic gradient descent with a single step--size parameter that governs the speed/misadjustment trade--off \cite{haykin,qureshi}. Variants such as normalized LMS (NLMS), recursive least squares (RLS), and blind methods like the constant modulus algorithm (CMA) further broaden the design space \cite{haykin,qureshi}.
 
 \paragraph{Project scope and context.}
 This project implements and evaluates an LMS--based, decision--directed adaptive FIR \emph{linear} equalizer for 4--QAM transmission over frequency--selective channels with complex AWGN. The simulation (in MATLAB) reflects a standard baseband receiver: a known training preamble initializes adaptation, after which the loop switches to decision--directed (DD) operation for continued tracking. Channels are modeled as unit--energy FIR responses to cleanly separate ISI effects from SNR scaling. This project considers three representative channels that span typical use cases: a mild 3--tap profile, a severe 5--tap profile with pre/postcursor ISI, and a random Rayleigh multipath profile (all normalized to unit energy). The equalizer employs an automatically chosen decision delay aligned to the dominant channel tap (a common heuristic in adaptive linear equalization) and measures both learning behavior and decision performance.
@@ -281,8 +281,7 @@ Results are obtained using a 9-tap LMS equalizer with
 step size $\mu = 0.015$, a training length of $1500$ symbols, and a
 decision-directed payload of $15{,}000$ symbols. The decision delay is chosen
 automatically based on the dominant channel tap. Three channel types are evaluated. Performance curves are averaged over five Monte Carlo
-runs. Constellation figures shown are representative examples, as very low-SNR
-realizations often produce heavily fused pre-equalization clouds that are not
+runs. Constellation figures shown are representative examples, as for example severe ISI produced heavily fused pre-equalization clouds that are not
 informative for visualization.
 
 
@@ -390,8 +389,7 @@ is the sum of the LMS misadjustment and the irreducible noise contribution.
 \begin{figure}[h]
   \centering
   \includegraphics[width=0.85\textwidth]{../results/learning_curve_mild_SNR_comparison.png}
-  \caption{Learning curves for the mild 3-tap channel at three SNR levels. The
-  training interval ends at $n=1500$ (vertical dashed line).}
+  \caption{Learning curves for the mild 3-tap channel at three SNR levels.}
   \label{fig:learning_mild_SNRs}
 \end{figure}
 
@@ -464,7 +462,7 @@ This project implemented and evaluated a complete 4--QAM transmission system wit
 
 The results confirm that a properly tuned LMS equalizer can substantially mitigate ISI: the distorted, overlapping input constellation is transformed into four well-separated clusters suitable for reliable detection, and the learning curve shows rapid initial convergence followed by stable decision-directed operation. SER decreases monotonically with SNR across the tested range, remaining noise-limited without exhibiting a strong error floor for the chosen parameters. 
 
-Overall, the study reinforces classical adaptive filter theory in a practical communication scenario and can be extended to explore more advanced techniques such as decision–feedback equalization, normalized LMS, or blind initialization methods like CMA.
+Overall, the study reinforces classical adaptive filter theory in a practical communication scenario and can be extended to explore more advanced techniques such as decision–feedback equalization, normalized LMS, or blind initialization methods like CMA \cite{haykin,godard,treichler}.
 
 
 
@@ -475,6 +473,9 @@ Overall, the study reinforces classical adaptive filter theory in a practical co
 \bibitem{proakis} J.~G.~Proakis, \emph{Digital Communications}, McGraw--Hill, 2001.
 \bibitem{lucky} R.~W.~Lucky, ``Techniques for adaptive equalization of digital communication,'' \emph{Bell Syst.\ Tech.\ J.}, vol.~45, pp.~255--286, Feb.~1966.
 \bibitem{qureshi} S.~U.~H.~Qureshi, ``Adaptive equalization,'' \emph{Proc.\ IEEE}, vol.~73, pp.~1349--1387, Sept.~1985.
+\bibitem{godard} D.~N.~Godard, ``Self--recovering equalization and carrier tracking in two--dimensional data communication systems,'' \emph{IEEE Trans.\ Commun.}, vol.~28, no.~11, pp.~1867--1875, Nov.~1980.
+
+\bibitem{treichler} J.~R.~Treichler and B.~G.~Agee, ``A new approach to multipath correction of constant modulus signals,'' \emph{IEEE Trans.\ Acoust.\ Speech Signal Process.}, vol.~ASSP--31, no.~2, pp.~459--472, Apr.~1983.
 \end{thebibliography}
 
 % ------------------------------ APPENDIX ----------------------------------

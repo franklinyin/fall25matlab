@@ -1,49 +1,33 @@
 function plot_constellation_comparison(cfg, h, hDescr, D, SNRdB, resultsDir)
-% Helper function to generate and save constellation diagram for a given configuration
-%
-% Inputs:
-%   cfg: configuration struct
-%   h: channel impulse response
-%   hDescr: channel description string
-%   D: decision delay
-%   SNRdB: SNR in dB for this run
-%   resultsDir: directory to save results
+% Generate and save constellation diagram for given SNR and channel.
 
-    % Get constellation reference
     [S, ~] = qam4_constellation(sqrt(cfg.sigma_s2));
-    
-    % Run simulation
     [~, y, ~, ~, xhat, ~, ~, ~, ~, ~, ~] = simulate_one_run(cfg, h, D, SNRdB);
     
-    % Extract just the channel type (low, mild, severe)
-    channelLabel = lower(strrep(hDescr, '‑', '-'));
-    if contains(channelLabel, 'low')
-        channelType = 'low';
-        channelName = 'Low ISI';
-    elseif contains(channelLabel, 'severe')
-        channelType = 'severe';
-        channelName = 'Severe ISI';
-    elseif contains(channelLabel, 'mild')
-        channelType = 'mild';
-        channelName = 'Mild ISI';
+    % extract channel type for filename
+    chlabel = lower(strrep(hDescr, '‑', '-'));
+    if contains(chlabel, 'low')
+        chtype = 'low';
+        chname = 'Low ISI';
+    elseif contains(chlabel, 'severe')
+        chtype = 'severe';
+        chname = 'Severe ISI';
+    elseif contains(chlabel, 'mild')
+        chtype = 'mild';
+        chname = 'Mild ISI';
     else
-        channelType = lower(strrep(channelLabel, ' ', '_'));
-        channelName = hDescr;
+        chtype = lower(strrep(chlabel, ' ', '_'));
+        chname = hDescr;
     end
     
-    % Create figure with big title
     figure('Name', sprintf('Constellations %s SNR%ddB', hDescr, round(SNRdB)), 'Color', 'w');
-    
     subplot(1,2,1);
     plot_constellation(y, S, 'Rx input y[n]');
     subplot(1,2,2);
     plot_constellation(xhat, S, 'Equalizer output \hat{x}[n]');
+    sgtitle(sprintf('%s Channel at SNR = %d dB', chname, round(SNRdB)), 'FontSize', 14, 'FontWeight', 'bold');
     
-    % Add overall title
-    sgtitle(sprintf('%s Channel at SNR = %d dB', channelName, round(SNRdB)), 'FontSize', 14, 'FontWeight', 'bold');
-    
-    % Save with descriptive filename
-    filename = sprintf('constellation_%s_SNR%ddB.png', channelType, round(SNRdB));
-    saveas(gcf, fullfile(resultsDir, filename));
-    fprintf('Saved: %s\n', filename);
+    fname = sprintf('constellation_%s_SNR%ddB.png', chtype, round(SNRdB));
+    saveas(gcf, fullfile(resultsDir, fname));
+    fprintf('Saved: %s\n', fname);
 end
