@@ -356,7 +356,7 @@ by stabilization once decision-directed operation begins. The steady-state MSE
 plateaus differ substantially across channels: the low-ISI channel reaches the
 lowest MSE (around \SI{-20}{dB}), followed by the mild channel, while the severe
 5-tap channel stabilizes around \SI{-7}{dB}. This ordering directly reflects the
-difficulty of the underlying ISI cancellation task.
+difficulty of the severe-ISI cancellation task.
 
 \begin{figure}[h]
   \centering
@@ -397,10 +397,18 @@ is chosen too large relative to the input power and filter length.
 
 \begin{figure}[h]
   \centering
-  \includegraphics[width=0.80\textwidth]{../results/learning_curve_mu_comparison_mild_SNR20dB.png}
+  \includegraphics[width=0.7\textwidth]{../results/learning_curve_mu_comparison_mild_SNR20dB.png}
   \caption{Learning curves for different LMS step sizes at \SI{20}{dB} SNR on the
   mild 3-tap channel.}
   \label{fig:learning_mu}
+\end{figure}
+
+\begin{figure}[h]
+  \centering
+  \includegraphics[width=0.7\textwidth]{../results/learning_curve_N_comparison_mild_SNR20dB.png}
+  \caption{Learning curves for different equalizer lengths $N$ at \SI{20}{dB}
+  SNR on the mild 3-tap channel.}
+  \label{fig:learning_N}
 \end{figure}
 
 \paragraph{Effect of Equalizer Length \boldmath$N$.}
@@ -413,13 +421,7 @@ a level close to that of the longer filters. Increasing the length further
 that $N = 7$ is already sufficient for this channel and that longer filters only
 increase computational complexity without improving performance.
 
-\begin{figure}[h]
-  \centering
-  \includegraphics[width=0.80\textwidth]{../results/learning_curve_N_comparison_mild_SNR20dB.png}
-  \caption{Learning curves for different equalizer lengths $N$ at \SI{20}{dB}
-  SNR on the mild 3-tap channel.}
-  \label{fig:learning_N}
-\end{figure}
+
 
 
 \subsection{SER versus SNR for Different Channel Profiles}
@@ -428,6 +430,14 @@ Figure~\ref{fig:ser_snr_channels} compares the SER performance of the LMS
 equalizer across three channel types. All simulations use the
 same equalizer configuration ($N=9$ taps, $\mu = 0.015$) and SER values are
 averaged over five Monte Carlo runs.
+
+
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=0.7\textwidth]{../results/SER_vs_SNR_channel_comparison.png}
+    \caption{SER versus SNR for three deterministic channel profiles.}
+    \label{fig:ser_snr_channels}
+\end{figure}
 
 At low SNR levels (0--6 dB), the differences among the three channels are
 clearly visible. The low-ISI real-valued channel exhibits the lowest SER in this
@@ -450,12 +460,6 @@ nearly indistinguishable. This indicates that, for sufficiently high SNR, the
 channels considered, and no error floor is observed within the tested SNR
 range.
 
-\begin{figure}[h]
-    \centering
-    \includegraphics[width=0.78\textwidth]{../results/SER_vs_SNR_channel_comparison.png}
-    \caption{SER versus SNR for three deterministic channel profiles.}
-    \label{fig:ser_snr_channels}
-\end{figure}
 
 
 
@@ -464,7 +468,10 @@ range.
 \section{Conclusion}\label{sec:conclusion}
 This project implemented and evaluated a complete 4--QAM transmission system with an adaptive LMS linear equalizer operating over frequency–selective channels. Using a realistic simulation chain—including controlled ISI, AWGN, a training sequence, and decision–directed tracking—the study examined how the equalizer reshapes distorted constellations, how the LMS algorithm converges in practice, and how symbol error rate varies with SNR and filter length.
 
-The results confirm that a properly tuned LMS equalizer can substantially mitigate ISI: the distorted, overlapping input constellation is transformed into four well-separated clusters suitable for reliable detection, and the learning curve shows rapid initial convergence followed by stable decision-directed operation. SER decreases monotonically with SNR across the tested range, remaining noise-limited without exhibiting a strong error floor for the chosen parameters. 
+
+The results confirm that a properly tuned LMS equalizer can substantially mitigate ISI: the distorted, overlapping input constellation is transformed into four well-separated clusters suitable for reliable detection, and the learning curve shows rapid initial convergence followed by stable decision-directed operation. SER decreases monotonically with SNR, remaining noise-limited for the tested configurations. Parameter sweeps confirm the expected trade-offs in step size and equalizer length.
+
+
 
 Overall, the study reinforces classical adaptive filter theory in a practical communication scenario and can be extended to explore more advanced techniques such as decision–feedback equalization, normalized LMS, or blind initialization methods like CMA \cite{haykin,godard,treichler}.
 
