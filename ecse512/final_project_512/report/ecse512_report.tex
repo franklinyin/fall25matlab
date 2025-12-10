@@ -115,9 +115,9 @@ The channel is normalized to unit energy such that $\sum_{n=0}^{K-1}|h[n]|^2 = 1
 
 The simulation considers three representative channel types:
 \begin{itemize}
+\item \textbf{Low-ISI (Real-valued):} A 3--tap real-valued channel $h = [1.0, 0.2, 0.05]$ with no phase rotation, representing a simple multipath scenario.
 \item \textbf{Mild ISI:} A 3--tap channel $h = [0.9+0j, 0.3-0.2j, 0.15+0.05j]$ with modest postcursor interference.
 \item \textbf{Severe ISI:} A 5--tap channel $h = [0.3+0.2j, 0.9+0j, 0.25-0.15j, 0.15+0.10j, 0.05-0.06j]$ with both precursor and postcursor interference.
-\item \textbf{Random Rayleigh:} A $K$--tap channel with complex Gaussian taps $h[k] \sim \mathcal{CN}(0, \sigma_h^2)$ before normalization, representing a frequency--selective fading channel.
 \end{itemize}
 
 The channel output before noise addition is the convolution
