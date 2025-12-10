@@ -1,10 +1,10 @@
 function [h, descr] = generate_channel(ch)
 % Returns an example ISI channel impulse response.
-%   ch.type: 'mild-real' | 'mild' | 'severe'
+%   ch.type: 'low' | 'mild' | 'severe'
 
     if ~isfield(ch,'type'), ch.type='mild'; end
     switch lower(ch.type)
-        case 'mild-real'
+        case 'low'
             % Low-ISI real-valued 3-tap channel (no phase rotation)
             h = [1.0, 0.2, 0.05];
             descr = 'low-ISI 3-tap (real-valued)';

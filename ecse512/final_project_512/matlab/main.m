@@ -15,7 +15,7 @@ cfg.numMC = 5; % Monte‑Carlo trials (increase for stats)
 cfg.SNRdB_grid = 0:3:18; % SNR sweep for SER curves
 cfg.saveFigs = true; % save figures to ../results
 cfg.randomSeed = 42; % reproducibility
-cfg.channel.type = 'severe'; % 'mild-real' | 'mild' | 'severe'
+cfg.channel.type = 'severe'; % 'low' | 'mild' | 'severe'
 cfg.plotOneRunSNRdB = 30; % SNR for which to show a detailed run
 cfg.centerTap = []; % optional target decision delay D (0..N-1)
 
