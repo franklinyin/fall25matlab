@@ -281,20 +281,12 @@ Results are obtained using a 9-tap LMS equalizer with
 step size $\mu = 0.015$, a training length of $1500$ symbols, and a
 decision-directed payload of $15{,}000$ symbols. The decision delay is chosen
 automatically based on the dominant channel tap. Three channel types are evaluated. Performance curves are averaged over five Monte Carlo
-runs. Constellation figures shown are representative examples, as for example severe ISI produced heavily fused pre-equalization clouds that are not
-informative for visualization.
+runs. Constellation figures shown are representative examples; for instance, severe ISI produces heavily fused pre-equalization clouds that are not informative for visualization.
 
 
 \subsection{Constellation Diagrams}
 
-% Constellation plots and learning curves provide qualitative insight into the
-% operation of the adaptive equalizer. Several representative examples are
-% presented below. While many Monte Carlo realizations were generated, only those
-% that clearly illustrate the typical behavior are shown. In some runs, especially
-% at low SNR or under severe ISI, the pre-equalization constellations appear as
-% dense, nearly unstructured clusters in which individual symbol regions are not
-% visually separable; such cases, although expected, are not informative to
-% display and are therefore omitted.
+
 
 % \subsubsection{Constellations for the Mild ISI Channel at 20 dB.}
 
@@ -431,27 +423,6 @@ range.
     Results averaged over five Monte Carlo trials.}
     \label{fig:ser_snr_channels}
 \end{figure}
-
-
-% \subsection{Impact of Step Size $\mu$ and Equalizer Length $N$}
-
-% Figure~\ref{fig:ser_mu} illustrates the effect of the LMS step size on performance at fixed SNR \SI{20}{dB} for $N=11$.\footnote{To adequately assess the impact of the $\mu$ and $N$, this section uses an alternative (non-optimal) configuration rather than the globally optimal one.} For very small step sizes (e.g., $\mu = 5\times 10^{-4}$), the equalizer adapts so slowly that it cannot converge within the $1500$--symbol training window; the resulting SER is close to $0.5$, i.e., only slightly better than random guessing. As $\mu$ increases toward $10^{-3}$, the SER improves dramatically. There is a broad plateau of near--optimal performance for $\mu$ between approximately $0.003$ and $0.005$, where SER is on the order of $2\times 10^{-2}$. For larger $\mu$ values up to $0.007$, misadjustment becomes more significant and the SER starts to increase again, but the degradation is modest in this range. This behavior clearly illustrates the classical trade--off: very small $\mu$ leads to under--adaptation, while very large $\mu$ increases steady--state error and sensitivity to decision errors; between these extremes there is a relatively wide region where performance is robust to the exact choice of $\mu$.
-
-% \begin{figure}[H]
-%  \centering
-%  \includegraphics[width=0.7\textwidth]{../results/SER_vs_mu_20dB.png}
-%  \caption{Symbol error rate versus LMS step size $\mu$ at \SI{20}{dB} SNR for $N=11$. Very small step sizes under--adapt within the available training sequence, while excessively large step sizes suffer from increased misadjustment.}
-%  \label{fig:ser_mu}
-% \end{figure}
-
-% Figure~\ref{fig:ser_n} shows the dependence of SER on the equalizer length $N$ at \SI{20}{dB} SNR with $\mu=0.003$. For this 5--tap channel, SER values lie between about $2.6\times 10^{-2}$ and $3.1\times 10^{-2}$ for all tested lengths, so the dependence on $N$ is relatively weak once the equalizer is long enough to span the channel memory. The best performance in this set is obtained with $N=7$, which is only slightly longer than the channel. Increasing $N$ to 9, 11, or 13 taps does not significantly change SER, indicating that these filters all have sufficient span to capture the dominant ISI. At $N=15$ the SER rises somewhat, consistent with the increase in misadjustment and slower convergence that occur when more coefficients must be adapted within the same training interval. These results support the common design guideline that $N$ should be chosen just large enough to cover the effective spread of the channel, with little benefit from much longer equalizers in the linear LMS setting.
-
-% \begin{figure}
-%  \centering
-%  \includegraphics[width=0.75\textwidth]{../results/SER_vs_N_20dB.png}
-%  \caption{Symbol error rate versus equalizer length $N$ at \SI{20}{dB} SNR with $\mu=0.003$. For the 5--tap channel, relatively short equalizers already achieve near--optimal performance; very long equalizers yield slightly worse SER due to increased misadjustment.}
-%  \label{fig:ser_n}
-% \end{figure}
 
 
 
