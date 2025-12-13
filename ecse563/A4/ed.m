@@ -8,43 +8,67 @@ function [g, C, lambda] = ed(c0, a, b, gmin, gmax, d, toler)
 %     d : total demand (scalar)
 %     toler : power balance tolerance (scalar, e.g., 0.5 MW)
 %   Outputs:
-%     g : dispatch vector
+%     g : dispatch vector (MW)
 %     C : total cost ($/h)
 %     lambda : power balance Lagrange multiplier ($/MWh)
 %
-%   Reference: ECSE 563 notes (Short‑Term Generation Optimization).
+%   Reference: ECSE 563 notes (Short-Term Generation Optimization).
 
-N = numel(a);
-c0 = c0(:); a = a(:); b = b(:); gmin = gmin(:); gmax = gmax(:);
+% Ensure column vectors
+c0 = c0(:); 
+a = a(:); 
+b = b(:);
+gmin = gmin(:); 
+gmax = gmax(:);
+
+N = length(a);
+if any([length(c0) length(b) length(gmin) length(gmax)] ~= N)
+    error('All generator parameter vectors must have the same length.');
+end
 
 % Feasibility check
-if d < sum(gmin) - 1e-9 || d > sum(gmax) + 1e-9
-    error('Infeasible demand: outside sum(gmin)/sum(gmax).');
+if d < sum(gmin) || d > sum(gmax)
+    error('Demand d is outside feasible range [sum(gmin), sum(gmax)].');
 end
 
-% Bracket lambda using marginal costs at the bounds
-lam_lo = min(a + b.*gmin) - 1000;
-lam_hi = max(a + b.*gmax) + 1000;
+% Incremental costs at limits (for lambda bracketing)
+mc_min = a + b .* gmin;
+mc_max = a + b .* gmax;
 
-% Monotone bisection on sum(g(lambda)) - d
-for it = 1:200
-    lam = 0.5*(lam_lo + lam_hi);
-    g = (lam - a)./b;
-    g = min(max(g, gmin), gmax);
-    s = sum(g);
-    if s < d
-        lam_lo = lam;
-    else
-        lam_hi = lam;
-    end
-    if abs(lam_hi - lam_lo) < 1e-9 || abs(s - d) <= toler
+lambda_low = min(mc_min);
+lambda_high = max(mc_max);
+
+% Lambda-iteration using bisection
+maxiter = 100;
+for k = 1:maxiter
+    lambda = 0.5 * (lambda_low + lambda_high);
+    
+    % Unconstrained dispatch for this lambda
+    g = (lambda - a) ./ b;
+    
+    % Enforce generator limits
+    g = max(gmin, min(gmax, g));
+    
+    mismatch = sum(g) - d;
+    
+    if abs(mismatch) <= toler
         break;
     end
+    
+    if mismatch > 0
+        % Too much generation -> lambda too high
+        lambda_high = lambda;
+    else
+        % Not enough generation -> lambda too low
+        lambda_low = lambda;
+    end
 end
-lambda = 0.5*(lam_lo + lam_hi);
-g = (lambda - a)./b;
-g = min(max(g, gmin), gmax);
+
+if abs(sum(g) - d) > toler
+    warning('ED:NoConverge', ...
+        'Lambda-iteration reached maxiter without meeting tolerance.');
+end
 
 % Total cost
-C = sum(c0 + a.*g + 0.5*b.*(g.^2));
+C = sum(c0 + a .* g + 0.5 * b .* (g.^2));
 end

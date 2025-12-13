@@ -1,138 +1,155 @@
 
-function out = dc_scopf(ifrom, ito, x, fmax, co, a, b, gmin, gmax, refbus, d, genbus, toler)
-%DC_SCOPF DC OPF (intact-network security) with line limits via PTDFs.
-%   Solves: min sum c0 + a*g + 0.5*b*g.^2
-%   s.t.    sum(g) = sum(d), gmin<=g<=gmax, and |f|<=fmax (intact network)
-%   using an active-set sequence that adds binding line constraints.
-%   Returns dispatch, prices, flows, binding sets and costs.
+function out = dc_scopf(ifrom, ito, x, fmax, d, co, a, b, gmin, gmax, ngen, is)
+%DC_SCOPF DC security-constrained optimal power flow (intact network)
+%   Solves: min sum c0_i + a_i*g_i + 0.5*b_i*g_i^2
+%   s.t.    nodal power balance, generation limits, and line flow limits
+%   Inputs:
+%     ifrom, ito : line "from" and "to" bus indices (nlines x 1)
+%     x : line reactances (p.u.) (nlines x 1)
+%     fmax : line MW flow limits (nlines x 1)
+%     d : bus demands (MW) (nbus x 1)
+%     co,a,b : generator cost coefficients
+%     gmin,gmax : generator min/max (MW) (ng x 1)
+%     ngen : bus index of each generator (ng x 1)
+%     is : reference (slack) bus index
+%   Outputs (struct out):
+%     g : generator outputs (MW)
+%     delta : bus angles (rad), ref bus = 0
+%     f : line flows (MW), positive ifrom -> ito
+%     C : total generation cost ($/h)
+%     LMP : locational marginal prices ($/MWh) per bus
+%     MS : merchandizing (congestion) surplus ($/h)
+%     lambda : lambda struct from quadprog (KKT multipliers)
+%     pinj : net injections per bus (MW)
+%     ifrom, ito, refbus : echoed inputs
 %
-%   out fields:
-%     g, lambda_sys, mu_lines (map), flows, act.lines, LMP (all buses),
-%     cost, cost_ED, cost_of_security, congestion_surplus
-%
-%   Reference: ECSE 563 notes (OPF + LMP, PTDF/SFT formulation).
+%   Reference: ECSE 563 notes (OPF + LMP, DC approximation).
 
-n = max([ifrom(:); ito(:)]);
-L = numel(ifrom);
-G = numel(a);
-a = a(:); b = b(:); co = co(:);
-gmin = gmin(:); gmax = gmax(:); genbus = genbus(:);
+% Basic dimensions
+nbus = max([ifrom; ito]);
+nlines = length(ifrom);
+ng = length(co);
+genbus = ngen(:);
 
-% Build Bbus and PTDF (with refbus)
-B = zeros(n,n);
-bbr = 1./x(:);
-for ell = 1:L
-    i = ifrom(ell); j = ito(ell); b = bbr(ell);
-    B(i,i) = B(i,i) + b; B(j,j) = B(j,j) + b;
-    B(i,j) = B(i,j) - b; B(j,i) = B(j,i) - b;
-end
-mask = true(n,1); mask(refbus)=false;
-X = zeros(n,n); X(mask,mask) = inv(B(mask,mask)); % maps injections to angles
-% Incidence matrix (n x L): +1 at from, -1 at to
-A = zeros(n,L); 
-for ell=1:L, A(ifrom(ell),ell)=1; A(ito(ell),ell)=-1; end
-C = diag(bbr) * A.';         % flow = C*delta
-H = C*X;                     % PTDF: flow = H * injections
-% Map generator outputs to bus injections P = M*g - d
-M = zeros(n,G); for i=1:G, M(genbus(i), i) = 1; end
-Hg = H * M;                  % (L x G)
-fconst = H * (-d(:));        % (L x 1)
+% Build line susceptances and Bbus
+bline = 1 ./ x;
 
-% Start from ED (no line limits)
-Dtot = sum(d);
-[tg, ~, lamED] = ed(co, a, b, gmin, gmax, Dtot, toler);
-flows = Hg*tg + fconst;
-% Active sets
-act_lines = false(L,1);
-% Work list: add most violated line until feasible
-maxIter = 50; iter=0;
-Q = diag(b); lin = a;   % quadratic/linear cost pieces
-g = tg;
-Aeq = [ones(1,G)]; beq = Dtot; names = {'balance'}; rows = [0];
-
-while true
-    iter = iter+1;
-    if iter > maxIter, error('Active-set did not converge.'); end
-    % Check line violations
-    viol_up = flows - fmax(:);
-    viol_lo = -fmax(:) - flows;
-    [vmax_up, iup] = max(viol_up);
-    [vmax_lo, ilo] = max(viol_lo);
-    [vmax, which] = max([vmax_up, vmax_lo]);
-    if vmax <= max(toler,1e-6)
-        break; % feasible
-    end
-    if which==1
-        ell = iup; sgn = +1; rhs = fmax(ell); tag = sprintf('line+%d',ell);
-    else
-        ell = ilo; sgn = -1; rhs = -fmax(ell); tag = sprintf('line-%d',ell);
-    end
-    % Add equality Hg(ell,:)*g = rhs - fconst(ell)
-    Aeq = [Aeq; Hg(ell,:)];
-    beq = [beq; rhs - fconst(ell)];
-    names{end+1} = tag; rows(end+1)=ell;
-    % Solve equality-constrained QP (unique g since #eq = #var may occur)
-    KKT = [Q, -Aeq.'; Aeq, zeros(size(Aeq,1))];
-    rhs_KKT = [-lin; beq];
-    sol = KKT \ rhs_KKT;
-    g = sol(1:G);
-    y = sol(G+1:end);  % duals for [balance, added lines,...]
-    flows = Hg*g + fconst;
-    % Handle bound hits by pinning them and adding equalities
-    hit_hi = find(g > gmax + 1e-8);
-    hit_lo = find(g < gmin - 1e-8);
-    for idx = hit_hi(:)'
-        Aeq = [Aeq; unitrow(G, idx)];
-        beq = [beq; gmax(idx)];
-        names{end+1} = sprintf('gmax%d', idx); rows(end+1)=0;
-    end
-    for idx = hit_lo(:)'
-        Aeq = [Aeq; unitrow(G, idx)];
-        beq = [beq; gmin(idx)];
-        names{end+1} = sprintf('gmin%d', idx); rows(end+1)=0;
-    end
-    % Re-solve after adding bounds if needed
-    if ~isempty(hit_hi) || ~isempty(hit_lo)
-        KKT = [Q, -Aeq.'; Aeq, zeros(size(Aeq,1))];
-        rhs_KKT = [-lin; beq];
-        sol = KKT \ rhs_KKT;
-        g = sol(1:G);
-        y = sol(G+1:end);
-        flows = Hg*g + fconst;
-    end
+B = zeros(nbus);
+for ell = 1:nlines
+    i = ifrom(ell); 
+    j = ito(ell);
+    B(i,i) = B(i,i) + bline(ell);
+    B(j,j) = B(j,j) + bline(ell);
+    B(i,j) = B(i,j) - bline(ell);
+    B(j,i) = B(j,i) - bline(ell);
 end
 
-% Extract duals
-lambda_sys = y(1);
-% For line constraints, compute their multipliers in order of Aeq rows
-mu_lines = zeros(L,1);
-for k=2:numel(names)
-    nm = names{k};
-    if startsWith(nm,'line+')
-        ell = rows(k); mu_lines(ell) = y(k);
-    elseif startsWith(nm,'line-')
-        ell = rows(k); mu_lines(ell) = y(k);
-    end
+% Reduced B (remove reference bus)
+refbus = is;
+keep = setdiff(1:nbus, refbus);
+Bred = B(keep, keep);
+
+% Incidence matrix A (line -> bus)
+A = zeros(nlines, nbus);
+for ell = 1:nlines
+    A(ell, ifrom(ell)) = 1;
+    A(ell, ito(ell)) = -1;
 end
 
-% LMPs at all buses π = λ + sum_ell μ_ell * H(ell,:)
-pi = lambda_sys + (mu_lines.' * H).';
+% Line flow matrix: f = F * delta_red
+F = diag(bline) * A(:, keep);
 
-% Congestion surplus: load payments minus gen payments
-pay_load = sum(pi(:) .* d(:));
-pay_gen  = sum(pi(genbus) .* g(:));
-cong_surplus = pay_load - pay_gen;
-
-C_ED = sum(co + a.*tg + 0.5*b.*(tg.^2));
-C_OPF = sum(co + a.*g  + 0.5*b.*(g.^2));
-
-out.g = g; out.lambda_sys = lambda_sys; out.mu_lines = mu_lines;
-out.flows = flows; out.act = struct('lines', names);
-out.LMP = pi; out.cost = C_OPF; out.cost_ED = C_ED;
-out.cost_of_security = C_OPF - C_ED;
-out.congestion_surplus = cong_surplus;
+% Generator incidence matrix G (bus -> gen)
+G = zeros(nbus, ng);
+for k = 1:ng
+    G(genbus(k), k) = 1;
 end
 
-function e = unitrow(n, i)
-e = zeros(1,n); e(i)=1;
+Gk = G(keep, :);
+dk = d(keep);
+
+% QP matrices: minimize 0.5 z' H z + fvec' z
+% z = [g; delta_red]
+H = blkdiag(diag(b), zeros(length(keep)));
+fvec = [a(:); zeros(length(keep),1)];
+
+% Nodal balances (for non-ref buses):
+%   Bred * delta_red = Gk * g - dk
+% -> [-Gk  Bred] [g; delta_red] = -dk
+Aeq_nodal = [-Gk, Bred];
+beq_nodal = -dk;
+
+% Global power balance: sum_i g_i = sum_n d_n
+Aeq_bal = [ones(1,ng), zeros(1,length(keep))];
+beq_bal = sum(d);
+
+% Full equality set
+Aeq = [Aeq_nodal; Aeq_bal];
+beq = [beq_nodal; beq_bal];
+
+% Line limits: -fmax <= F * delta_red <= fmax
+Aineq = [zeros(nlines, ng), F;
+         zeros(nlines, ng), -F];
+bineq = [fmax(:); fmax(:)];
+
+% Variable bounds
+lb = [gmin(:); -inf(length(keep),1)];
+ub = [gmax(:); inf(length(keep),1)];
+
+% Solve QP with quadprog
+options = optimoptions('quadprog','Display','off');
+
+[z, ~, exitflag, ~, lambda] = quadprog(H, fvec, Aineq, bineq, ...
+                                       Aeq, beq, lb, ub, [], options);
+
+if exitflag <= 0
+    error('quadprog did not converge in dc_scopf (exitflag = %d)', exitflag);
+end
+
+% Extract solution
+g = z(1:ng);
+delta_red = z(ng+1:end);
+
+delta = zeros(nbus,1);
+delta(keep) = delta_red;
+
+% Line flows
+f = F * delta_red;
+
+% Cost
+C = sum(co + a(:).*g + 0.5*b(:).*g.^2);
+
+% LMPs (dual variables of nodal balance equations)
+lambda_bus = zeros(nbus,1);
+
+% In lambda.eqlin, rows correspond to rows of Aeq:
+% first (nbus-1) are nodal balances, last one is global balance
+lambda_nodal = lambda.eqlin(1:length(keep));
+
+lambda_bus(keep) = lambda_nodal;
+
+% Set ref bus price as average of others (or any consistent value)
+lambda_bus(refbus) = mean(lambda_bus(keep));
+
+LMP = lambda_bus;
+
+% Congestion / merchandizing surplus
+% Net injections: generation positive, load positive
+pinj = G * g - d;
+
+% MS = - sum_i lambda_i * p_i
+MS = -sum(LMP .* pinj);
+
+% Pack outputs
+out.g = g;
+out.delta = delta;
+out.f = f;
+out.C = C;
+out.LMP = LMP;
+out.MS = MS;
+out.lambda = lambda;
+out.pinj = pinj;
+out.ifrom = ifrom;
+out.ito = ito;
+out.refbus = refbus;
 end

@@ -28,22 +28,18 @@ end
 
 % ---------- Problem 3 data (A4Q3_scopf_data.m) ----------
 A4Q3_scopf_data;      % expects variables as provided
-genbus = [1;2;3];
-out = dc_scopf(ifrom, ito, x, fmax, co, a, b, gmin, gmax, is, d, genbus, 1e-6);
-fprintf('\nProblem 3: DC OPF with intact line limits\n');
+out = dc_scopf(ifrom, ito, x, fmax, d, co, a, b, gmin, gmax, ngen, is);
+fprintf('\nProblem 3: DC SCOPF with intact line limits\n');
 fprintf('  g* = [%g %g %g] MW\n', out.g);
-fprintf('  lambda(sys) = %.4f $/MWh\n', out.lambda_sys);
-fprintf('  cost(ED)=%.2f, cost(OPF)=%.2f, cost of security=%.2f $/h\n', ...
-    out.cost_ED, out.cost, out.cost_of_security);
-fprintf('  Congestion surplus = %.2f $/h\n', out.congestion_surplus);
-fprintf('  Binding set: %s\n', strjoin(out.act.lines, ', '));
+fprintf('  cost = %.2f $/h\n', out.C);
+fprintf('  Merchandizing surplus = %.2f $/h\n', out.MS);
 disp('  LMPs by bus:');
 disp(out.LMP.');
 
 % ---------- Problem 4 data (A4Q4_wlsse_data.m) ----------
 A4Q4_wlsse_data;
-[delta, V, Nit, tsec] = fdwlsse(nfrom, nto, r, x, b, Pinj, Qinj, Pflow, Qflow, Vnode, 1e-4, 50);
-fprintf('\nProblem 4: FD-WLS State Estimation\n');
-fprintf('  Iterations=%d, time=%.4fs\n', Nit, tsec);
+[delta, V, Niter, tsec] = fdwlsse(nfrom, nto, r, x, b, Pinj, Qinj, Pflow, Qflow, Vnode, 1e-4, 50);
+fprintf('\nProblem 4: WLS State Estimation\n');
+fprintf('  Iterations=%d, time=%.4fs\n', Niter, tsec);
 fprintf('  Angles (rad):\n'); disp(delta.');
 fprintf('  Voltages (pu):\n'); disp(V.');

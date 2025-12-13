@@ -1,133 +1,214 @@
 
-function [delta, V, Nit, tsec] = fdwlsse(nfrom, nto, r, x, b, Pinj, Qinj, Pflow, Qflow, Vnode, toler, maxiter)
-%FDWLSSE Fast-decoupled weighted least-squares state estimator.
-%   States: voltage angles at non-slack buses (delta) and |V| at PQ buses.
-%   Measurements: P/Q injections, P/Q flows, V magnitudes with std devs.
-%   All quantities are in per unit; line data include total line charging b.
+function [delta, V, Niter, elapsed] = fdwlsse(nfrom, nto, r, x, b, ...
+    Pinj, Qinj, Pflow, Qflow, Vnode, toler, maxiter)
+%FDWLSSE Weighted least-squares state estimation (AC) for small systems.
+%   [delta, V, Niter, elapsed] = fdwlsse(nfrom, nto, r, x, b, ...
+%       Pinj, Qinj, Pflow, Qflow, Vnode, toler, maxiter)
+%   States:
+%     delta : bus voltage angles (rad), size nb×1 (slack angle = 0)
+%     V : bus voltage magnitudes (p.u.), size nb×1
+%   Measurements:
+%     Pinj : (mP×3) [bus, value(pu), sqrt(R)]
+%     Qinj : (mQ×3) [bus, value(pu), sqrt(R)]
+%     Pflow : (mPF×4)[from,to,value(pu),sqrt(R)]
+%     Qflow : (mQF×4)[from,to,value(pu),sqrt(R)]
+%     Vnode : (mV×3) [bus, value(pu), sqrt(R)]
+%   Network:
+%     nfrom, nto : line incidence (1-based bus indices)
+%     r, x, b : line parameters (per unit); total line charging = j*b
+%   Method:
+%     Gauss-Newton WLS with numerical Jacobian and AC measurement model.
+%     Slack bus is assumed to be bus 1 (angle fixed at 0).
 %
 %   Reference: ECSE 563 notes (Power Flow + State Estimation).
 
-tic;
+% Basic sizes
+nbus = max(max(nfrom), max(nto));
+nline = numel(nfrom);
+
 % Build Ybus
-nb = max([nfrom(:); nto(:)]);
-Y = zeros(nb, nb);
-for k = 1:numel(nfrom)
-    i = nfrom(k); j = nto(k);
-    z = r(k) + 1j*x(k);
-    y = 1/z;
-    bc = 1j*b(k)/2;
-    Y(i,i) = Y(i,i) + y + bc;
-    Y(j,j) = Y(j,j) + y + bc;
-    Y(i,j) = Y(i,j) - y;
-    Y(j,i) = Y(j,i) - y;
+Ybus = zeros(nbus);
+yser = 1 ./ (r + 1j*x);
+bsh = 1j * b / 2;
+
+for l = 1:nline
+    i = nfrom(l);
+    k = nto(l);
+    y = yser(l);
+    bs = bsh(l);
+    Ybus(i,i) = Ybus(i,i) + y + bs;
+    Ybus(k,k) = Ybus(k,k) + y + bs;
+    Ybus(i,k) = Ybus(i,k) - y;
+    Ybus(k,i) = Ybus(k,i) - y;
 end
-G = real(Y); B = imag(Y);
 
-% Extract measurement vectors and weights
-zP = [Pinj(:,2); Pflow(:,3)];     sP = [Pinj(:,3); Pflow(:,4)];
-zQ = [Qinj(:,2); Qflow(:,3)];     sQ = [Qinj(:,3); Qflow(:,4)];
-zV = Vnode(:,2);                  sV = Vnode(:,3);
-WP = diag(1./(sP.^2)); WQ = diag(1./(sQ.^2)); WV = diag(1./(sV.^2));
+% Stack measurements
+z = [];
+bus1 = [];
+bus2 = [];
+mtype = [];
+sigma2 = [];
 
-% Indexing
-nbus = nb;
-ref = 1;          % Slack bus index (assumed 1)
-pv = [];          % Not used in FD decoupled SE (hold voltages via Vnode if any)
-pq = setdiff(1:nbus, [ref, pv]);
+% P injections
+if ~isempty(Pinj)
+    z = [z ; Pinj(:,2)];
+    bus1 = [bus1 ; Pinj(:,1)];
+    bus2 = [bus2 ; zeros(size(Pinj,1),1)];
+    mtype = [mtype; 1*ones(size(Pinj,1),1)];
+    sigma2 = [sigma2 ; Pinj(:,3).^2];
+end
 
-% Initial state
-delta = zeros(nbus,1); V = ones(nbus,1);
-% If any Vnode provided, use them as starting magnitudes at those buses
+% Q injections
+if ~isempty(Qinj)
+    z = [z ; Qinj(:,2)];
+    bus1 = [bus1 ; Qinj(:,1)];
+    bus2 = [bus2 ; zeros(size(Qinj,1),1)];
+    mtype = [mtype; 2*ones(size(Qinj,1),1)];
+    sigma2 = [sigma2 ; Qinj(:,3).^2];
+end
+
+% P flows
+if ~isempty(Pflow)
+    z = [z ; Pflow(:,3)];
+    bus1 = [bus1 ; Pflow(:,1)];
+    bus2 = [bus2 ; Pflow(:,2)];
+    mtype = [mtype; 3*ones(size(Pflow,1),1)];
+    sigma2 = [sigma2 ; Pflow(:,4).^2];
+end
+
+% Q flows
+if ~isempty(Qflow)
+    z = [z ; Qflow(:,3)];
+    bus1 = [bus1 ; Qflow(:,1)];
+    bus2 = [bus2 ; Qflow(:,2)];
+    mtype = [mtype; 4*ones(size(Qflow,1),1)];
+    sigma2 = [sigma2 ; Qflow(:,4).^2];
+end
+
+% V magnitudes
 if ~isempty(Vnode)
-    V(Vnode(:,1)) = Vnode(:,2);
+    z = [z ; Vnode(:,2)];
+    bus1 = [bus1 ; Vnode(:,1)];
+    bus2 = [bus2 ; zeros(size(Vnode,1),1)];
+    mtype = [mtype; 5*ones(size(Vnode,1),1)];
+    sigma2 = [sigma2 ; Vnode(:,3).^2];
 end
 
-for Nit = 1:maxiter
-    % --- P-subproblem: estimate delta (angles) ---
-    % Calculate hP(delta) for injections and flows (approximation: use B matrix)
-    % Injections: P_i ≈ sum_j -B_ij (delta_i - delta_j) for |V|≈1
-    % Flows i->j : P_ij ≈ (delta_i - delta_j)/x_ij
-    mPinj = size(Pinj,1); mPflow = size(Pflow,1);
-    hPinj = zeros(mPinj,1); HP = zeros(mPinj + mPflow, nbus);
-    % Injection rows
-    for m = 1:mPinj
-        i = Pinj(m,1);
-        for j = 1:nbus
-            if j==i, continue; end
-            hPinj(m) = hPinj(m) + (-B(i,j))*(delta(i) - delta(j));
-            HP(m,i) = HP(m,i) + (-B(i,j));
-            HP(m,j) = HP(m,j) + (+B(i,j));
-        end
-    end
-    % Flow rows
-    hPflow = zeros(mPflow,1);
-    for m = 1:mPflow
-        i = Pflow(m,1); j = Pflow(m,2);
-        % Find series reactance x_ij (assume unique line pair)
-        idx = find((nfrom==i & nto==j) | (nfrom==j & nto==i), 1);
-        xij = x(idx);
-        hPflow(m) = (delta(i) - delta(j))/xij;
-        HP(mPinj+m, i) = HP(mPinj+m, i) + 1/xij;
-        HP(mPinj+m, j) = HP(mPinj+m, j) - 1/xij;
-    end
-    hP = [hPinj; hPflow];
-    % Remove reference angle column/row (delta_ref = 0)
-    keep = setdiff(1:nbus, ref);
-    HPk = HP(:, keep);
-    rP = [zP] - hP;
-    % Solve normal equations
-    d_delta = (HPk.' * WP * HPk) \ (HPk.' * WP * rP);
-    delta(keep) = delta(keep) + d_delta;
+m = numel(z);
+W = diag(1 ./ sigma2);
 
-    % --- Q/V-subproblem: estimate |V| (magnitudes) ---
-    % Measurements: Q injections, Q flows, |V| magnitudes
-    mQinj = size(Qinj,1); mQflow = size(Qflow,1); mV = size(Vnode,1);
-    hQinj = zeros(mQinj,1); HQ = zeros(mQinj + mQflow + mV, numel(pq));
-    % Approximation: use susceptance-looking Jacobian (fast-decoupled)
-    for m = 1:mQinj
-        i = Qinj(m,1);
-        % Q_i ≈ -B_ii*(V_i - 1) - sum_{j≠i} B_ij*(V_j - 1)  (linearized)
-        hQinj(m) = -B(i,i)*(V(i)-1);
-        for j = 1:nbus
-            if j==i, continue; end
-            hQinj(m) = hQinj(m) - B(i,j)*(V(j)-1);
-        end
-        % Jacobian wrt V magnitudes at PQ buses
-        for k = 1:numel(pq)
-            j = pq(k);
-            if j==i
-                HQ(m,k) = HQ(m,k) - B(i,i);
-            else
-                HQ(m,k) = HQ(m,k) - B(i,j);
-            end
-        end
-    end
-    % Q flows and V magnitudes
-    hQflow = zeros(mQflow,1); HV = zeros(mV, numel(pq));
-    for m = 1:mQflow
-        i = Qflow(m,1); j = Qflow(m,2);
-        idx = find((nfrom==i & nto==j) | (nfrom==j & nto==i), 1);
-        bij = -1/x(idx);  %#ok<NASGU>  % not used in very rough decoupled Q model
-        hQflow(m) = 0;    % neglected in the fast-decoupled linearization
-    end
-    hV = V(Vnode(:,1));
-    for m = 1:mV
-        k = find(pq==Vnode(m,1));
-        if ~isempty(k), HV(m,k) = 1; end
-    end
-    HQbig = [HQ; zeros(mQflow, size(HQ,2)); HV];
-    hQ = [hQinj; hQflow; hV];
+% Initial state guess
+delta_state = zeros(nbus-1,1);
+V = ones(nbus,1);
+x = [delta_state; V];
+nstate = numel(x);
 
-    rQ = [zQ; zeros(mQflow,1); zV] - hQ;
-    dV = (HQbig.' * blkdiag(WQ, eye(mQflow), WV) * HQbig) \ ...
-         (HQbig.' * blkdiag(WQ, eye(mQflow), WV) * rQ);
-    V(pq) = V(pq) + dV;
+% Function handle for measurement model
+measfun = @(xx) measurement_model(xx, Ybus, nbus, ...
+                                  nfrom, nto, yser, bsh, ...
+                                  mtype, bus1, bus2);
 
-    % Convergence (use infinity norm of updates)
-    if max(abs(d_delta)) < toler && (isempty(dV) || max(abs(dV)) < toler)
+% Iterative WLS
+tic;
+for k = 1:maxiter
+    h = measfun(x);
+    r = z - h;
+    
+    % Numerical Jacobian
+    H = numerical_jacobian(measfun, x, h);
+    
+    G = H.' * (W * H);
+    rhs = H.' * (W * r);
+    
+    dx = G \ rhs;
+    
+    x = x + dx;
+    
+    if max(abs(dx)) < toler
         break;
     end
 end
+elapsed = toc;
+Niter = k;
 
-tsec = toc;
+% Unpack state
+delta = [0; x(1:nbus-1)];
+V = x(nbus:end);
+end
+
+% =====================================================================
+function h = measurement_model(x, Ybus, nbus, ...
+                               nfrom, nto, yser, bsh, ...
+                               mtype, bus1, bus2)
+% Build predicted measurements h(x)
+delta_state = x(1:nbus-1);
+V = x(nbus:end);
+
+Va = [0; delta_state];
+Vcmp = V .* exp(1j*Va);
+
+% Bus injections
+Iinj = Ybus * Vcmp;
+Sbus = Vcmp .* conj(Iinj);
+Pbus = real(Sbus);
+Qbus = imag(Sbus);
+
+h = zeros(numel(mtype),1);
+
+for k = 1:numel(mtype)
+    t = mtype(k);
+    i = bus1(k);
+    j = bus2(k);
+    
+    switch t
+        case 1      % Pinj at bus i
+            h(k) = Pbus(i);
+        case 2      % Qinj at bus i
+            h(k) = Qbus(i);
+        case 3      % Pflow from i to j
+            idx = find(nfrom==i & nto==j, 1);
+            if isempty(idx)
+                idx = find(nfrom==j & nto==i, 1);
+                i2 = j; j = i;
+            else
+                i2 = i;
+            end
+            y = yser(idx);
+            bs = bsh(idx);
+            Iij = (Vcmp(i2) - Vcmp(j)) * y + Vcmp(i2) * bs;
+            Sij = Vcmp(i2) * conj(Iij);
+            h(k) = real(Sij);
+        case 4      % Qflow from i to j
+            idx = find(nfrom==i & nto==j, 1);
+            if isempty(idx)
+                idx = find(nfrom==j & nto==i, 1);
+                i2 = j; j = i;
+            else
+                i2 = i;
+            end
+            y = yser(idx);
+            bs = bsh(idx);
+            Iij = (Vcmp(i2) - Vcmp(j)) * y + Vcmp(i2) * bs;
+            Sij = Vcmp(i2) * conj(Iij);
+            h(k) = imag(Sij);
+        case 5      % V magnitude at bus i
+            h(k) = abs(Vcmp(i));
+    end
+end
+end
+
+% =====================================================================
+function H = numerical_jacobian(measfun, x, h0)
+% Simple finite-difference Jacobian
+nstate = numel(x);
+m = numel(h0);
+H = zeros(m, nstate);
+eps_fd = 1e-6;
+
+for j = 1:nstate
+    xpert = x;
+    xpert(j) = xpert(j) + eps_fd;
+    hpert = measfun(xpert);
+    H(:,j) = (hpert - h0) / eps_fd;
+end
 end
