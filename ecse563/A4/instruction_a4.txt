@@ -1,0 +1,113 @@
+\title{
+McGill University \\ ECSE 563 Power System Operation and Planning-Fall 2025
+}
+
+\author{
+Assignment 4 \\ Power System Optimization
+}
+
+Complete the following function programming assignments. In all cases, provide fullydocumented code with appropriate software validation as indicated which uses the data found in Appendix (also available in the files A4Q3_scopf_data.m and A4Q_wlsse_data.m found on myCourses). Note that if you are using Matlab to perform basic matrix operations, all of your programs should contain fewer than 100 lines of code.
+1. Develop a callable function to perform the economic dispatch using the $\lambda$-iteration method for an arbitrary generation system.
+The module should be able to take as inputs vectors co ( $\$$ ), a ( $\$ / \mathrm{MWh}$ or $\$ \mathrm{pu} \mathrm{h}$ ) and $\mathrm{b}\left(\$ / \mathrm{MW}^{2} \mathrm{~h}\right.$ or $\left.\$ \mathrm{pu}^{2} \mathrm{~h}\right)$ which correspond to the parameters of the quadratic generation cost functions $C_{i}\left(g_{i}\right)=c_{0 i}+a_{i} g_{i}+\frac{1}{2} b_{i} g_{i}^{2}$ for $i=1, \ldots, N$, gmin and gmax are respectively the minimum and maximum generation limit vectors (MW or p.u.), d is the power demand and toler is the small power balancing tolerance (MW or p.u.). The output should be the vector of generation outputs g (MW or p.u.), the total cost C ( $\$ / \mathrm{h}$ ) and lambda the power balance Lagrange multiplier ( $\$ / \mathrm{MWh}$ or $\$ /$ p.u.-h). Use the following function prototype:
+$$
+[g, C, \text { lambda }]=\text { ed }(c o, a, b, g \min , g \max , d, \text { toler })
+$$
+
+Provide fully-documented code with appropriate validation using the generation data found in Table 1. Validate your code with the three following load levels: $d= 300,400,600$ and 700 MW . Use toler $=0.5 \mathrm{MW}$.
+Show graphically that the units are producing as they should given the values of $\lambda$ and $g_{i}$ 's.
+
+What are the minimum outputs the generators should be providing if they are to recover their fixed operating costs if they are remunerated as $\lambda g_{i}$ ?
+2. Develop a callable function to perform a static unit commitment on an arbitrary generation system. You may use full enumeration of potential solutions.
+The module should be able to take as inputs vectors co ( $\$$ ), a ( $\$ / \mathrm{MWh}$ or $\$ \mathrm{pu} \mathrm{h}$ ) and $\mathrm{b}\left(\$ / \mathrm{MW}^{2} \mathrm{~h}\right.$ or $\$$ p.u. $\left.{ }^{2} \mathrm{~h}\right)$ which correspond to the parameters of the quadratic generation cost functions $C_{i}\left(u_{i}, g_{i}\right)=u_{i} c_{0 i}+a_{i} g_{i}+\frac{1}{2} b_{i} g_{i}^{2}$ for $i=1, \ldots, N$, gmin and gmax are respectively the minimum and maximum generation limit vectors (MW or p.u.), d is the power demand and toler is the small power balancing tolerance (MW or p.u.). The output should be the vector of generation scheduling statuses $u$ and outputs g (MW or p.u.), the total cost $\mathrm{C}(\$ / \mathrm{h})$ and lambda the power balance Lagrange multiplier ( $\$ / \mathrm{MWh}$ or $\$ / \mathrm{p} . \mathrm{u} .-\mathrm{h}$ ). Use the following function prototype:
+$$
+[\mathrm{u}, \mathrm{~g}, \mathrm{C}, \text { lambda}]=\mathrm{uc}(\mathrm{co}, \mathrm{a}, \mathrm{~b}, \mathrm{gmin}, \mathrm{gmax}, \mathrm{~d}, \mathrm{toler})
+$$
+
+Note that you are allowed to approach the solution of the problem via full enumeration.
+
+Provide fully-documented code with appropriate validation using the generation data found in Table 1. Validate your code with the three following load levels: $d= 300,400,600$ and 700 MW . Use toler $=0.5 \mathrm{MW}$.
+
+Calculate the generators' profits if they are remunerated at the marginal cost of electricity, $\lambda$. Compare these profit values with those corresponding to the simple economic dispatch solutions in Problem 1. Is unit commitment sufficient to avoid having generators losing money under marginal cost pricing?
+3. Develop a callable function to perform a dc-based security-constrained optimal power flow (dc-SCOPF) for an arbitrary network and generation system. Your function only needs to consider line flow limits for the intact network only.
+Demonstrate the validity of your code by running the dc-SCOPF on the nine-node network described in the data file A4Q3_scopf_data.m. Show how new constraints are added to the economic dispatch step and how generation is being redispatched as a result.
+
+Assume generators 1, 2 and 3 in Table 1 are located respectively at nodes 1, 2 and 3. Loads are located at nodes 5,7 and 9 . Perform your validation with system demands $d_{5}=200 \mathrm{MW}, d_{7}=100 \mathrm{MW}$ and $d_{9}=225 \mathrm{MW}$. Determine the cost of security.
+Compute the locational marginal prices and the congestion surplus using your software.
+4. Develop in a software module to perform weighted least square power system state estimation based on the fast-decoupled formulation. Use the following function prototype:
+```
+[delta, V, N, time] = fdwlsse(nfrom, nto, r, x, b, Pinj, Qinj,
+    Pflow, Qflow, Vnode, toler, maxiter)
+```
+
+
+The module should take as its input the network parameters necessary to compute the network admittance matrix (nfrom, nto, $\mathrm{r}, \mathrm{x}, \mathrm{b}$ ), the matrices of per unit network measurements (active and reactive node injections Pinj, Qinj, active and reactive line flows Pflow, Qflow and the node voltage magnitudes Vnode), the per unit algorithmic tolerance toler and the maximum number of iterations maxiter.
+The measurement input matrices should contain information about the location of the measurement, its actual value and its covariance. Hence, nodal measurement matrices Pinj, Qinj, Vnode should each have three columns, the first one indicating at which node to measurement is taken, the second column should contain the
+measurements corresponding to each location, and the third should contain the measurement's $\sqrt{R_{m m}}$. The flow measurement matrices, on the other hand, should have four columns. The first should indicate the leaving node of the line flow, the second column the destination node, the third column should contain the measurement, and the fourth should contain the measurement's $\sqrt{R_{m m}}$.
+The output should include the resulting voltage angles and magnitudes (delta, V ), the number of iterations to convergence $N$ and the computation time.
+
+You should validate your function on the network data found in Table 2 using a convergence tolerance of $10^{-4}$ p.u. The measurement information for the network is found in Table 3. Those are available in the file A4Q_wlsse_data.m.
+Prior to estimating the state of the network, prove, on paper, that the state of the network is fully observable. Argue whether or not it would be possible to remove one measurement and still have a fully observable state.
+
+To help you validate your state estimator, you can use the power flow data in Table 4; those data were used to generate the noisy measurements in Table 3. Note that the apparent power base of this network is 100 MVA.
+
+\section*{Appendix - Generation and Network Data}
+
+\begin{table}
+\captionsetup{labelformat=empty}
+\caption{Table 1: Generation costs and capacity}
+\begin{tabular}{cccccc}
+\hline Generator $i$ & $c_{0 i}(\$ / \mathrm{h})$ & $a_{i}(\$ / \mathrm{MWh})$ & $b_{i}\left(\$ / \mathrm{MW}^{2} \mathrm{~h}\right)$ & $g^{\min }(\mathrm{MW})$ & $g^{\max }(\mathrm{MW})$ \\
+\hline 1 & 800 & 20 & 0.030 & 10 & 250 \\
+2 & 400 & 23 & 0.035 & 10 & 300 \\
+3 & 400 & 56 & 0.040 & 10 & 270 \\
+\hline
+\end{tabular}
+\end{table}
+
+\begin{table}
+\captionsetup{labelformat=empty}
+\caption{Table 2: Test network data}
+\begin{tabular}{ccccccc}
+\hline Line & From node & To node & $r$ (p.u.) & $x$ (p.u.) & $b$ (p.u.) & $\bar{f}(\mathrm{MW})$ \\
+\hline 1 & 1 & 2 & 0.0147 & 0.168 & 0.138 & 300 \\
+2 & 1 & 4 & 0.0108 & 0.126 & 0.102 & 355 \\
+3 & 2 & 3 & 0.0185 & 0.210 & 0.185 & 300 \\
+4 & 3 & 4 & 0.0294 & 0.336 & 0.296 & 300 \\
+5 & 3 & 5 & 0.0221 & 0.252 & 0.213 & 300 \\
+6 & 4 & 5 & 0.0108 & 0.126 & 0.104 & 450 \\
+7 & 2 & 4 & 0.0105 & 0.130 & 0.100 & 360 \\
+\hline
+\end{tabular}
+\end{table}
+
+\begin{table}
+\captionsetup{labelformat=empty}
+\caption{Table 3: Network measurements}
+\begin{tabular}{cccc}
+\hline Measurement, $m$ & Type & Value (p.u.) & $\sqrt{R_{m m}}$ (p.u.) \\
+\hline 1 & $P_{1}$ & 1.7288 & 0.010 \\
+2 & $P_{3}$ & 2.6783 & 0.010 \\
+3 & $P_{4}$ & -0.5726 & 0.010 \\
+4 & $P_{12}$ & 0.5678 & 0.008 \\
+5 & $Q_{1}$ & -0.5961 & 0.010 \\
+6 & $Q_{3}$ & -0.3382 & 0.010 \\
+7 & $Q_{4}$ & 1.4454 & 0.010 \\
+8 & $Q_{12}$ & -0.1149 & 0.008 \\
+9 & $V_{2}$ & 1.0099 & 0.004 \\
+\hline
+\end{tabular}
+\end{table}
+
+\begin{table}
+\captionsetup{labelformat=empty}
+\caption{Table 4: Node classifications, specified voltages and active and reactive powers}
+\begin{tabular}{ccccccc}
+\hline Node & Type & $V_{0}$ (p.u.) & $P_{g}(\mathrm{MW})$ & $Q_{g}(\mathrm{MW})$ & $P_{d}(\mathrm{MW})$ & $Q_{d}(\mathrm{MW})$ \\
+\hline 1 & Slack & 1.00 & - & - & 134 & 66.1 \\
+2 & PQ & - & 0 & 0 & 85 & 27.9 \\
+3 & PV & 1.00 & 385 & - & 119 & 39.1 \\
+4 & PV & 1.05 & 268 & - & 323 & 106.2 \\
+5 & PQ & - & 0 & 0 & 287 & 9.4 \\
+\hline
+\end{tabular}
+\end{table}
