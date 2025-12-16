@@ -11,14 +11,12 @@ function [g, C, lambda] = ed(c0, a, b, gmin, gmax, d, toler)
 %     g : dispatch vector (MW)
 %     C : total cost ($/h)
 %     lambda : power balance Lagrange multiplier ($/MWh)
-%
-%   Reference: ECSE 563 notes (Short-Term Generation Optimization).
 
 % Ensure column vectors
-c0 = c0(:); 
-a = a(:); 
-b = b(:);
-gmin = gmin(:); 
+c0   = c0(:);
+a    = a(:);
+b    = b(:);
+gmin = gmin(:);
 gmax = gmax(:);
 
 N = length(a);
@@ -31,40 +29,51 @@ if d < sum(gmin) || d > sum(gmax)
     error('Demand d is outside feasible range [sum(gmin), sum(gmax)].');
 end
 
-% Incremental costs at limits (for lambda bracketing)
+% -------- λ-iteration algorithm (gradient method) --------
+
+% Incremental costs at limits (C'_i(g))
 mc_min = a + b .* gmin;
 mc_max = a + b .* gmax;
 
-lambda_low = min(mc_min);
-lambda_high = max(mc_max);
+% Initial lambda (from notes):
+% λ^0 = ( d + Σ (a_i / b_i) ) / Σ (1 / b_i)
+lambda = (d + sum(a ./ b)) / sum(1 ./ b);
 
-% Lambda-iteration using bisection
-maxiter = 100;
-for k = 1:maxiter
-    lambda = 0.5 * (lambda_low + lambda_high);
+% Parameters
+beta    = 0.03;      % step size
+maxiter = 10000;     % safety cap on iterations
+
+% Initialization
+Delta  = Inf;        % power mismatch
+g      = zeros(N,1); % dispatch vector
+
+k = 0;
+while abs(Delta) > toler && k < maxiter
+    k = k + 1;
+    lambda_old = lambda;   % λ used to compute this iteration's dispatch
     
-    % Unconstrained dispatch for this lambda
-    g = (lambda - a) ./ b;
-    
-    % Enforce generator limits
-    g = max(gmin, min(gmax, g));
-    
-    mismatch = sum(g) - d;
-    
-    if abs(mismatch) <= toler
-        break;
+    % Compute g_i^k from λ^k with limit checks
+    for i = 1:N
+        if mc_min(i) >= lambda_old
+            g(i) = gmin(i);
+        elseif mc_max(i) <= lambda_old
+            g(i) = gmax(i);
+        else
+            g(i) = (lambda_old - a(i)) / b(i);
+        end
     end
     
-    if mismatch > 0
-        % Too much generation -> lambda too high
-        lambda_high = lambda;
-    else
-        % Not enough generation -> lambda too low
-        lambda_low = lambda;
-    end
+    % Power balance mismatch Δ^k = Σ g_i^k - d
+    Delta = sum(g) - d;
+    
+    % Update λ for next iteration: λ^{k+1} = λ^k - β Δ^k
+    lambda = lambda_old - beta * Delta;
 end
 
-if abs(sum(g) - d) > toler
+% Use the λ that produced the final dispatch g
+lambda = lambda_old;
+
+if abs(Delta) > toler
     warning('ED:NoConverge', ...
         'Lambda-iteration reached maxiter without meeting tolerance.');
 end
