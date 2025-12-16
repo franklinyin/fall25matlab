@@ -1,4 +1,4 @@
-
+% Q3 implementation
 function out = dc_scopf(ifrom, ito, x, fmax, d, co, a, b, gmin, gmax, ngen, is)
 %DC_SCOPF DC security-constrained optimal power flow (intact network)
 %   Solves: min sum c0_i + a_i*g_i + 0.5*b_i*g_i^2

@@ -1,4 +1,4 @@
-
+% Q2 implementation
 function [u, g, C, lambda] = uc(c0, a, b, gmin, gmax, d, toler)
 %UC Static unit commitment by full enumeration + ED on committed units
 %   Inputs:
