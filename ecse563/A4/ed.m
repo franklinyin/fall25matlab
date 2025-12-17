@@ -13,16 +13,16 @@ function [g, C, lambda] = ed(c0, a, b, gmin, gmax, d, toler)
 %     lambda : power balance Lagrange multiplier ($/MWh)
 
 % Ensure column vectors
-c0   = c0(:);
-a    = a(:);
-b    = b(:);
-gmin = gmin(:);
-gmax = gmax(:);
+% c0   = c0(:);
+% a    = a(:);
+% b    = b(:);
+% gmin = gmin(:);
+% gmax = gmax(:);
 
 N = length(a);
-if any([length(c0) length(b) length(gmin) length(gmax)] ~= N)
-    error('All generator parameter vectors must have the same length.');
-end
+% if any([length(c0) length(b) length(gmin) length(gmax)] ~= N)
+%     error('All generator parameter vectors must have the same length.');
+% end
 
 % Feasibility check
 if d < sum(gmin) || d > sum(gmax)

@@ -15,11 +15,11 @@ function [u, g, C, lambda] = uc(c0, a, b, gmin, gmax, d, toler)
 %   Reference: ECSE 563 notes (Short-Term Generation Optimization).
 
 % Ensure column vectors
-c0 = c0(:); 
-a = a(:); 
-b = b(:);
-gmin = gmin(:); 
-gmax = gmax(:);
+% c0 = c0(:); 
+% a = a(:); 
+% b = b(:);
+% gmin = gmin(:); 
+% gmax = gmax(:);
 
 N = length(c0);
 if any([length(a) length(b) length(gmin) length(gmax)] ~= N)
