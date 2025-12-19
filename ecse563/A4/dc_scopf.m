@@ -99,9 +99,12 @@ bineq = [fmax(:); fmax(:)];
 lb = [gmin(:); -inf(length(keep),1)];
 ub = [gmax(:);  inf(length(keep),1)];
 
-%% Solve QP with quadprog
-options = optimoptions('quadprog','Display','off');
+%% Solve QP with quadprog (requires Optimization Toolbox)
+if ~exist('quadprog', 'file')
+    error('quadprog not available. Optimization Toolbox required for dc_scopf.');
+end
 
+options = optimset('Display','off');
 [z, ~, exitflag, ~, lambda] = quadprog(H, fvec, Aineq, bineq, ...
                                        Aeq, beq, lb, ub, [], options);
 

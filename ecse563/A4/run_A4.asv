@@ -52,7 +52,7 @@ end
 
 %% b) production vidualization ---
 fprintf('b) production vidualization\n');
-figure('Name', 'q1 - production vidualization', 'Position', [100 100 1200 800]);
+figure('Name', 'Problem 1: ED Graphical Validation', 'Position', [100 100 1200 800]);
 
 for idx = 1:length(loads)
     subplot(2, 2, idx);
@@ -92,9 +92,10 @@ for idx = 1:length(loads)
     legend('Location', 'best', 'FontSize', 9);
     hold off;
 end
-sgtitle('q1 - production vidualization', 'FontSize', 14, 'FontWeight', 'bold');
+sgtitle('Problem 1: ED Optimality Verification - MC Curves vs Lambda', 'FontSize', 14, 'FontWeight', 'bold');
 
-saveas(gcf, 'Pq1_production_vidualization.png');
+saveas(gcf, 'P1_ED_graphical_validation.png');
+fprintf('  -> Saved: P1_ED_graphical_validation.png\n\n');
 
 %% c) --- Fixed Cost Recovery Analysis (Required by instruction) ---
 fprintf('c) Fixed Cost Recovery Analysis:\n');

@@ -28,11 +28,15 @@ Note that you are allowed to approach the solution of the problem via full enume
 Provide fully-documented code with appropriate validation using the generation data found in Table 1. Validate your code with the three following load levels: $d= 300,400,600$ and 700 MW . Use toler $=0.5 \mathrm{MW}$.
 
 Calculate the generators' profits if they are remunerated at the marginal cost of electricity, $\lambda$. Compare these profit values with those corresponding to the simple economic dispatch solutions in Problem 1. Is unit commitment sufficient to avoid having generators losing money under marginal cost pricing?
-3. Develop a callable function to perform a dc-based security-constrained optimal power flow (dc-SCOPF) for an arbitrary network and generation system. Your function only needs to consider line flow limits for the intact network only.
-Demonstrate the validity of your code by running the dc-SCOPF on the nine-node network described in the data file A4Q3_scopf_data.m. Show how new constraints are added to the economic dispatch step and how generation is being redispatched as a result.
 
-Assume generators 1, 2 and 3 in Table 1 are located respectively at nodes 1, 2 and 3. Loads are located at nodes 5,7 and 9 . Perform your validation with system demands $d_{5}=200 \mathrm{MW}, d_{7}=100 \mathrm{MW}$ and $d_{9}=225 \mathrm{MW}$. Determine the cost of security.
-Compute the locational marginal prices and the congestion surplus using your software.
+3. Develop a callable function to perform a dc-based security-constrained optimal power flow (dc-SCOPF) for an arbitrary network and generation system. Your function only needs to consider line flow limits for the intact network only.
+
+
+a) Demonstrate the validity of your code by running the dc-SCOPF on the nine-node network described in the data file A4Q3_scopf_data.m. 
+b) Show how new constraints are added to the economic dispatch step and how generation is being redispatched as a result.
+
+c) Assume generators 1, 2 and 3 in Table 1 are located respectively at nodes 1, 2 and 3. Loads are located at nodes 5,7 and 9 . Perform your validation with system demands $d_{5}=200 \mathrm{MW}, d_{7}=100 \mathrm{MW}$ and $d_{9}=225 \mathrm{MW}$. d) Determine the cost of security.
+e) Compute the locational marginal prices and f) the congestion surplus using your software.
 4. Develop in a software module to perform weighted least square power system state estimation based on the fast-decoupled formulation. Use the following function prototype:
 ```
 [delta, V, N, time] = fdwlsse(nfrom, nto, r, x, b, Pinj, Qinj,
