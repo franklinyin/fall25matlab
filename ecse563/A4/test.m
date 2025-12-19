@@ -19,8 +19,11 @@ for d = loads
         d, lam, g, C);
 end
 
-% Production visualization
+% production visualization
 q1_visualization(loads, c0, a, b, gmin, gmax, toler);
+
+% fixed cost recovery analysis
+q1_min_output(loads, c0, a, b, gmin, gmax, toler);
 
 
 %% q2

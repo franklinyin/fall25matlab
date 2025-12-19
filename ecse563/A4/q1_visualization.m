@@ -57,7 +57,7 @@ for idx = 1:length(loads)
 end
 sgtitle('q1 - production vidualization', 'FontSize', 14, 'FontWeight', 'bold');
 
-saveas(gcf, 'Pq1_production_vidualization.png');
+saveas(gcf, 'q1_production_vidualization.png');
 
 end
 
