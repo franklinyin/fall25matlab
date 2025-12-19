@@ -74,8 +74,7 @@ end
 lambda = lambda_old;
 
 if abs(Delta) > toler
-    warning('ED:NoConverge', ...
-        'Lambda-iteration reached maxiter without meeting tolerance.');
+    warning('No Convergence');
 end
 
 % Total cost
