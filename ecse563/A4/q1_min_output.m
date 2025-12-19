@@ -1,21 +1,7 @@
 function q1_min_output(loads, c0, a, b, gmin, gmax, toler)
-% Q1_MIN_OUTPUT Fixed Cost Recovery Analysis for Economic Dispatch
-% 
-% Inputs:
-%   loads  - Array of load values (MW)
-%   c0     - Fixed cost coefficients (vector)
-%   a      - Linear cost coefficients (vector)
-%   b      - Quadratic cost coefficients (vector)
-%   gmin   - Minimum generation limits (vector)
-%   gmax   - Maximum generation limits (vector)
-%   toler  - Tolerance for ED convergence
-%
-% Analyzes whether generators can recover fixed costs at the dispatch lambda.
+% helper function for Fixed Cost Recovery Analysis for Economic Dispatch
 
 fprintf('c) Fixed Cost Recovery Analysis:\n');
-fprintf('-------------------------------------------------\n');
-fprintf('For generator i to recover fixed costs when remunerated at lambda*g_i:\n');
-fprintf('  Require: lambda * g_i >= c0_i  =>  g_i >= c0_i / lambda\n\n');
 
 fprintf('%-8s', 'Load');
 fprintf('%-12s', 'Lambda');

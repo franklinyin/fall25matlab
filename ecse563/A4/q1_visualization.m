@@ -1,19 +1,7 @@
 function q1_visualization(loads, c0, a, b, gmin, gmax, toler)
-% Q1_VISUALIZATION Creates production visualization for Economic Dispatch
-% 
-% Inputs:
-%   loads  - Array of load values (MW)
-%   c0     - Fixed cost coefficients (vector)
-%   a      - Linear cost coefficients (vector)
-%   b      - Quadratic cost coefficients (vector)
-%   gmin   - Minimum generation limits (vector)
-%   gmax   - Maximum generation limits (vector)
-%   toler  - Tolerance for ED convergence
-%
-% Creates and saves a figure showing marginal cost curves and dispatch points
-% for each load level.
+% helper function for production visualization in part 1
 
-fprintf('b) production vidualization\n');
+fprintf('Production vidualization\n');
 figure('Name', 'q1 - production vidualization', 'Position', [100 100 1200 800]);
 
 for idx = 1:length(loads)
