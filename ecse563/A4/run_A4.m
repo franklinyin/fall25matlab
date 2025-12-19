@@ -22,7 +22,7 @@ fprintf('\nProblem 2: UC (static, full enumeration)\n');
 for d = loads
     [u,g,C,lam] = uc(c0,a,b,gmin,gmax,d,toler);
     prof = lam*g - (c0.*u + a.*g + 0.5*b.*g.^2);
-    fprintf('  d=%4.0f: u=%s, lambda=%.3f, g=[%.2f %.2f %.2f], C=%.2f, total profit=%.2f\n', ...
+    fprintf('- d=%4.0f: u=%s, lambda=%.3f, g=[%.2f,%.2f,%.2f],\n    C=%.2f, total profit=%.2f\n\n', ...
         d, mat2str(u.'), lam, g, C, sum(prof));
 end
 
