@@ -1,7 +1,7 @@
 function q1_min_output(loads, c0, a, b, gmin, gmax, toler)
 % helper function for Fixed Cost Recovery Analysis for Economic Dispatch
 
-fprintf('c) Fixed Cost Recovery Analysis:\n');
+fprintf('Fixed Cost Recovery Analysis:\n');
 
 fprintf('%-8s', 'Load');
 fprintf('%-12s', 'Lambda');

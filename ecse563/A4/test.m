@@ -12,7 +12,7 @@ toler = 5e-1;  % MW
 loads = [300, 400, 600, 700]; % q2
 
 %% q1
-fprintf('Q1: ED results\n');
+fprintf('Q1: ED\n');
 for d = loads
     [g_ed,C_ed,lam_ed] = ed(c0,a,b,gmin,gmax,d,toler);
     fprintf('  d=%4.0f MW -> lambda=%.3f $/MWh, g=[%.2f %.2f %.2f] MW, C=%.2f $/h\n', ...
@@ -27,7 +27,7 @@ q1_min_output(loads, c0, a, b, gmin, gmax, toler);
 
 
 %% q2
-fprintf('\nQ2: UC (static, full enumeration)\n');
+fprintf('\nQ2: UC\n');
 for d = loads
     [u_uc,g_uc,C_uc,lam_uc] = uc(c0,a,b,gmin,gmax,d,toler);
     prof_uc = lam_uc*g_uc - (c0.*u_uc + a.*g_uc + 0.5*b.*g_uc.^2);
