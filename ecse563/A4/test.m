@@ -35,15 +35,23 @@ for d = loads
         d, mat2str(u_uc.'), lam_uc, g_uc, C_uc, sum(prof_uc));
 end
 
+% profit comparison: UC vs ED
+q2_q1_profit_comparison(loads, c0, a, b, gmin, gmax, toler);
+
 %% q3
-A4Q3_scopf_data;      % expects variables as provided
+A4Q3_scopf_data;
 out = dc_scopf(ifrom, ito, x, fmax, d, co, a, b, gmin, gmax, ngen, is);
 fprintf('\nQ3: DC SCOPF with intact line limits\n');
 fprintf('  g* = [%g %g %g] MW\n', out.g);
 fprintf('  cost = %.2f $/h\n', out.C);
-fprintf('  Merchandizing surplus = %.2f $/h\n', out.MS);
 disp('  LMPs by bus:');
 disp(out.LMP.');
+fprintf('  Congestion surplus = %.2f $/h\n', out.MS);
+
+fprintf('Computing Cost of Security:\n');
+[~, C_ed_unconstrained, ~] = ed(co, a, b, gmin, gmax, sum(d), toler) % first compute unconstrained ED for comparison
+cost_of_security = out.C - C_ed_unconstrained
+
 
 %% ---------- Problem 4 data (A4Q4_wlsse_data.m) ----------
 A4Q4_wlsse_data;

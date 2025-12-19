@@ -26,7 +26,7 @@ Link to the code: \url{}
 
 \section*{Problem 1: Economic Dispatch}
 
-\textbf{Implementation:} The economic dispatch is implemented using the $\lambda$-iteration method (gradient-based approach). Starting from an initial $\lambda$ computed as $\lambda^0 = (d + \sum a_i/b_i) / \sum (1/b_i)$, the algorithm iteratively updates $\lambda$ using $\lambda^{k+1} = \lambda^k - \beta \Delta^k$ where $\Delta^k = \sum g_i^k - d$ is the power mismatch and $\beta = 0.03$ is the step size. At each iteration, generator outputs are computed as $g_i = (\lambda - a_i)/b_i$ with enforcement of limits $g_i^{\min} \leq g_i \leq g_i^{\max}$. The algorithm converges when $|\Delta| < \text{toler}$.
+\textbf{Implementation:} The economic dispatch is implemented using the $\lambda$-iteration method (gradient-based approach). Starting from an initial $\lambda$ computed as $\lambda^0 = (d + \sum a_i/b_i) / \sum (1/b_i)$, the algorithm iteratively updates $\lambda$ using $\lambda^{k+1} = \lambda^k - \beta \Delta^k$ where $\Delta^k = \sum g_i^k - d$ is the power mismatch and $\beta = 0.03$ is the step size. At each iteration, generator outputs are computed as $g_i = (\lambda - a_i)/b_i$ with enforcement of limits $g_i^{\min} \leq g_i \leq g_i^{\max}$. The algorithm converges when $|\Delta| < \text{toler}$. Reference: Algorithm in (p.62, lecture 9).
 
 \begin{lstlisting}[language=Matlab]
 Problem 1: ED results
@@ -36,10 +36,45 @@ Problem 1: ED results
   d= 700 MW -> lambda=61.994 $/MWh, g=[250.00 300.00 149.84] MW, C=24852.80 $/h
 \end{lstlisting}
 
-The optimality condition $\lambda = a_i + b_i g_i$ is satisfied for all units not at limits, confirming correct dispatch.
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=\linewidth]{Power/q1_production_vidualization.png}
+    \caption{Production Visualization}
+    \label{fig:placeholder}
+\end{figure}
 
-\textbf{Minimum outputs for fixed cost recovery:} For generator $i$ to recover fixed costs $c_{0i}$ when remunerated at $\lambda g_i$, we require $\lambda g_i \geq c_{0i}$, hence $g_i \geq c_{0i}/\lambda$. At the highest $\lambda$ (700 MW case: $\lambda = 61.994$ \$/MWh), the minimum outputs are: Gen 1: 12.90 MW, Gen 2: 6.45 MW, Gen 3: 6.45 MW. All dispatched generators exceed these thresholds.
+% The optimality condition $\lambda = a_i + b_i g_i$ is satisfied for all units not at limits, confirming correct dispatch.
 
+\textbf{Minimum outputs for fixed cost recovery:} For generator $i$ to recover fixed costs $c_{0i}$ when remunerated at $\lambda g_i$, we require $\lambda g_i \geq c_{0i}$, hence $g_i \geq c_{0i}/\lambda$. 
+
+Using this formulas, all the minimum outputs at different loads are calculated as below:
+
+\begin{lstlisting}[language=Matlab]
+Load    Lambda      Gen 1 Min   Gen 2 Min   Gen 3 Min   
+(MW)    ($/MWh)     (MW)        (MW)        (MW)        
+------------------------------------------------
+300     26.061      30.70       15.35       15.35       
+          Actual dispatch: [202.05, 87.47, 10.00] MW
+          Meets recovery: [YES, YES, NO]
+
+400     27.909      28.66       14.33       14.33       
+          Actual dispatch: [250.00, 140.27, 10.00] MW
+          Meets recovery: [YES, YES, NO]
+
+600     57.991      13.80       6.90        6.90        
+          Actual dispatch: [250.00, 300.00, 49.78] MW
+          Meets recovery: [YES, YES, YES]
+
+700     61.994      12.90       6.45        6.45        
+          Actual dispatch: [250.00, 300.00, 149.84] MW
+          Meets recovery: [YES, YES, YES]
+\end{lstlisting}
+
+
+At the highest $\lambda$ (700 MW case: $\lambda = 61.994$ \$/MWh), the minimum outputs are: Gen 1: 12.90 MW, Gen 2: 6.45 MW, Gen 3: 6.45 MW. All dispatched generators exceed these thresholds.
+
+
+\newpage
 \section*{Problem 2: Unit Commitment}
 
 \textbf{Implementation:} The unit commitment is solved via full enumeration of all $2^N$ possible on/off combinations. For each commitment vector $\mathbf{u} \in \{0,1\}^N$, the economic dispatch is solved with effective limits $g_i^{\min} = u_i \cdot g_i^{\min}$ and $g_i^{\max} = u_i \cdot g_i^{\max}$, and fixed costs $c_{0i} = u_i \cdot c_{0i}$. The combination yielding the minimum total cost is selected as the optimal solution.
@@ -61,8 +96,31 @@ Problem 2: UC (static, full enumeration)
 
 \textbf{Profit comparison:} At $d=300$ MW, UC yields negative total profit (-401.54 \$/h) while ED yields positive profit. At $d=400$ MW, UC profit (322.48 \$/h) exceeds ED profit. At higher demands ($d=600,700$ MW), both UC and ED yield positive profits, with UC providing higher total profits.
 
+\begin{lstlisting}[language=Matlab]
+Load    Method      Total Profit      Commitment        Cost              
+(MW)                ($/h)                               ($/h)             
+----------------------------------------------------------------------
+300      ED           -1155.14           [1,1,1]            8961.02           
+         UC           -401.54            [1,1,0]            8285.53           
+         UC - ED      753.59            
+
+400      ED           -498.71            [1,1,1]            11670.04          
+         UC           322.48             [1,1,0]            10988.77          
+         UC - ED      821.19            
+
+600      ED           15932.31           [1,1,1]            18849.96          
+         UC           15932.31           [1,1,1]            18849.96          
+         UC - ED      0.00              
+
+700      ED           18533.12           [1,1,1]            24852.80          
+         UC           18533.12           [1,1,1]            24852.80          
+         UC - ED      0.00              
+\end{lstlisting}
+
 \textbf{Conclusion:} Unit commitment is \textit{not} sufficient to avoid generators losing money under marginal cost pricing at low demand levels. At $d=300$ MW, even with optimal commitment (Gen 3 off), the system incurs losses because fixed costs ($c_{01}+c_{02}=1200$ \$/h) exceed revenue at the marginal price.
 
+
+\newpage
 \section*{Problem 3: DC Security-Constrained OPF}
 
 \textbf{Implementation:} The DC-SCOPF is formulated as a quadratic programming problem minimizing generation costs subject to nodal power balance, generation limits, and line flow constraints. The problem is solved using MATLAB's \texttt{quadprog} solver. The B-bus matrix is constructed from line reactances, and line flows are expressed as $f = F \boldsymbol{\delta}$ where $F$ is the flow sensitivity matrix. LMPs are computed from the shadow prices of the nodal balance constraints, and the merchandizing surplus is calculated as $MS = -\sum_i \text{LMP}_i \cdot p_i$.
@@ -82,19 +140,11 @@ Problem 3: DC SCOPF with intact line limits
 
 \textbf{LMPs and congestion surplus:} LMPs vary by bus due to binding line constraints, with highest LMP at bus 9 (95.57 \$/MWh) indicating congestion. The merchandizing surplus of 19535.78 \$/h represents revenue collected from price differences across the network.
 
+
+
+\newpage
 \section*{Problem 4: Weighted Least Squares State Estimation}
 
-\textbf{Implementation:} The WLS state estimator uses an iterative Newton-Raphson approach with a numerically computed Jacobian matrix. The state vector consists of $(n-1)$ voltage angles and $n$ voltage magnitudes. At each iteration, predicted measurements are computed from the current state estimate, the Jacobian $H$ is evaluated using finite differences, and the state update is computed as $\Delta \mathbf{x} = (H^T W H)^{-1} H^T W (\mathbf{z} - \mathbf{h})$ where $W$ is the diagonal weight matrix ($W_{mm} = 1/\sigma_m^2$). The algorithm converges when $\max(|\Delta \mathbf{x}|) < \text{toler}$.
-
-\begin{lstlisting}[language=Matlab]
-Problem 4: WLS State Estimation
-  Iterations=4, time=0.0310s
-  Angles (rad):
-         0   -0.0947    0.0442   -0.1422   -0.3161
-
-  Voltages (pu):
-    1.0062    1.0099    1.0101    1.0582    1.0014
-\end{lstlisting}
 
 \textbf{Observability analysis:} The network has 5 buses requiring 9 state variables: 4 voltage angles (with bus 1 as slack, $\delta_1 = 0$) and 5 voltage magnitudes. The measurement set includes 3 active power injections ($P_1, P_3, P_4$), 3 reactive power injections ($Q_1, Q_3, Q_4$), 1 active flow ($P_{12}$), 1 reactive flow ($Q_{12}$), and 1 voltage magnitude ($V_2$), totaling 9 measurements.
 
@@ -125,8 +175,25 @@ Removing the slack bus (column 1), $A_{\text{noslack}} = A(:, 2:5)$ yields the o
 
 For reactive power and voltage observability, using $M_{rr} = M_{aa}$ and adding the voltage measurement at bus 2, the observability matrix $H_{rr}$ (5×5) is constructed. The gain matrix $G_{rr} = H_{rr}^T H_{rr}$ has rank 5, confirming all 5 voltage magnitudes are observable.
 
-Total rank = $\text{rank}(G_{aa}) + \text{rank}(G_{rr}) = 4 + 5 = 9$, confirming full observability of all 9 states.
+Total rank = $\text{rank}(G_{aa}) + \text{rank}(G_{rr}) = 4 + 5 = 9$, confirming full observability of all 9 states (see matlab code \textbf{observability\_proof.m}).
 
 \textbf{Removing one measurement:} If one measurement is removed, the system becomes 8 measurements for 9 states. Since the total rank would reduce from 9 to at most 8, the system would lose full observability. The rank reduction depends on which measurement is removed; removing a critical (non-redundant) measurement would make the system unobservable.
+
+
+
+
+\textbf{Implementation:} The WLS state estimator uses an iterative Newton-Raphson approach with a numerically computed Jacobian matrix. The state vector consists of $(n-1)$ voltage angles and $n$ voltage magnitudes. At each iteration, predicted measurements are computed from the current state estimate, the Jacobian $H$ is evaluated using finite differences, and the state update is computed as $\Delta \mathbf{x} = (H^T W H)^{-1} H^T W (\mathbf{z} - \mathbf{h})$ where $W$ is the diagonal weight matrix ($W_{mm} = 1/\sigma_m^2$). The algorithm converges when $\max(|\Delta \mathbf{x}|) < \text{toler}$.
+
+\begin{lstlisting}[language=Matlab]
+Problem 4: WLS State Estimation
+  Iterations=4, time=0.0310s
+  Angles (rad):
+         0   -0.0947    0.0442   -0.1422   -0.3161
+
+  Voltages (pu):
+    1.0062    1.0099    1.0101    1.0582    1.0014
+\end{lstlisting}
+
+
 
 \end{document}

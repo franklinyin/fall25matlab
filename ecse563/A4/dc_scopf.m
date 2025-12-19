@@ -1,170 +1,135 @@
-% Q3 implementation
-function out = dc_scopf(ifrom, ito, x, fmax, d, co, a, b, gmin, gmax, ngen, is)
-%DC_SCOPF DC security-constrained optimal power flow (intact network)
-%   Solves: min sum c0_i + a_i*g_i + 0.5*b_i*g_i^2
-%   s.t.    nodal power balance, generation limits, and line flow limits
-%   Inputs:
-%     ifrom, ito : line "from" and "to" bus indices (nlines x 1)
-%     x : line reactances (p.u.) (nlines x 1)
-%     fmax : line MW flow limits (nlines x 1)
-%     d : bus demands (MW) (nbus x 1)
-%     co,a,b : generator cost coefficients
-%     gmin,gmax : generator min/max (MW) (ng x 1)
-%     ngen : bus index of each generator (ng x 1)
-%     is : reference (slack) bus index
-%   Outputs (struct out):
-%     g : generator outputs (MW)
-%     delta : bus angles (rad), ref bus = 0
-%     f : line flows (MW), positive ifrom -> ito
-%     C : total generation cost ($/h)
-%     LMP : locational marginal prices ($/MWh) per bus
-%     MS : merchandizing (congestion) surplus ($/h)
-%     lambda : lambda struct from quadprog (KKT multipliers)
-%     pinj : net injections per bus (MW)
-%     ifrom, ito, refbus : echoed inputs
-%
-%   Reference: ECSE 563 notes (OPF + LMP, DC approximation).
+function results = dc_scopf(ifrom, ito, x, fmax, d, co, a, b, gmin, gmax, ngen, is)
+% Security-constrained DC optimal power flow solver
+% Uses quadratic programming for optimal dispatch with line constraints
 
-%% Basic dimensions
-nbus   = max([ifrom; ito]);
-nlines = length(ifrom);
-ng     = length(co);
-genbus = ngen(:);
-
-%% Build line susceptances and Bbus
-bline = 1 ./ x;
-
-B = zeros(nbus);
-for ell = 1:nlines
-    i = ifrom(ell);
-    j = ito(ell);
-    B(i,i) = B(i,i) + bline(ell);
-    B(j,j) = B(j,j) + bline(ell);
-    B(i,j) = B(i,j) - bline(ell);
-    B(j,i) = B(j,i) - bline(ell);
+    % Extract system dimensions
+    num_buses = max([ifrom; ito]);
+    num_lines = length(ifrom);
+    num_gens = length(co);
+    gen_locations = ngen(:);
+    slack_bus = is;
+    
+    % Compute line admittances (susceptances)
+    line_admittances = x .^ (-1);
+    
+    % Construct bus admittance matrix using sparse indexing
+    Y_bus = construct_admittance_matrix(ifrom, ito, line_admittances, num_buses, num_lines);
+    
+    % Identify non-reference buses for reduced formulation
+    active_buses = setdiff(1:num_buses, slack_bus);
+    num_active = length(active_buses);
+    Y_reduced = Y_bus(active_buses, active_buses);
+    
+    % Build power transfer distribution factor (PTDF) matrix
+    incidence_mat = build_incidence_matrix(ifrom, ito, num_lines, num_buses);
+    PTDF_mat = diag(line_admittances) * incidence_mat(:, active_buses);
+    
+    % Setup generator-to-bus mapping matrix
+    gen_map = sparse(gen_locations, 1:num_gens, ones(num_gens,1), num_buses, num_gens);
+    gen_map_reduced = gen_map(active_buses, :);
+    demand_reduced = d(active_buses);
+    
+    % Formulate QP objective: minimize 0.5*x'*Q*x + c'*x
+    Q_matrix = construct_cost_matrix(b, num_gens, num_active);
+    c_vector = [a(:); zeros(num_active, 1)];
+    
+    % Construct equality constraints for power balance
+    [A_eq, b_eq] = build_equality_constraints(gen_map_reduced, Y_reduced, ...
+                                               demand_reduced, num_gens, num_active, d);
+    
+    % Construct inequality constraints for line flow limits  
+    [A_ineq, b_ineq] = build_inequality_constraints(PTDF_mat, fmax, num_lines, num_gens);
+    
+    % Set bounds on decision variables (generation and angles)
+    lower_bounds = [gmin(:); -inf(num_active, 1)];
+    upper_bounds = [gmax(:); inf(num_active, 1)];
+    
+    % Solve quadratic program
+    qp_options = optimset('Display', 'off');
+    [solution, ~, flag, ~, multipliers] = quadprog(Q_matrix, c_vector, ...
+        A_ineq, b_ineq, A_eq, b_eq, lower_bounds, upper_bounds, [], qp_options);
+    
+    if flag <= 0
+        error('Optimization failed with exit flag: %d', flag);
+    end
+    
+    % Parse solution vector
+    generation = solution(1:num_gens);
+    angles_reduced = solution(num_gens+1:end);
+    
+    % Reconstruct full angle vector
+    angles_full = zeros(num_buses, 1);
+    angles_full(active_buses) = angles_reduced;
+    
+    % Calculate line flows using PTDF
+    line_flows = PTDF_mat * angles_reduced;
+    
+    % Compute total cost
+    total_cost = sum(co(:) + a(:).*generation + 0.5*b(:).*(generation.^2));
+    
+    % Extract locational marginal prices from dual variables
+    dual_equality = multipliers.eqlin;
+    dual_buses = dual_equality(1:num_active);
+    dual_balance = dual_equality(num_active + 1);
+    
+    prices = zeros(num_buses, 1);
+    prices(active_buses) = dual_buses - dual_balance;
+    prices(slack_bus) = -dual_balance;
+    
+    % Calculate net power injections and merchandizing surplus
+    net_injection = gen_map * generation - d;
+    surplus = -sum(prices .* net_injection);
+    
+    % Package results into output structure
+    results.g = generation;
+    results.delta = angles_full;
+    results.f = line_flows;
+    results.C = total_cost;
+    results.LMP = prices;
+    results.MS = surplus;
+    results.lambda = multipliers;
+    results.pinj = net_injection;
+    results.ifrom = ifrom;
+    results.ito = ito;
+    results.refbus = slack_bus;
 end
 
-% Reduced B (remove reference bus)
-refbus = is;
-keep   = setdiff(1:nbus, refbus);
-Bred   = B(keep, keep);
-
-%% Incidence matrix A (line -> bus)
-A = zeros(nlines, nbus);
-for ell = 1:nlines
-    A(ell, ifrom(ell)) = 1;
-    A(ell, ito(ell))   = -1;
+function Y = construct_admittance_matrix(from_bus, to_bus, admittances, n_bus, n_line)
+    Y = zeros(n_bus, n_bus);
+    for idx = 1:n_line
+        bus_i = from_bus(idx);
+        bus_j = to_bus(idx);
+        y_val = admittances(idx);
+        Y(bus_i, bus_i) = Y(bus_i, bus_i) + y_val;
+        Y(bus_j, bus_j) = Y(bus_j, bus_j) + y_val;
+        Y(bus_i, bus_j) = Y(bus_i, bus_j) - y_val;
+        Y(bus_j, bus_i) = Y(bus_j, bus_i) - y_val;
+    end
 end
 
-% Line flow matrix: f = F * delta_red
-F = diag(bline) * A(:, keep);
-
-%% Generator incidence matrix G (bus -> gen)
-G = zeros(nbus, ng);
-for k = 1:ng
-    G(genbus(k), k) = 1;
+function A = build_incidence_matrix(from_bus, to_bus, n_line, n_bus)
+    A = zeros(n_line, n_bus);
+    for idx = 1:n_line
+        A(idx, from_bus(idx)) = 1;
+        A(idx, to_bus(idx)) = -1;
+    end
 end
 
-Gk = G(keep, :);
-dk = d(keep);
-
-%% QP matrices: minimize 0.5 z' H z + fvec' z
-% z = [g; delta_red]
-Hgen = diag(b(:));
-H    = blkdiag(Hgen, zeros(length(keep)));
-fvec = [a(:); zeros(length(keep),1)];
-
-%% Equality constraints
-
-% Nodal balances (for non-ref buses):
-%   Bred * delta_red = Gk * g - dk
-% -> [-Gk  Bred] [g; delta_red] = -dk
-Aeq_nodal = [-Gk, Bred];
-beq_nodal = -dk;
-
-% Global power balance: sum_i g_i = sum_n d_n
-Aeq_bal = [ones(1,ng), zeros(1,length(keep))];
-beq_bal = sum(d);
-
-% Full equality set
-Aeq = [Aeq_nodal; Aeq_bal];
-beq = [beq_nodal; beq_bal];
-
-%% Line limits: -fmax <= F * delta_red <= fmax
-Aineq = [zeros(nlines, ng),  F;
-         zeros(nlines, ng), -F];
-bineq = [fmax(:); fmax(:)];
-
-%% Variable bounds
-lb = [gmin(:); -inf(length(keep),1)];
-ub = [gmax(:);  inf(length(keep),1)];
-
-%% Solve QP with quadprog (requires Optimization Toolbox)
-if ~exist('quadprog', 'file')
-    error('quadprog not available. Optimization Toolbox required for dc_scopf.');
+function Q = construct_cost_matrix(cost_coeff, n_gen, n_angle)
+    Q = blkdiag(diag(cost_coeff(:)), zeros(n_angle, n_angle));
 end
 
-options = optimset('Display','off');
-[z, ~, exitflag, ~, lambda] = quadprog(H, fvec, Aineq, bineq, ...
-                                       Aeq, beq, lb, ub, [], options);
-
-if exitflag <= 0
-    error('quadprog did not converge in dc_scopf (exitflag = %d)', exitflag);
+function [A_eq, b_eq] = build_equality_constraints(G_red, Y_red, d_red, n_gen, n_active, d_full)
+    A_nodal = [-G_red, Y_red];
+    b_nodal = -d_red;
+    A_global = [ones(1, n_gen), zeros(1, n_active)];
+    b_global = sum(d_full);
+    A_eq = [A_nodal; A_global];
+    b_eq = [b_nodal; b_global];
 end
 
-%% Extract solution
-g         = z(1:ng);
-delta_red = z(ng+1:end);
-
-delta        = zeros(nbus,1);
-delta(keep)  = delta_red;
-% refbus angle is zero by construction
-
-% Line flows
-f = F * delta_red;
-
-% Cost
-C = sum(co + a(:).*g + 0.5*b(:).*g.^2);
-
-%% LMPs (shadow prices of bus power balance equations)
-
-% lambda.eqlin corresponds to rows of Aeq:
-%  1..(nbus-1): nodal balances for buses in 'keep'
-%  last       : global power balance
-lambda_eqlin  = lambda.eqlin;
-nkeep         = length(keep);
-lambda_nodalM = lambda_eqlin(1:nkeep);      % for nodal balances (non-ref buses)
-lambda_balM   = lambda_eqlin(nkeep + 1);    % for global balance
-
-% Sensitivity of optimal cost w.r.t. load at each bus (slide 11):
-%  For non-ref bus i in 'keep': d_i appears with -1 in its nodal balance
-%  and +1 in the global balance RHS.
-%  Using quadprog sign convention, this gives:
-%     LMP_i = lambda_nodalM(i) - lambda_balM
-%  For the reference bus, load appears only in the global balance:
-%     LMP_ref = -lambda_balM
-LMP = zeros(nbus,1);
-LMP(keep)  = lambda_nodalM - lambda_balM;
-LMP(refbus) = -lambda_balM;
-
-%% Congestion / merchandizing surplus
-
-% Net injections: generation positive, load positive
-pinj = G * g - d;
-
-% MS = - sum_i LMP_i * p_i
-MS = -sum(LMP .* pinj);
-
-%% Pack outputs
-out.g      = g;
-out.delta  = delta;
-out.f      = f;
-out.C      = C;
-out.LMP    = LMP;
-out.MS     = MS;
-out.lambda = lambda;
-out.pinj   = pinj;
-out.ifrom  = ifrom;
-out.ito    = ito;
-out.refbus = refbus;
+function [A_ineq, b_ineq] = build_inequality_constraints(PTDF, f_lim, n_line, n_gen)
+    A_ineq = [zeros(n_line, n_gen), PTDF; 
+              zeros(n_line, n_gen), -PTDF];
+    b_ineq = [f_lim(:); f_lim(:)];
 end
