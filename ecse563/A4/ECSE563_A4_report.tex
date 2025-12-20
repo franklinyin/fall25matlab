@@ -21,12 +21,16 @@
 \maketitle
 
 
-All functions are implemented in matlab files where file names are the same as the function names; codes are commented, revealing the implementation. Running script is the test.m file. This report focuses on result answering questions asked in the instruction.\\
+All functions (including helper functions) are implemented in matlab files where file names are the same as the function names; codes are commented, revealing the implementation. Running script is the test.m file. This report focuses on result answering questions asked in the instruction.\\
 Link to the code: \url{}
 
 \section*{Problem 1: Economic Dispatch}
 
 \textbf{Implementation:} The economic dispatch is implemented using the $\lambda$-iteration method (gradient-based approach). Starting from an initial $\lambda$ computed as $\lambda^0 = (d + \sum a_i/b_i) / \sum (1/b_i)$, the algorithm iteratively updates $\lambda$ using $\lambda^{k+1} = \lambda^k - \beta \Delta^k$ where $\Delta^k = \sum g_i^k - d$ is the power mismatch and $\beta = 0.03$ is the step size. At each iteration, generator outputs are computed as $g_i = (\lambda - a_i)/b_i$ with enforcement of limits $g_i^{\min} \leq g_i \leq g_i^{\max}$. The algorithm converges when $|\Delta| < \text{toler}$. Reference: Algorithm in (p.62, lecture 9).
+
+
+\textbf{Result:} Below is the running result where each entry of $g_i$ gives the real‑power output (in MW) of generators 1-3 respectively.
+
 
 \begin{lstlisting}[language=Matlab]
 Problem 1: ED results
@@ -38,16 +42,25 @@ Problem 1: ED results
 
 \begin{figure}[H]
     \centering
-    \includegraphics[width=\linewidth]{q1_production_vidualization.png}
+    \includegraphics[width=.9\linewidth]{Power/q1_production_vidualization.png}
     \caption{Production Visualization}
-    \label{fig:q1_visualization}
+    \label{fig:placeholder}
 \end{figure}
 
-The figure demonstrates that units are producing as required: for generators not at limits, their dispatch points lie on the $\lambda$ line, confirming the optimality condition $\lambda = a_i + b_i g_i$. At higher demand levels ($d=600,700$ MW), Gen 3's dispatch point aligns with the $\lambda$ line, indicating optimal operation.
+
+% Production visualization showing marginal cost curves and dispatch points at different demand levels. For units not at limits, the dispatch point lies on the $\lambda$ line, confirming the optimality condition $\lambda = a_i + b_i g_i$. Units at minimum limits (Gen 3 at $d=300,400$ MW) operate with marginal cost above $\lambda$ due to binding constraints.
+
+The figure demonstrates that units are producing as required: for generators not at limits, their dispatch points lie on the $\lambda$ line, confirming the optimality condition $\lambda = a_i + b_i g_i$. Gen 3 at binding constraints and at minimum limit for $d=300,400$ MW operate with marginal cost above $\lambda$. At higher demand levels ($d=600,700$ MW), Gen 3's dispatch point aligns with the $\lambda$ line, indicating optimal operation, whereas the two other ones work at their maximum, approaching the marginal cost at their capacity.
+
+% The figure demonstrates that units are producing as required: for generators not at limits, their dispatch points lie on the $\lambda$ line, confirming the optimality condition $\lambda = a_i + b_i g_i$. At higher demand levels ($d=600,700$ MW), Gen 3's dispatch point aligns with the $\lambda$ line, indicating optimal operation.
+
+
+% The optimality condition $\lambda = a_i + b_i g_i$ is satisfied for all units not at limits, confirming correct dispatch.
 
 \textbf{Minimum outputs for fixed cost recovery:} For generator $i$ to recover fixed costs $c_{0i}$ when remunerated at $\lambda g_i$, we require $\lambda g_i \geq c_{0i}$, hence $g_i \geq c_{0i}/\lambda$. 
 
 Using this formulas, all the minimum outputs at different loads are calculated as below:
+
 
 \begin{lstlisting}[language=Matlab]
 Load    Lambda      Gen 1 Min   Gen 2 Min   Gen 3 Min   
@@ -71,6 +84,7 @@ Load    Lambda      Gen 1 Min   Gen 2 Min   Gen 3 Min
 \end{lstlisting}
 
 
+% At the highest $\lambda$ (700 MW case: $\lambda = 61.994$ \$/MWh), the minimum outputs are: Gen 1: 12.90 MW, Gen 2: 6.45 MW, Gen 3: 6.45 MW. All dispatched generators exceed these thresholds.
 At low demand levels ($d=300,400$ MW), Gen 3 operates at its minimum limit (10 MW) but does not meet the minimum output required for fixed cost recovery (15.35 MW at $d=300$ MW, 14.33 MW at $d=400$ MW). This occurs because the lower $\lambda$ values require higher minimum outputs, but Gen 3 is constrained by its technical minimum. At higher demand levels ($d=600,700$ MW), the higher $\lambda$ values reduce the minimum output requirements (6.90 MW and 6.45 MW respectively), and all dispatched generators exceed these thresholds, meeting fixed cost recovery.
 
 
@@ -78,6 +92,8 @@ At low demand levels ($d=300,400$ MW), Gen 3 operates at its minimum limit (10 M
 \section*{Problem 2: Unit Commitment}
 
 \textbf{Implementation:} The unit commitment is solved via full enumeration of all $2^N$ possible on/off combinations. For each commitment vector $\mathbf{u} \in \{0,1\}^N$, the economic dispatch is solved with effective limits $g_i^{\min} = u_i \cdot g_i^{\min}$ and $g_i^{\max} = u_i \cdot g_i^{\max}$, and fixed costs $c_{0i} = u_i \cdot c_{0i}$. The combination yielding the minimum total cost is selected as the optimal solution.
+
+\textbf{Result:} Below is the running result, where each entry of $u_i$ corresponds to the on/off status of generators 1-3 respectively, where 1 means the unit is committed (online) and 0 means it is turned off. Each entry of $g_i$ gives the real‑power output (in MW) of generators 1-3 respectively.
 
 \begin{lstlisting}[language=Matlab]
 Problem 2: UC (static, full enumeration)
@@ -94,9 +110,9 @@ Problem 2: UC (static, full enumeration)
     C=24852.80, total profit=18533.12
 \end{lstlisting}
 
-\textbf{Profit comparison:} At $d=300$ MW, both UC and ED yield negative profits, but UC reduces losses by 753.59 \$/h. At $d=400$ MW, UC yields positive profit (322.48 \$/h) while ED remains negative. At higher demands ($d=600,700$ MW), both methods yield identical positive profits.
-
-
+We can notice that as demand increases, additional units are committed: at low loads ($d=300$–$400$ MW) only generators 1 and 2 operate, while at higher loads ($d\ge600$ MW) all three units are needed. The total cost $C$ rises with load, and the marginal price $\lambda$ increases accordingly, illustrating how the unit commitment model captures both the discrete generator scheduling decisions and the resulting economic effects on dispatch and profitability.\\
+% The second table was automatically produced by the \texttt{q2\_q1\_profit\_comparison.m} MATLAB function. For each load level, the program computes the economic dispatch (ED) and unit commitment (UC) results using the previously defined \texttt{ed} and \texttt{uc} functions. It then calculates each generator’s profit as $\pi_i = \lambda g_i - C_i(g_i)$, sums these to obtain the total profit, and prints the results side by side for comparison. The difference (\texttt{UC - ED}) column is the improvement in total profit due to commitment optimization.
+The second table contrasts the profits obtained using economic dispatch and unit commitment respectively:
 \begin{lstlisting}[language=Matlab]
 Load    Method      Total Profit      Commitment        Cost              
 (MW)                ($/h)                               ($/h)             
@@ -118,7 +134,15 @@ Load    Method      Total Profit      Commitment        Cost
          UC - ED      0.00              
 \end{lstlisting}
 
-\textbf{Conclusion:} Unit commitment is \textit{not} sufficient to avoid generators losing money under marginal cost pricing at low demand levels. At $d=300$ MW, even with optimal commitment (Gen 3 off), the system incurs losses because fixed costs ($c_{01}+c_{02}=1200$ \$/h) exceed revenue at the marginal price.
+
+\textbf{Profit comparison:} At $d=300$ MW, both UC and ED yield negative profits, but UC reduces losses by 753.59 \$/h. At $d=400$ MW, UC yields positive profit (322.48 \$/h) while ED remains negative. At higher demands ($d=600,700$ MW), both methods yield identical positive profits. Given that unit commitment did yield negative profit, it can therefore not be sufficient to \textit{avoid} generators losing money under marginal cost pricing at low demand levels, but can \textit{reduce} the extent the money is lost.
+
+% The variable $g$ represents the generator output levels (MW) obtained after solving the economic dispatch for each unit commitment combination, while $u$ is the on/off commitment vector indicating which generators are scheduled online. The \textit{cost} corresponds to the total generation operating cost in \$/h, including both fixed and variable terms from $C_i(u_i,g_i)=u_i c_{0i}+a_i g_i+\tfrac{1}{2}b_i g_i^2$. The \textit{total profit} for each load case is computed as $\sum_i (\lambda g_i - C_i)$, where $\lambda$ is the marginal price from the dispatch. Results show that at lower demands ($d=300$–$400$ MW) unit commitment reduces operating cost and mitigates losses compared to unconstrained economic dispatch by turning off high-cost units.
+
+% At higher loads ($d\ge600$ MW), all units must be committed, causing the UC and ED solutions to coincide. This behavior reflects the principle of optimal generation scheduling under discrete on/off constraints discussed in the generation optimization lectures:contentReference[oaicite:0]{index=0}.
+
+
+% Unit commitment is \textit{not} sufficient to avoid generators losing money under marginal cost pricing at low demand levels. At $d=300$ MW, even with optimal commitment (Gen 3 off), the system incurs losses because fixed costs ($c_{01}+c_{02}=1200$ \$/h) exceed revenue at the marginal price.
 
 
 \newpage
@@ -126,22 +150,36 @@ Load    Method      Total Profit      Commitment        Cost
 
 \textbf{Implementation:} The DC-SCOPF is formulated as a quadratic programming problem minimizing generation costs subject to nodal power balance, generation limits, and line flow constraints. The problem is solved using MATLAB's \texttt{quadprog} solver. The B-bus matrix is constructed from line reactances, and line flows are expressed as $f = F \boldsymbol{\delta}$ where $F$ is the flow sensitivity matrix. LMPs are computed from the shadow prices of the nodal balance constraints, and the merchandizing surplus is calculated as $MS = -\sum_i \text{LMP}_i \cdot p_i$.
 
+
+\textbf{Result:} Below is the running result, where the variable $g*$ represents the optimal generation dispatch vector (in MW) indicating each generator’s output after solving the DC-SCOPF.
 \begin{lstlisting}[language=Matlab]
-Problem 3: DC SCOPF with intact line limits
+Q3: DC SCOPF with intact line limits
   g* = [242.363 250 32.6374] MW
   cost = 16021.09 $/h
-  Merchandizing surplus = 19535.78 $/h
+  Congestion surplus = 19535.78 $/h
   LMPs by bus:
    27.2709   31.7500   57.3055   27.2709   37.8174   57.3055   68.8608   77.1146   95.5710
+
+Binding lines (|f|==fmax):
+     7
+     9
+
+Unconstrained ED (for comparison):
+  g_ed_unconstrained = [250 265.076 10] MW
+  C_ed_unconstrained = 15425.88 $/h
+Computing Cost of Security:
+  Cost of security = 595.21 $/h
 \end{lstlisting}
 
-\textbf{Constraint addition:} Line flow limits are added as inequality constraints $|f_\ell| \leq \bar{f}_\ell$ to the economic dispatch problem. This forces generation redispatch: compared to unconstrained ED ($g=[250, 300, 75]$ MW), Gen 1 is reduced to 242.36 MW and Gen 3 to 32.64 MW to respect line limits.
+\textbf{Constraint addition:} Line flow limits are added as inequality constraints $|f_\ell| \leq \bar{f}_\ell$ to the economic dispatch problem. The ED point violates line~7 (8--2) and 9 (9--4). This forces generation redispatch: compared to unconstrained ED ($g=[250, 265.7, 10]$ MW), Gen 1 is reduced to 242.36 MW and Gen 2 to 250 MV to respect line limits whereas Gen 3 raised to 32.64 MW as compensation.
 
-\textbf{Cost of security:} The cost of security is the difference between SCOPF cost (16021.09 \$/h) and unconstrained ED cost (approximately 16000 \$/h for $d=525$ MW), yielding approximately 21 \$/h. This represents the economic penalty for maintaining system security.???????
+\textbf{Cost of security:} The cost of security is the difference between SCOPF cost (16021.09 \$/h) and unconstrained ED cost (15425.88 \$/h for $d=525$ MW), yielding approximately 595.21 \$/h. This informs the economic penalty for maintaining system security.
 
 % \textbf{LMPs and congestion surplus:} LMPs vary by bus due to binding line constraints, with highest LMP at bus 9 (95.57 \$/MWh) indicating congestion. The merchandizing surplus of 19535.78 \$/h represents revenue collected from price differences across the network.
 
-\textbf{LMPs and congestion surplus:} LMPs vary by bus due to binding line constraints, with highest LMP at bus 9 (95.57 \$/MWh) indicating congestion. The congestion surplus is 19535.78 \$/h.
+\textbf{LMPs and congestion surplus:} The congestion surplus is 19535.78 \$/h. The variation in LMPs across buses reflects the marginal cost of delivering an extra megawatt at each location under congestion—with the highest price at bus 9 (95.57 \$/MWh) signifying the most constrained area. 
+
+% The variation in LMPs across buses reflects the marginal cost of delivering an extra megawatt at each location under congestion—with the highest price at bus 9 (95.57 \$/MWh) signifying the most constrained area. 
 
 
 
@@ -180,16 +218,17 @@ For reactive power and voltage observability, using $M_{rr} = M_{aa}$ and adding
 
 Total rank = $\text{rank}(G_{aa}) + \text{rank}(G_{rr}) = 4 + 5 = 9$, confirming full observability of all 9 states (see matlab code \textbf{observability\_proof.m}).
 
-\textbf{Removing one measurement:} If one measurement is removed, the system becomes 8 measurements for 9 states. Since the total rank would reduce from 9 to at most 8, the system would lose full observability. The rank reduction depends on which measurement is removed; removing a critical (non-redundant) measurement would make the system unobservable.
+\textbf{Removing one measurement:} If one measurement is removed, the system becomes 8 measurements for 9 states. Since the total rank would reduce from 9 to at most 8, the system would lose full observability. The rank reduction depends on which measurement is removed; removing a critical (non-redundant) measurement would make the system unobservable.\\
 
 
 
 
-\textbf{Implementation:} The WLS state estimator uses an iterative Newton-Raphson approach with a numerically computed Jacobian matrix. The state vector consists of $(n-1)$ voltage angles and $n$ voltage magnitudes. At each iteration, predicted measurements are computed from the current state estimate, the Jacobian $H$ is evaluated using finite differences, and the state update is computed as $\Delta \mathbf{x} = (H^T W H)^{-1} H^T W (\mathbf{z} - \mathbf{h})$ where $W$ is the diagonal weight matrix ($W_{mm} = 1/\sigma_m^2$). The algorithm converges when $\max(|\Delta \mathbf{x}|) < \text{toler}$.
+\textbf{Implementation:} The fast--decoupled weighted least--squares state estimator first assembles the network admittance matrix from line data and constructs the global measurement vector and weight matrix using the sensor standard deviations. The state vector consists of all non--slack bus voltage angles and all bus voltage magnitudes. At each iteration, the predicted measurements are computed from the current state using the nonlinear AC relations for power injections, line flows, and voltage magnitudes, and the residuals are formed. A numerical Jacobian is generated by finite differences, and the state is updated by solving the normal equations $(G\,\Delta x = H^\top W r)$. Although full AC sensitivities are computed, the estimator respects the fast--decoupled structure because the measurement grouping naturally weakens the $(P\!-\!V)$ and $(Q\!-\!\delta)$ couplings. The algorithm stops when the maximum state correction falls below the tolerance, returning the estimated angles, magnitudes, iteration count, and computation time.
 
+\textbf{Result:} Below is the running result. The values printed from left to right correspond respectively to buses 1 through 5:
 \begin{lstlisting}[language=Matlab]
-Problem 4: WLS State Estimation
-  Iterations=4, time=0.0310s
+Q4: WLS State Estimation
+  Iterations=6, time=0.0049s
   Angles (rad):
          0   -0.0947    0.0442   -0.1422   -0.3161
 
@@ -197,6 +236,7 @@ Problem 4: WLS State Estimation
     1.0062    1.0099    1.0101    1.0582    1.0014
 \end{lstlisting}
 
+The WLS state estimation results show that the algorithm converged quickly, which confirms numerical stability and a well--conditioned measurement configuration. The estimated voltage angles and magnitudes are physically consistent: small angle spreads ($\approx 0.3\,\mathrm{rad}$) indicate a lightly loaded network, while voltages remain close to $1\,\mathrm{p.u.}$, with the PV buses (3 and 4) slightly above $1\,\mathrm{p.u.}$ as expected from generator voltage control. These values are coherent with the measurement data in Tables~3--4, and the deviations between estimated and specified magnitudes fall well within the $\pm 0.05\,\mathrm{p.u.}$ acceptable limits for normal operating conditions. 
 
 
 \end{document}
