@@ -38,12 +38,12 @@ Problem 1: ED results
 
 \begin{figure}[H]
     \centering
-    \includegraphics[width=\linewidth]{Power/q1_production_vidualization.png}
+    \includegraphics[width=\linewidth]{q1_production_vidualization.png}
     \caption{Production Visualization}
-    \label{fig:placeholder}
+    \label{fig:q1_visualization}
 \end{figure}
 
-% The optimality condition $\lambda = a_i + b_i g_i$ is satisfied for all units not at limits, confirming correct dispatch.
+The figure demonstrates that units are producing as required: for generators not at limits, their dispatch points lie on the $\lambda$ line, confirming the optimality condition $\lambda = a_i + b_i g_i$. At higher demand levels ($d=600,700$ MW), Gen 3's dispatch point aligns with the $\lambda$ line, indicating optimal operation.
 
 \textbf{Minimum outputs for fixed cost recovery:} For generator $i$ to recover fixed costs $c_{0i}$ when remunerated at $\lambda g_i$, we require $\lambda g_i \geq c_{0i}$, hence $g_i \geq c_{0i}/\lambda$. 
 
@@ -71,7 +71,7 @@ Load    Lambda      Gen 1 Min   Gen 2 Min   Gen 3 Min
 \end{lstlisting}
 
 
-At the highest $\lambda$ (700 MW case: $\lambda = 61.994$ \$/MWh), the minimum outputs are: Gen 1: 12.90 MW, Gen 2: 6.45 MW, Gen 3: 6.45 MW. All dispatched generators exceed these thresholds.
+At low demand levels ($d=300,400$ MW), Gen 3 operates at its minimum limit (10 MW) but does not meet the minimum output required for fixed cost recovery (15.35 MW at $d=300$ MW, 14.33 MW at $d=400$ MW). This occurs because the lower $\lambda$ values require higher minimum outputs, but Gen 3 is constrained by its technical minimum. At higher demand levels ($d=600,700$ MW), the higher $\lambda$ values reduce the minimum output requirements (6.90 MW and 6.45 MW respectively), and all dispatched generators exceed these thresholds, meeting fixed cost recovery.
 
 
 \newpage

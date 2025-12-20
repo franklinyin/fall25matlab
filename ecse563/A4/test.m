@@ -44,13 +44,14 @@ out = dc_scopf(ifrom, ito, x, fmax, d, co, a, b, gmin, gmax, ngen, is);
 fprintf('\nQ3: DC SCOPF with intact line limits\n');
 fprintf('  g* = [%g %g %g] MW\n', out.g);
 fprintf('  cost = %.2f $/h\n', out.C);
-disp('  LMPs by bus:');
-disp(out.LMP.');
 fprintf('  Congestion surplus = %.2f $/h\n', out.MS);
-
-fprintf('Computing Cost of Security:\n');
+% fprintf('Computing Cost of Security:\n');
 [~, C_ed_unconstrained, ~] = ed(co, a, b, gmin, gmax, sum(d), toler) % first compute unconstrained ED for comparison
 cost_of_security = out.C - C_ed_unconstrained
+disp('  LMPs by bus:');
+disp(out.LMP.');
+
+
 
 
 %% ---------- Problem 4 data (A4Q4_wlsse_data.m) ----------
