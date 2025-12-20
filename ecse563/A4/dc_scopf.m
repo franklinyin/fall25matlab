@@ -1,50 +1,69 @@
 function results = dc_scopf(ifrom, ito, x, fmax, d, co, a, b, gmin, gmax, ngen, is)
 % Security-constrained DC optimal power flow solver
 % Uses quadratic programming for optimal dispatch with line constraints
+% Inputs:
+%   ifrom, ito : line "from" and "to" bus indices (nlines x 1)
+%   x : line reactances (p.u. on Sbase) (nlines x 1)
+%   fmax : line MW flow limits (nlines x 1)
+%   d : bus demands (MW) (nbus x 1)
+%   co,a,b : generator cost coefficients
+%   gmin,gmax : generator min/max (MW) (ng x 1)
+%   ngen : bus index of each generator (ng x 1)
+%   is : reference (slack) bus index
+% Outputs:
+%   results : struct containing:
+%     g : generator outputs (MW)
+%     flow : line flows (MW), positive ifrom -> ito
+%     C : total generation cost ($/h)
+%     LMP : locational marginal prices ($/MWh) per bus
+%     MS : merchandizing (congestion) surplus ($/h)
+%     lambda : lambda struct from quadprog (KKT multipliers)
+%     pinj : net injections per bus (MW)
+%     ifrom, ito, refbus : echoed inputs
 
-    % Extract system dimensions
+    % extract system dimensions
     num_buses = max([ifrom; ito]);
     num_lines = length(ifrom);
     num_gens = length(co);
     gen_locations = ngen(:);
     slack_bus = is;
     
-    % Compute line admittances (susceptances)
+    % compute line admittances (susceptances)
     line_admittances = x .^ (-1);
     
-    % Construct bus admittance matrix using sparse indexing
+    % construct bus admittance matrix using sparse indexing
     Y_bus = construct_admittance_matrix(ifrom, ito, line_admittances, num_buses, num_lines);
     
-    % Identify non-reference buses for reduced formulation
+    % identify non-reference buses for reduced formulation
     active_buses = setdiff(1:num_buses, slack_bus);
     num_active = length(active_buses);
     Y_reduced = Y_bus(active_buses, active_buses);
     
-    % Build power transfer distribution factor (PTDF) matrix
+    % build power transfer distribution factor (PTDF) matrix
     incidence_mat = build_incidence_matrix(ifrom, ito, num_lines, num_buses);
     PTDF_mat = diag(line_admittances) * incidence_mat(:, active_buses);
     
-    % Setup generator-to-bus mapping matrix
+    % setup generator-to-bus mapping matrix
     gen_map = sparse(gen_locations, 1:num_gens, ones(num_gens,1), num_buses, num_gens);
     gen_map_reduced = gen_map(active_buses, :);
     demand_reduced = d(active_buses);
     
-    % Formulate QP objective: minimize 0.5*x'*Q*x + c'*x
+    % formulate QP objective: minimize 0.5*x'*Q*x + c'*x
     Q_matrix = construct_cost_matrix(b, num_gens, num_active);
     c_vector = [a(:); zeros(num_active, 1)];
     
-    % Construct equality constraints for power balance
+    % construct equality constraints for power balance
     [A_eq, b_eq] = build_equality_constraints(gen_map_reduced, Y_reduced, ...
                                                demand_reduced, num_gens, num_active, d);
     
-    % Construct inequality constraints for line flow limits  
+    % construct inequality constraints for line flow limits  
     [A_ineq, b_ineq] = build_inequality_constraints(PTDF_mat, fmax, num_lines, num_gens);
     
-    % Set bounds on decision variables (generation and angles)
+    % set bounds on decision variables (generation and angles)
     lower_bounds = [gmin(:); -inf(num_active, 1)];
     upper_bounds = [gmax(:); inf(num_active, 1)];
     
-    % Solve quadratic program
+    % solve quadratic program
     qp_options = optimset('Display', 'off');
     [solution, ~, flag, ~, multipliers] = quadprog(Q_matrix, c_vector, ...
         A_ineq, b_ineq, A_eq, b_eq, lower_bounds, upper_bounds, [], qp_options);

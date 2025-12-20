@@ -1,18 +1,5 @@
 function q2_q1_profit_comparison(loads, c0, a, b, gmin, gmax, toler)
-% Q2_Q1_PROFIT_COMPARISON Profit Comparison: Unit Commitment vs Economic Dispatch
-% 
-% Inputs:
-%   loads  - Array of load values (MW)
-%   c0     - Fixed cost coefficients (vector)
-%   a      - Linear cost coefficients (vector)
-%   b      - Quadratic cost coefficients (vector)
-%   gmin   - Minimum generation limits (vector)
-%   gmax   - Maximum generation limits (vector)
-%   toler  - Tolerance for ED/UC convergence
-%
-% Compares profits between UC and ED methods when generators are remunerated
-% at marginal cost lambda.
-
+% Helper function for profit comparison between UC and ED
 fprintf('\n----------------------------------------------------------------------\n');
 fprintf('PROFIT COMPARISON: Unit Commitment vs Economic Dispatch\n');
 fprintf('----------------------------------------------------------------------\n');

@@ -1,6 +1,17 @@
 % Q4 implementation (fast-decoupled WLS SE)
 function [delta, V, N, time] = fdwlsse(nfrom, nto, r, x, b, ...
     Pinj, Qinj, Pflow, Qflow, Vnode, toler, maxiter)
+    % inputs:
+    %   nfrom, nto : line "from" and "to" bus indices (nlines x 1)
+    %   r, x, b : line parameters (per unit); total line charging = j*b
+    %   Pinj, Qinj, Pflow, Qflow, Vnode : measurement data
+    %   toler : convergence tolerance
+    %   maxiter : maximum number of iterations
+    % outputs:
+    %   delta : bus voltage angles (rad), size nb×1 (slack angle = 0)
+    %   V : bus voltage magnitudes (p.u.), size nb×1
+    %   N : number of iterations
+    %   time : computation time
 
     nbus = max(max(nfrom), max(nto));
     Ybus = admittance(nfrom, nto, r, x, b);

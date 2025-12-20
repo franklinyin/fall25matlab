@@ -11,7 +11,7 @@ for idx = 1:length(loads)
     % Call ED to get results for this load
     [g, ~, lam] = ed(c0, a, b, gmin, gmax, d, toler);
     
-    % Plot marginal cost curves for each generator
+    % plot marginal cost curves for each generator
     g_range1 = linspace(gmin(1), gmax(1), 100);
     g_range2 = linspace(gmin(2), gmax(2), 100);
     g_range3 = linspace(gmin(3), gmax(3), 100);

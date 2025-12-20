@@ -1,11 +1,18 @@
 % Q2
 function [u, g, C, lambda] = uc(c0, a, b, gmin, gmax, d, toler)
     % uc - unit commitment by enumeration + ED
+    % Inputs:
+    %   c0,a,b : column vectors (size N) of cost coefficients
+    %   gmin,gmax : column vectors (size N) of generator limits
+    %   d : total demand (scalar)
+    %   toler : power balance tolerance
+    % Outputs:
+    %   u : commitment vector (0/1)
+    %   g : dispatch vector (MW)
+    %   C : total cost ($/h)
+    %   lambda : power balance Lagrange multiplier ($/MWh)
     
     N = numel(c0);
-    % if any([numel(a) numel(b) numel(gmin) numel(gmax)] ~= N)
-    %     error('All generator parameter vectors must have the same length.');
-    % end
     
     ncomb = 2^N;
     
@@ -14,11 +21,11 @@ function [u, g, C, lambda] = uc(c0, a, b, gmin, gmax, d, toler)
     gbest = [];
     lambest = NaN;
     
-    for idx = 0:(ncomb-1)
+    for idx = 0:(ncomb-1) % enumerate all possibilities
         bits = dec2bin(idx, N) - '0';
         u = bits(:);
         
-        if d > 0 && sum(u) == 0
+        if d > 0 && sum(u) == 0 % at least one unit producing
             continue;
         end
         
@@ -26,7 +33,7 @@ function [u, g, C, lambda] = uc(c0, a, b, gmin, gmax, d, toler)
         gmax_u = u .* gmax;
         c0_u = u .* c0;
         
-        try
+        try %trying ed and reject for infeasibility
             [g, C_ed, lambda] = ed(c0_u, a, b, gmin_u, gmax_u, d, toler);
         catch
             continue;
