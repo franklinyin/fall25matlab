@@ -29,14 +29,14 @@ if d < sum(gmin) || d > sum(gmax)
     error('Demand d is outside feasible range [sum(gmin), sum(gmax)].');
 end
 
-% -------- λ-iteration algorithm (gradient method) --------
+% -------- lambda-iteration algorithm (gradient method) --------
 
 % Incremental costs at limits (C'_i(g))
 mc_min = a + b .* gmin;
 mc_max = a + b .* gmax;
 
 % Initial lambda (from notes):
-% λ^0 = ( d + Σ (a_i / b_i) ) / Σ (1 / b_i)
+% lambda^0 = ( d + sum (a_i / b_i) ) / sum (1 / b_i)
 lambda = (d + sum(a ./ b)) / sum(1 ./ b);
 
 % Parameters
@@ -50,9 +50,9 @@ g      = zeros(N,1); % dispatch vector
 k = 0;
 while abs(Delta) > toler && k < maxiter
     k = k + 1;
-    lambda_old = lambda;   % λ used to compute this iteration's dispatch
+    lambda_old = lambda;   % lambda used to compute this iteration's dispatch
     
-    % Compute g_i^k from λ^k with limit checks
+    % Compute g_i^k from lambda^k with limit checks
     for i = 1:N
         if mc_min(i) >= lambda_old
             g(i) = gmin(i);
@@ -63,14 +63,14 @@ while abs(Delta) > toler && k < maxiter
         end
     end
     
-    % Power balance mismatch Δ^k = Σ g_i^k - d
+    % Power balance mismatch Delta^k = sum g_i^k - d
     Delta = sum(g) - d;
     
-    % Update λ for next iteration: λ^{k+1} = λ^k - β Δ^k
+    % Update lambda for next iteration: lambda^{k+1} = lambda^k - β Delta^k
     lambda = lambda_old - beta * Delta;
 end
 
-% Use the λ that produced the final dispatch g
+% Use the lambda that produced the final dispatch g
 lambda = lambda_old;
 
 if abs(Delta) > toler

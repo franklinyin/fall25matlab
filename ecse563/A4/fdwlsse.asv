@@ -19,16 +19,16 @@ function [delta, V, N, time] = fdwlsse(nfrom, nto, r, x, b, ...
     H0 = compute_jacobian(x_state, h0, Ybus, nbus, nfrom, nto, r, x, b, ...
         Pinj, Qinj, Pflow, Qflow, Vnode);
 
-    % split into angle and magnitude sensitivities
+    % Split into angle and magnitude sensitivities
     Hdelta = H0(:, 1:nbus-1);  % dh/ddelta
     HV = H0(:, nbus:end);  % dh/dV
 
-    % active measurements
+    % Active measurements use only dP/ddelta, dPf/ddelta (P-delta block)
     H_A = Hdelta(idxA, :);
     W_A = W(idxA, idxA);
     G_AA = H_A.' * (W_A * H_A);
 
-    % reactive + voltage measurements
+    % Reactive + voltage measurements use only dQ/dV, dQf/dV and dV/dV (Q-V block)
     H_R = HV(idxQV, :);
     W_R = W(idxQV, idxQV);
     G_RR = H_R.' * (W_R * H_R);
@@ -41,7 +41,7 @@ function [delta, V, N, time] = fdwlsse(nfrom, nto, r, x, b, ...
             Pinj, Qinj, Pflow, Qflow, Vnode);
         residual = z - h;   % r = z - h(x^k)
 
-        % partition residuals
+        % Partition residuals
         r_A = residual(idxA);  % active P/Pf residuals
         r_RV = residual(idxQV);  % reactive Q/Qf + voltage residuals
 
@@ -53,10 +53,11 @@ function [delta, V, N, time] = fdwlsse(nfrom, nto, r, x, b, ...
         d_delta = G_AA \ t_A;
         d_V = G_RR \ t_R;
 
-        % assemble and update
+        % Assemble full state increment and update
         dx = [d_delta; d_V];
         x_state = x_state + dx;
 
+        % Convergence test on state change
         if max(abs(dx)) < toler
             break;
         end
