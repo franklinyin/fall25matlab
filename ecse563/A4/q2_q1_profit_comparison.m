@@ -3,8 +3,6 @@ function q2_q1_profit_comparison(loads, c0, a, b, gmin, gmax, toler)
 fprintf('\n----------------------------------------------------------------------\n');
 fprintf('PROFIT COMPARISON: Unit Commitment vs Economic Dispatch\n');
 fprintf('----------------------------------------------------------------------\n');
-fprintf('Generators remunerated at marginal cost lambda\n');
-fprintf('Profit_i = lambda * g_i - Cost_i(g_i)\n\n');
 
 fprintf('%-8s', 'Load');
 fprintf('%-12s', 'Method');
@@ -21,17 +19,17 @@ fprintf('----------------------------------------------------------------------\
 for idx = 1:length(loads)
     d = loads(idx);
     
-    % Call ED to get results
+    % call ED to get results
     [g_ed, C_ed, lam_ed] = ed(c0, a, b, gmin, gmax, d, toler);
     
-    % Calculate ED profits (all units committed: u = [1,1,1])
+    % calculate ED profits (all units committed: u = [1,1,1])
     prof_ed = lam_ed * g_ed - (c0 + a .* g_ed + 0.5 * b .* (g_ed.^2));
     total_profit_ed = sum(prof_ed);
     
-    % Call UC to get results
+    % call UC to get results
     [u_uc, g_uc, C_uc, lam_uc] = uc(c0, a, b, gmin, gmax, d, toler);
     
-    % Calculate UC profits
+    % calculate UC profits
     prof_uc = lam_uc * g_uc - (c0.*u_uc + a.*g_uc + 0.5*b.*g_uc.^2);
     total_profit_uc = sum(prof_uc);
     
@@ -44,7 +42,7 @@ for idx = 1:length(loads)
     fprintf('%-8s %-12s %-18.2f %-18s %-18.2f\n', ...
         '', 'UC', total_profit_uc, u_str, C_uc);
     
-    % Difference
+    % difference
     profit_diff = total_profit_uc - total_profit_ed;
     fprintf('%-8s %-12s %-18.2f\n\n', '', 'UC - ED', profit_diff);
 end

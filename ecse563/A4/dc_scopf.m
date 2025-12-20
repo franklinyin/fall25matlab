@@ -18,17 +18,14 @@ function results = dc_scopf(ifrom, ito, x, fmax, d, co, a, b, gmin, gmax, ngen, 
 %     LMP : locational marginal prices ($/MWh) per bus
 %     MS : merchandizing (congestion) surplus ($/h)
 
-    % extract system dimensions
     num_buses = max([ifrom; ito]);
     num_lines = length(ifrom);
     num_gens = length(co);
     gen_locations = ngen(:);
     slack_bus = is;
     
-    % compute line admittances (susceptances)
+    % special admittance matrix
     line_admittances = x .^ (-1);
-    
-    % construct bus admittance matrix using sparse indexing
     Y_bus = construct_admittance_matrix(ifrom, ito, line_admittances, num_buses, num_lines);
     
     % identify non-reference buses for reduced formulation
@@ -60,8 +57,7 @@ function results = dc_scopf(ifrom, ito, x, fmax, d, co, a, b, gmin, gmax, ngen, 
     lower_bounds = [gmin(:); -inf(num_active, 1)];
     upper_bounds = [gmax(:); inf(num_active, 1)];
     
-    % solve quadratic program
-    qp_options = optimset('Display', 'off');
+    qp_options = optimset('Display', 'off'); % solve quadratic program
     [solution, ~, flag, ~, multipliers] = quadprog(Q_matrix, c_vector, ...
         A_ineq, b_ineq, A_eq, b_eq, lower_bounds, upper_bounds, [], qp_options);
     
@@ -69,18 +65,12 @@ function results = dc_scopf(ifrom, ito, x, fmax, d, co, a, b, gmin, gmax, ngen, 
         error('Optimization failed with exit flag: %d', flag);
     end
     
-    % Parse solution vector
     generation = solution(1:num_gens);
     angles_reduced = solution(num_gens+1:end);
+    line_flows = PTDF_mat * angles_reduced;% Calculate line flows using PTDF
+    total_cost = sum(co(:) + a(:).*generation + 0.5*b(:).*(generation.^2));% Compute total cost
     
-    % 
-    % % Calculate line flows using PTDF
-    line_flows = PTDF_mat * angles_reduced;
-    
-    % Compute total cost
-    total_cost = sum(co(:) + a(:).*generation + 0.5*b(:).*(generation.^2));
-    
-    % Extract locational marginal prices from dual variables
+    % extract locational marginal prices from dual variables
     dual_equality = multipliers.eqlin;
     dual_buses = dual_equality(1:num_active);
     dual_balance = dual_equality(num_active + 1);
@@ -89,11 +79,11 @@ function results = dc_scopf(ifrom, ito, x, fmax, d, co, a, b, gmin, gmax, ngen, 
     lmp(active_buses) = dual_buses - dual_balance;
     lmp(slack_bus) = -dual_balance;
     
-    % Calculate net power injections and merchandizing surplus
+    % net power injections and merchandizing surplus
     net_injection = gen_map * generation - d;
     surplus = -sum(lmp .* net_injection);
     
-    % Package results into output structure
+    % package results
     results.g = generation;
     results.flow = line_flows;
     results.C = total_cost;
@@ -101,6 +91,9 @@ function results = dc_scopf(ifrom, ito, x, fmax, d, co, a, b, gmin, gmax, ngen, 
     results.MS = surplus;
 end
 
+%% helper functions
+
+% construct special admittance matrix
 function Y = construct_admittance_matrix(from_bus, to_bus, admittances, n_bus, n_line)
     Y = zeros(n_bus, n_bus);
     for idx = 1:n_line
@@ -114,6 +107,7 @@ function Y = construct_admittance_matrix(from_bus, to_bus, admittances, n_bus, n
     end
 end
 
+% construct incidence matrix
 function A = build_incidence_matrix(from_bus, to_bus, n_line, n_bus)
     A = zeros(n_line, n_bus);
     for idx = 1:n_line
@@ -122,10 +116,12 @@ function A = build_incidence_matrix(from_bus, to_bus, n_line, n_bus)
     end
 end
 
+% construct cost matrix
 function Q = construct_cost_matrix(cost_coeff, n_gen, n_angle)
     Q = blkdiag(diag(cost_coeff(:)), zeros(n_angle, n_angle));
 end
 
+% construct equality constraints
 function [A_eq, b_eq] = build_equality_constraints(G_red, Y_red, d_red, n_gen, n_active, d_full)
     A_nodal = [-G_red, Y_red];
     b_nodal = -d_red;
@@ -135,6 +131,7 @@ function [A_eq, b_eq] = build_equality_constraints(G_red, Y_red, d_red, n_gen, n
     b_eq = [b_nodal; b_global];
 end
 
+% construct inequality constraints
 function [A_ineq, b_ineq] = build_inequality_constraints(PTDF, f_lim, n_line, n_gen)
     A_ineq = [zeros(n_line, n_gen), PTDF; 
               zeros(n_line, n_gen), -PTDF];

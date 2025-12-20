@@ -1,7 +1,6 @@
 % Q1 implementation
 function [g, C, lambda] = ed(c0, a, b, gmin, gmax, d, toler)
 %  economic dispatch by lambda-iteration (quadratic costs)
-    %   Cost Ci(gi) = c0_i + a_i*gi + 0.5*b_i*gi^2
     %   Inputs:
     %     c0,a,b : column vectors (size N) of cost coefficients
     %     gmin,gmax : column vectors (size N) of generator limits
