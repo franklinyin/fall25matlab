@@ -55,14 +55,14 @@ function results = dc_scopf(ifrom, ito, x, fmax, d, co, a, b, gmin, gmax, ngen, 
     
     % Parse solution vector
     generation = solution(1:num_gens);
-    angles_reduced = solution(num_gens+1:end);
+    % angles_reduced = solution(num_gens+1:end);
     
-    % Reconstruct full angle vector
-    angles_full = zeros(num_buses, 1);
-    angles_full(active_buses) = angles_reduced;
-    
-    % Calculate line flows using PTDF
-    line_flows = PTDF_mat * angles_reduced;
+    % % Reconstruct full angle vector
+    % angles_full = zeros(num_buses, 1);
+    % angles_full(active_buses) = angles_reduced;
+    % 
+    % % Calculate line flows using PTDF
+    % line_flows = PTDF_mat * angles_reduced;
     
     % Compute total cost
     total_cost = sum(co(:) + a(:).*generation + 0.5*b(:).*(generation.^2));
@@ -72,26 +72,26 @@ function results = dc_scopf(ifrom, ito, x, fmax, d, co, a, b, gmin, gmax, ngen, 
     dual_buses = dual_equality(1:num_active);
     dual_balance = dual_equality(num_active + 1);
     
-    prices = zeros(num_buses, 1);
-    prices(active_buses) = dual_buses - dual_balance;
-    prices(slack_bus) = -dual_balance;
+    lmp = zeros(num_buses, 1);
+    lmp(active_buses) = dual_buses - dual_balance;
+    lmp(slack_bus) = -dual_balance;
     
     % Calculate net power injections and merchandizing surplus
     net_injection = gen_map * generation - d;
-    surplus = -sum(prices .* net_injection);
+    surplus = -sum(lmp .* net_injection);
     
     % Package results into output structure
     results.g = generation;
-    results.delta = angles_full;
-    results.f = line_flows;
+    % results.delta = angles_full;
+    % results.f = line_flows;
     results.C = total_cost;
-    results.LMP = prices;
+    results.LMP = lmp;
     results.MS = surplus;
-    results.lambda = multipliers;
-    results.pinj = net_injection;
-    results.ifrom = ifrom;
-    results.ito = ito;
-    results.refbus = slack_bus;
+    % results.lambda = multipliers;
+    % results.pinj = net_injection;
+    % results.ifrom = ifrom;
+    % results.ito = ito;
+    % results.refbus = slack_bus;
 end
 
 function Y = construct_admittance_matrix(from_bus, to_bus, admittances, n_bus, n_line)

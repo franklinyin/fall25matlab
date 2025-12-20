@@ -94,7 +94,8 @@ Problem 2: UC (static, full enumeration)
     C=24852.80, total profit=18533.12
 \end{lstlisting}
 
-\textbf{Profit comparison:} At $d=300$ MW, UC yields negative total profit (-401.54 \$/h) while ED yields positive profit. At $d=400$ MW, UC profit (322.48 \$/h) exceeds ED profit. At higher demands ($d=600,700$ MW), both UC and ED yield positive profits, with UC providing higher total profits.
+\textbf{Profit comparison:} At $d=300$ MW, both UC and ED yield negative profits, but UC reduces losses by 753.59 \$/h. At $d=400$ MW, UC yields positive profit (322.48 \$/h) while ED remains negative. At higher demands ($d=600,700$ MW), both methods yield identical positive profits.
+
 
 \begin{lstlisting}[language=Matlab]
 Load    Method      Total Profit      Commitment        Cost              
@@ -136,9 +137,11 @@ Problem 3: DC SCOPF with intact line limits
 
 \textbf{Constraint addition:} Line flow limits are added as inequality constraints $|f_\ell| \leq \bar{f}_\ell$ to the economic dispatch problem. This forces generation redispatch: compared to unconstrained ED ($g=[250, 300, 75]$ MW), Gen 1 is reduced to 242.36 MW and Gen 3 to 32.64 MW to respect line limits.
 
-\textbf{Cost of security:} The cost of security is the difference between SCOPF cost (16021.09 \$/h) and unconstrained ED cost (approximately 16000 \$/h for $d=525$ MW), yielding approximately 21 \$/h. This represents the economic penalty for maintaining system security.
+\textbf{Cost of security:} The cost of security is the difference between SCOPF cost (16021.09 \$/h) and unconstrained ED cost (approximately 16000 \$/h for $d=525$ MW), yielding approximately 21 \$/h. This represents the economic penalty for maintaining system security.???????
 
-\textbf{LMPs and congestion surplus:} LMPs vary by bus due to binding line constraints, with highest LMP at bus 9 (95.57 \$/MWh) indicating congestion. The merchandizing surplus of 19535.78 \$/h represents revenue collected from price differences across the network.
+% \textbf{LMPs and congestion surplus:} LMPs vary by bus due to binding line constraints, with highest LMP at bus 9 (95.57 \$/MWh) indicating congestion. The merchandizing surplus of 19535.78 \$/h represents revenue collected from price differences across the network.
+
+\textbf{LMPs and congestion surplus:} LMPs vary by bus due to binding line constraints, with highest LMP at bus 9 (95.57 \$/MWh) indicating congestion. The congestion surplus is 19535.78 \$/h.
 
 
 
