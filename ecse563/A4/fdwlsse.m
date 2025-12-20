@@ -3,7 +3,7 @@ function [delta, V, Niter, elapsed] = fdwlsse(nfrom, nto, r, x, b, ...
     Pinj, Qinj, Pflow, Qflow, Vnode, toler, maxiter)
 
     nbus = max(max(nfrom), max(nto));
-    Ybus = build_ybus(nfrom, nto, r, x, b, nbus);
+    Ybus = admittance(nfrom, nto, r, x, b);
     [z, W] = extract_measurements(Pinj, Qinj, Pflow, Qflow, Vnode);
     
     x_state = [zeros(nbus-1,1); ones(nbus,1)];
@@ -33,24 +33,6 @@ function [delta, V, Niter, elapsed] = fdwlsse(nfrom, nto, r, x, b, ...
 end
 
 % For the convenience of immediate reference, the helper functions are included underneath the body of the code
-
-%% Build admittance matrix
-function Ybus = build_ybus(nfrom, nto, r, x, b, nbus)
-Ybus = zeros(nbus);
-yser = 1 ./ (r + 1j*x);
-bsh = 1j * b / 2;
-
-for l = 1:numel(nfrom)
-    i = nfrom(l);
-    k = nto(l);
-    y = yser(l);
-    bs = bsh(l);
-    Ybus(i,i) = Ybus(i,i) + y + bs;
-    Ybus(k,k) = Ybus(k,k) + y + bs;
-    Ybus(i,k) = Ybus(i,k) - y;
-    Ybus(k,i) = Ybus(k,i) - y;
-end
-end
 
 %% Extract measurements and build weight matrix
 function [z, W] = extract_measurements(Pinj, Qinj, Pflow, Qflow, Vnode)
