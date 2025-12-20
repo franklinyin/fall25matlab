@@ -17,9 +17,6 @@ function results = dc_scopf(ifrom, ito, x, fmax, d, co, a, b, gmin, gmax, ngen, 
 %     C : total generation cost ($/h)
 %     LMP : locational marginal prices ($/MWh) per bus
 %     MS : merchandizing (congestion) surplus ($/h)
-%     lambda : lambda struct from quadprog (KKT multipliers)
-%     pinj : net injections per bus (MW)
-%     ifrom, ito, refbus : echoed inputs
 
     % extract system dimensions
     num_buses = max([ifrom; ito]);
@@ -76,9 +73,6 @@ function results = dc_scopf(ifrom, ito, x, fmax, d, co, a, b, gmin, gmax, ngen, 
     generation = solution(1:num_gens);
     angles_reduced = solution(num_gens+1:end);
     
-    % % Reconstruct full angle vector
-    % angles_full = zeros(num_buses, 1);
-    % angles_full(active_buses) = angles_reduced;
     % 
     % % Calculate line flows using PTDF
     line_flows = PTDF_mat * angles_reduced;
@@ -101,16 +95,10 @@ function results = dc_scopf(ifrom, ito, x, fmax, d, co, a, b, gmin, gmax, ngen, 
     
     % Package results into output structure
     results.g = generation;
-    % results.delta = angles_full;
     results.flow = line_flows;
     results.C = total_cost;
     results.LMP = lmp;
     results.MS = surplus;
-    % results.lambda = multipliers;
-    % results.pinj = net_injection;
-    % results.ifrom = ifrom;
-    % results.ito = ito;
-    % results.refbus = slack_bus;
 end
 
 function Y = construct_admittance_matrix(from_bus, to_bus, admittances, n_bus, n_line)
