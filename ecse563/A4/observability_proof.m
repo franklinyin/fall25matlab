@@ -2,46 +2,19 @@
 
 N = max(max(nfrom), max(nto));
 Id = eye(N);
-A = Id(1:N, nfrom) - Id(1:N, nto);
-A = A'
+A = (Id(1:N, nfrom) - Id(1:N, nto))';
 
-% For Active power
-Maa = [1 1 0 0 0 0 0;
-    0 0 -1 1 1 0 0;
-    0 -1 0 -1 0 1 -1;
-    1 0 0 0 0 0 0]
+% Active power observability
+Maa = [1 1 0 0 0 0 0; 0 0 -1 1 1 0 0; 0 -1 0 -1 0 1 -1; 1 0 0 0 0 0 0];
+Haa = Maa * A(:, 2:end);  % Remove slack node
+Gaa = Haa' * Haa;
+rankGaa = rank(Gaa);  % Rank 4: all 4 angles observable
 
-%Remove slack node
-A_noslack = A(:, 2:end)
-Haa = Maa * A_noslack
+% Reactive power observability
+Mrr = [1 1 0 0 0 0 0; 0 0 -1 1 1 0 0; 0 -1 0 -1 0 1 -1; 1 0 0 0 0 0 0];
+Hrr = [Mrr * A; 0 1 0 0 0];  % Add V2 measurement
+Grr = Hrr' * Hrr;
+rankGrr = rank(Grr);  % Rank 5: all 5 magnitudes observable
 
-Gaa = transpose(Haa) * Haa
-rankGaa = rank(Gaa)
-
-% Rank is 4 --> all 4 angles are observable
-
-% For reactive power
-Mrr = [1 1 0 0 0 0 0;
-    0 0 -1 1 1 0 0;
-    0 -1 0 -1 0 1 -1;
-    1 0 0 0 0 0 0 ;]
-
-% add measurement for V2
-Hrr = [Mrr * A;
-        0 1 0 0 0]
-
-Hrr = transpose(Hrr) * Hrr
-rankGrr = rank(Hrr)
-
-totalRank = rankGaa + rankGrr
-% Rank is 5 --> all 5 magnitudes are observable
-
-%Rank 4 + 5 = 9 --> fully obserable. 
-% If we remove 1 measurement we would
-%reduce in rank for sure, so we would not have full observability
-
-
-
-
-
-
+totalRank = rankGaa + rankGrr;  % Rank 9: fully observable
+% Removing 1 measurement reduces rank, so full observability requires all measurements

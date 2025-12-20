@@ -55,14 +55,14 @@ function results = dc_scopf(ifrom, ito, x, fmax, d, co, a, b, gmin, gmax, ngen, 
     
     % Parse solution vector
     generation = solution(1:num_gens);
-    % angles_reduced = solution(num_gens+1:end);
+    angles_reduced = solution(num_gens+1:end);
     
     % % Reconstruct full angle vector
     % angles_full = zeros(num_buses, 1);
     % angles_full(active_buses) = angles_reduced;
     % 
     % % Calculate line flows using PTDF
-    % line_flows = PTDF_mat * angles_reduced;
+    line_flows = PTDF_mat * angles_reduced;
     
     % Compute total cost
     total_cost = sum(co(:) + a(:).*generation + 0.5*b(:).*(generation.^2));
@@ -83,7 +83,7 @@ function results = dc_scopf(ifrom, ito, x, fmax, d, co, a, b, gmin, gmax, ngen, 
     % Package results into output structure
     results.g = generation;
     % results.delta = angles_full;
-    % results.f = line_flows;
+    results.flow = line_flows;
     results.C = total_cost;
     results.LMP = lmp;
     results.MS = surplus;

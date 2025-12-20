@@ -45,12 +45,16 @@ fprintf('\nQ3: DC SCOPF with intact line limits\n');
 fprintf('  g* = [%g %g %g] MW\n', out.g);
 fprintf('  cost = %.2f $/h\n', out.C);
 fprintf('  Congestion surplus = %.2f $/h\n', out.MS);
-% fprintf('Computing Cost of Security:\n');
-[~, C_ed_unconstrained, ~] = ed(co, a, b, gmin, gmax, sum(d), toler) % first compute unconstrained ED for comparison
-cost_of_security = out.C - C_ed_unconstrained
 disp('  LMPs by bus:');
 disp(out.LMP.');
 
+fprintf('Binding lines (|f|==fmax):\n'); 
+
+bind = abs(abs(out.flow)-fmax)<1e-6; disp(find(bind));
+
+fprintf('Computing Cost of Security:\n');
+[g, C_ed_unconstrained, ~] = ed(co, a, b, gmin, gmax, sum(d), toler) % first compute unconstrained ED for comparison
+cost_of_security = out.C - C_ed_unconstrained
 
 
 
